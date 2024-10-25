@@ -38,7 +38,8 @@ llamaEmbeddings = OllamaEmbeddings(
     model="llama3.1"
 )
 #creates vectore database with llama embeddings
-vectorstore = Chroma.from_documents(documents=pptx_splits, embedding=llamaEmbeddings) # documents = pptx_splits or all_splits
+# documents = pptx_splits for the code to split and read pptx files or all_splits for the code to split and read txt files 
+vectorstore = Chroma.from_documents(documents=pptx_splits, embedding=llamaEmbeddings) 
 
 #retrives 10 documents that meet search parameters of similar
 retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 10})
@@ -66,3 +67,4 @@ def create_prompt():
 
 #print the respone from the ollama llm that was given the formated prompt
 print(llm.invoke(create_prompt()))
+
