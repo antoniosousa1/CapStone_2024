@@ -1,61 +1,54 @@
-from langchain_ollama import OllamaLLM, OllamaEmbeddings
-from langchain_community.document_loaders import TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
+import warnings
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.chains import RetrievalQA
+from langchain_ollama import OllamaLLM
+from langchain.schema import Document
+from langchain.vectorstores.base import VectorStore
+from typing import List
+import os
 
+# Suppress specific warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", message="urllib3")
 
-#sets llama 3.1 as the llm a varable
-llm = OllamaLLM(model="llama3.1")
+# Load the PDF and create the document loader
+def load_documents(pdf_path: str) -> List[Document]:
+    loader = PyPDFLoader(pdf_path)
+    return loader.load()
 
-#testing print statement showing model is working with llama
-    #response = llm.invoke("This is a test say Hi")
+# Split text into smaller chunks
+def split_documents(documents: List[Document]) -> List[Document]:
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    return text_splitter.split_documents(documents)
 
-    #print(response)
+# Embed the text into vectors
+def create_vector_store(documents: List[Document]) -> VectorStore:
+    model_name = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model = HuggingFaceEmbeddings(model_name=model_name)
+    return FAISS.from_documents(documents, embedding_model)
 
-#loads data from markdown file
-loader = TextLoader(
-    "./data/beeMovie.txt"
-)
+# Set up the RAG pipeline
+def setup_rag_pipeline(vector_store: VectorStore) -> RetrievalQA:
+    llm = OllamaLLM(model="llama3.1")
+    retriever = vector_store.as_retriever()
+    return RetrievalQA.from_chain_type(llm=llm, retriever=retriever, chain_type="stuff")
 
-#assigns docs to the loaded documents
-#document a class 
-"""
-document = Document(
-    page_content="Hello, world!",
-    metadata={"source": "https://example.com"}
-)
-"""
-docs = loader.load()
-#load() -> list[Document]
-    #print(docs[0].page_content[:100])
+# Main execution
+if __name__ == "__main__":
+    pdf_path = "C:/Users/GFelix/Downloads/CIS 442 HW 1.pdf"  # Replace with your PDF path
+    query = "What is this about?"  # Write your question here
 
-#splits the text into 500 char chunks with a 150 char overlap to not cut off important context, also text is split by an empty line aswell
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=500, chunk_overlap=150, add_start_index=True
-)
-all_splits = text_splitter.split_documents(docs)
+    # Check if the file exists
+    if not os.path.isfile(pdf_path):
+        print("Error: The specified PDF file does not exist.")
+    else:
+        documents = load_documents(pdf_path)
+        split_docs = split_documents(documents)
+        vector_store = create_vector_store(split_docs)
+        rag = setup_rag_pipeline(vector_store)
+        response = rag.invoke(query)
 
-#allsplits is a list of documents
-    #print(len(all_splits))
-
-#stores documents into vector database
-
-
-llamaEmbeddings = OllamaEmbeddings(
-    model="llama3.1"
-)
-#creates vectore database with llama embeddings
-vectorstore = Chroma.from_documents(documents=all_splits, embedding=llamaEmbeddings)
-
-#retrives 5 documents that meet search parameters of similar
-retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
-
-#prompt for serching avalible docuemnts
-retrieved_docs = retriever.invoke("what happens to adam's stinger")
-
-#prints the retrieved docuemnts 
-print(retrieved_docs)
-
-
-
-#keep working on this another time
+        print("Response:", response)
