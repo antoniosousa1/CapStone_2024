@@ -1,54 +1,70 @@
-import warnings
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.chains import RetrievalQA
-from langchain_ollama import OllamaLLM
-from langchain.schema import Document
-from langchain.vectorstores.base import VectorStore
-from typing import List
-import os
+from langchain_ollama import OllamaLLM, OllamaEmbeddings
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_chroma import Chroma
 
-# Suppress specific warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-warnings.filterwarnings("ignore", message="urllib3")
+#sets llama 3.1 as the llm a varable
+llm = OllamaLLM(model="llama3.1")
 
-# Load the PDF and create the document loader
-def load_documents(pdf_path: str) -> List[Document]:
-    loader = PyPDFLoader(pdf_path)
-    return loader.load()
+#loads data from markdown file
+loader = DirectoryLoader(
+    "./data",
+    loader_cls=TextLoader
+)
 
-# Split text into smaller chunks
-def split_documents(documents: List[Document]) -> List[Document]:
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-    return text_splitter.split_documents(documents)
+#assigns docs to the loaded documents
+#document a class 
+"""
+document = Document(
+    page_content="Hello, world!",
+    metadata={"source": "https://example.com"}
+)
+"""
+#load() -> list[Document]
+docs = loader.load()
 
-# Embed the text into vectors
-def create_vector_store(documents: List[Document]) -> VectorStore:
-    model_name = "sentence-transformers/all-MiniLM-L6-v2"
-    embedding_model = HuggingFaceEmbeddings(model_name=model_name)
-    return FAISS.from_documents(documents, embedding_model)
+#splits the text into 1000 char chunks with a 150 char overlap to not cut off important context, also text is split by an empty line aswell
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=250, chunk_overlap=100, add_start_index=True
+)
+all_splits = text_splitter.split_documents(docs)
 
-# Set up the RAG pipeline
-def setup_rag_pipeline(vector_store: VectorStore) -> RetrievalQA:
-    llm = OllamaLLM(model="llama3.1")
-    retriever = vector_store.as_retriever()
-    return RetrievalQA.from_chain_type(llm=llm, retriever=retriever, chain_type="stuff")
+#chooses which model of ollama embeddings to use
+llamaEmbeddings = OllamaEmbeddings(
+    model="llama3.1"
+)
+#creates vectore database with llama embeddings
+vectorstore = Chroma.from_documents(documents=all_splits, embedding=llamaEmbeddings)
 
-# Main execution
-if __name__ == "__main__":
-    pdf_path = "C:/Users/GFelix/Downloads/CIS 442 HW 1.pdf"  # Replace with your PDF path
-    query = "What is this about?"  # Write your question here
+#retrives 10 documents that meet search parameters of similar
+retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
 
-    # Check if the file exists
-    if not os.path.isfile(pdf_path):
-        print("Error: The specified PDF file does not exist.")
-    else:
-        documents = load_documents(pdf_path)
-        split_docs = split_documents(documents)
-        vector_store = create_vector_store(split_docs)
-        rag = setup_rag_pipeline(vector_store)
-        response = rag.invoke(query)
+question = input()
 
-        print("Response:", response)
+#prompt for serching avalible docuemnts
+retrieved_docs = retriever.invoke(question)
+
+for i in retrieved_docs:
+    print(i.page_content)
+    print("\n")
+
+#function to create a prompt from a predetermined prompt format and the context given from the retriver
+def create_prompt():
+
+    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer he question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n"
+    
+    Question = "Question: " + question + "\n"
+
+    Context_str = "Context: \n\n"
+
+    for i in retrieved_docs:
+        Context_str += i.page_content + "\n\n"
+
+    Answer = "Answer: "
+
+    final_prompt = prompt + Question + Context_str + Answer
+
+    return final_prompt
+
+#print the respone from the ollama llm that was given the formated prompt
+print(llm.invoke(create_prompt()))
