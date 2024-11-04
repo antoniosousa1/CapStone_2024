@@ -1,54 +1,78 @@
-import warnings
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.chains import RetrievalQA
-from langchain_ollama import OllamaLLM
-from langchain.schema import Document
-from langchain.vectorstores.base import VectorStore
-from typing import List
 import os
+from langchain_ollama import OllamaLLM, OllamaEmbeddings
+from langchain_community.document_loaders import PyMuPDFLoader  # PDF loader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_chroma import Chroma
 
-# Suppress specific warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-warnings.filterwarnings("ignore", message="urllib3")
+# Set up the LLM
+llm = OllamaLLM(model="llama3.1")
 
-# Load the PDF and create the document loader
-def load_documents(pdf_path: str) -> List[Document]:
-    loader = PyPDFLoader(pdf_path)
-    return loader.load()
+# Set the absolute path to your PDF file
+pdf_path = os.path.abspath("C:/Users/GFelix/Downloads/BeeMovie.pdf")  # Adjust this path as needed
+print(f"Loading PDF from: {pdf_path}")  # Debugging print to verify path
 
-# Split text into smaller chunks
-def split_documents(documents: List[Document]) -> List[Document]:
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-    return text_splitter.split_documents(documents)
+# Load PDF file
+try:
+    loader = PyMuPDFLoader(pdf_path)
+except ValueError as e:
+    print(f"Error loading PDF: {e}")
+    exit(1)
 
-# Embed the text into vectors
-def create_vector_store(documents: List[Document]) -> VectorStore:
-    model_name = "sentence-transformers/all-MiniLM-L6-v2"
-    embedding_model = HuggingFaceEmbeddings(model_name=model_name)
-    return FAISS.from_documents(documents, embedding_model)
+# Load documents
+docs = loader.load()
 
-# Set up the RAG pipeline
-def setup_rag_pipeline(vector_store: VectorStore) -> RetrievalQA:
-    llm = OllamaLLM(model="llama3.1")
-    retriever = vector_store.as_retriever()
-    return RetrievalQA.from_chain_type(llm=llm, retriever=retriever, chain_type="stuff")
+# Split the text into chunks
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000, chunk_overlap=150, add_start_index=True
+)
+all_splits = text_splitter.split_documents(docs)
 
-# Main execution
-if __name__ == "__main__":
-    pdf_path = "C:/Users/GFelix/Downloads/CIS 442 HW 1.pdf"  # Replace with your PDF path
-    query = "What is this about?"  # Write your question here
+# Set up embeddings
+llamaEmbeddings = OllamaEmbeddings(model="llama3.1")
 
-    # Check if the file exists
-    if not os.path.isfile(pdf_path):
-        print("Error: The specified PDF file does not exist.")
-    else:
-        documents = load_documents(pdf_path)
-        split_docs = split_documents(documents)
-        vector_store = create_vector_store(split_docs)
-        rag = setup_rag_pipeline(vector_store)
-        response = rag.invoke(query)
+# Create a vector store with the embeddings
+vectorstore = Chroma.from_documents(documents=all_splits, embedding=llamaEmbeddings)
 
-        print("Response:", response)
+# Set up retriever
+retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 10})
+
+# Loop for user interaction
+while True:
+    user_input = input("User: ")
+
+    if user_input.lower() == "/bye":
+        print("AI: Bye, have a great day :)")
+        break
+
+    # Retrieve relevant documents based on user input
+    retrieved_docs = retriever.invoke(user_input)
+
+    # Function to create a prompt from retrieved context
+    def create_prompt():
+        prompt = (
+            "You are an assistant for question-answering tasks. "
+            "Use the following pieces of retrieved context to answer the question. "
+            "If you don't know the answer, just say that you don't know. "
+            "Use three sentences maximum and keep the answer concise.\n"
+        )
+        
+        Question = f"Question: {user_input}\n\n"
+        Context_str = "Context: this is a movie called Bee Movie \n\n"
+
+        for i in retrieved_docs:
+            Context_str += f"- {i.page_content.strip()}\n\n"  # Bullet points for better readability
+
+        Answer = "Answer: "
+
+        final_prompt = prompt + Question + Context_str + Answer
+
+        return final_prompt
+
+    # Get the AI's response and format it
+    ai_response = llm.invoke(create_prompt())
+    
+    # Print the response in a structured format
+    print("\n--- Response ---")
+    print(f"Question: {user_input}")
+    print(f"Answer: {ai_response.strip()}")
+    print("-----------------\n")
