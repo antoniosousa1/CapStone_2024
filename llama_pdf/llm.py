@@ -14,7 +14,7 @@ llm = OllamaLLM(model="llama3.1")
 
 
 #Loading the pdf
-pdf_loader = PyPDFLoader("C:/Users/GFelix/CapStone_2024/llama_pdf/data/BeeMovie.pdf")
+pdf_loader = PyPDFLoader("./data/BeeMovie.pdf")
 
 #Assigns docs to the loaded documents
 #Document a class
