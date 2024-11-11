@@ -1,28 +1,18 @@
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
-from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 
 #sets llama 3.1 as the llm a varable
-llm = OllamaLLM(model="llama3.1")
+llm = OllamaLLM(model="llama3.1:70b")
 
 #loads data from markdown file
 loader = DirectoryLoader(
-    "./data",
-    loader_cls=TextLoader
+    path="./data"
 )
 
 #assigns docs to the loaded documents
-#document a class 
-"""
-document = Document(
-    page_content="Hello, world!",
-    metadata={"source": "https://example.com"}
-)
-"""
-#load() -> list[Document]
 docs = loader.load()
-
 #splits the text into 1000 char chunks with a 150 char overlap to not cut off important context, also text is split by an empty line aswell
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=250, chunk_overlap=100, add_start_index=True
@@ -31,13 +21,13 @@ all_splits = text_splitter.split_documents(docs)
 
 #chooses which model of ollama embeddings to use
 llamaEmbeddings = OllamaEmbeddings(
-    model="llama3.1"
+    model="llama3.1:70b"
 )
 #creates vectore database with llama embeddings
 vectorstore = Chroma.from_documents(documents=all_splits, embedding=llamaEmbeddings)
 
 #retrives 10 documents that meet search parameters of similar
-retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 10})
 
 question = input()
 
@@ -46,7 +36,7 @@ retrieved_docs = retriever.invoke(question)
 
 for i in retrieved_docs:
     print(i.page_content)
-    print("\n")
+    print("BREAK\n")
 
 #function to create a prompt from a predetermined prompt format and the context given from the retriver
 def create_prompt():
