@@ -1,5 +1,5 @@
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
-from langchain_community.document_loaders import DirectoryLoader
+from langchain_community.document_loaders import DirectoryLoader, TextLoader, PyPDFLoader, UnstructuredPowerPointLoader, Docx2txtLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 
@@ -7,20 +7,29 @@ from langchain_chroma import Chroma
 llm = OllamaLLM(model="llama3.1")
 
 #loads data from markdown file
-loader = DirectoryLoader(
-    path="./data",
-)
+loaders = {
+    ".pdf": PyPDFLoader,
+    ".docx": Docx2txtLoader,
+    ".txt": TextLoader,
+    ".pptx": UnstructuredPowerPointLoader
+}
+
+def createDirLoaders(file_type, file_path):
+    return DirectoryLoader(
+        path=file_path,
+        loader_cls=loaders[file_type]
+    )
+
+pdf_loader=createDirLoaders(".pdf", "./data")
+pptx_loader=createDirLoaders(".pptx", "./data")
+docx_loader=createDirLoaders(".docx", "./data")
+txt_loader=createDirLoaders(".txt", "./data")
+        
 
 #assigns docs to the loaded documents
-#document a class 
-"""
-document = Document(
-    page_content="Hello, world!",
-    metadata={"source": "https://example.com"}
-)
-"""
-#load() -> list[Document]
-docs = loader.load()
+docs = txt_loader.load()
+
+print(docs)
 
 #splits the text into 1000 char chunks with a 150 char overlap to not cut off important context, also text is split by an empty line aswell
 text_splitter = RecursiveCharacterTextSplitter(

@@ -43,11 +43,6 @@ question = input()
 
 #prompt for serching avalible docuemnts
 retrieved_docs = retriever.invoke(question)
-
-for i in retrieved_docs:
-    print(i.page_content)
-    print("\n")
-
 #function to create a prompt from a predetermined prompt format and the context given from the retriver
 def create_prompt():
 
