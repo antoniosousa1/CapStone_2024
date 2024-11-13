@@ -10,4 +10,4 @@ https://python.langchain.com/docs/tutorials/rag/
 3. Ensure the Ollama server is running by opening Ollama application
 4. Run "pip3 install -r requirements.txt"
 5. Run "python3 llm.py" in the llama directory
-6. Note: the application take a while to work so if you want to ensure its working open activity monior or task manager to see how much memory you are using
+6. Note: the application take a while to work if run locally so if you want to ensure its working open your activity monior or task manager to see how much memory you are using

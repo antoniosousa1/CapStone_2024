@@ -39,7 +39,7 @@ if os.path.exists(vectorstore_path) and os.listdir(vectorstore_path):
     # Try to load it, if not throw an error 
     try:
         # Load the vectorstore from the persisted directory
-        vectorstore = Chroma(persist_directory=vectorstore_path, embedding_function=llamaEmbeddings)
+        vectorstore = Chroma(persist_directory=vectorstore_path, embedding_function=llamaEmbeddings) 
         
         print("Vector data loaded successfully.")
 
