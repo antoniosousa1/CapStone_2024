@@ -2,7 +2,7 @@ from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
-from langchain_community.vectorstores import Chroma
+from langchain_community.vectorstores import VectorStore
 import os
 
 # Sets llama 3.1 as the llm a varable
@@ -34,7 +34,7 @@ llamaEmbeddings = OllamaEmbeddings(
 )
 
 # The path to store the vector (pwd for your own path)
-vectorstore_path = "/x1/mgreeson/WorkFolder/CapStoneProject/CapStone_2024/Integrated_llama_RAG/Vector_Storage_Data" 
+vectorstore_path = "/x1/amorais1/text-split/CapStone_2024/Integrated_llama_RAG/Vector_Storage_Data" 
 
 # If the vector data has been stored properly, load it and check if data actually exists in it 
 if os.path.exists(vectorstore_path) and os.listdir(vectorstore_path):  
