@@ -16,6 +16,10 @@ loader = DirectoryLoader(
 # Assigns docs to the loaded documents
 docs = loader.load()
 
+# Add file names as metadata to each document
+for doc in docs:
+    doc.metadata["source"] = os.path.basename(doc.metadata["source"])
+
 # Splits the text into 1000 char chunks with a 150 char overlap to not cut off important context, also text is split by an empty line aswell
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=250, chunk_overlap=100, add_start_index=True
@@ -71,11 +75,10 @@ question = input("What is your question: ")
 retrieved_docs = retriever.invoke(question)
 
 # Outputs the chunks of text to the terminal that are split up
-'''
 for i in retrieved_docs:
     print(i.page_content)
     print("BREAK\n")
-'''
+
 
 # Function to create a prompt from a predetermined prompt format and the context given from the retriver
 def create_prompt():
@@ -86,8 +89,9 @@ def create_prompt():
 
     Context_str = "Context: \n\n"
 
-    for i in retrieved_docs:
-        Context_str += i.page_content + "\n\n"
+    # Include document metadata (source file name) in the context
+    for doc in retrieved_docs:
+        context_str += f"(Source: {doc.metadata['source']})\n{doc.page_content}\n\n"
 
     Answer = "Answer: "
 
