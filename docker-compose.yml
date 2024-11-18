@@ -1,25 +1,33 @@
-version: '3.8'
-
 services:
-  ollama:
-    image: ollama/ollama:latest  # Use the Ollama Docker image (replace with the correct tag)
-    container_name: ollama-server
-    ports:
-      - "5000:5000"  # Exposing port 5000 for Ollama server
-    networks:
-      - ollama-network
 
-  app:
+  ollama-server:  # Assumes Dockerfile for your app is in the current directory
+    build: 
+      context: ./Server
+    ports:
+      - "11434:11434"  # Expose Ollama on port 11434 to the host
+    networks: # network containers are on
+      - app-network
+    deploy:
+      resources: # if resources are not allocated server starves cpu causing application to fail
+        limits:
+          cpus: "4.0"    # Allocate 4 cores
+          memory: "6g"   # Allocate 8GB RAM
+        reservations:
+          cpus: "2.0"    # Ensure 2 cores are always reserved
+          memory: "4g"   # Ensure 4GB RAM is always reserved
+
+  ollama-app:
     build:
-      context: ./app  # Path to your application directory containing the Dockerfile
-    container_name: app-container
-    environment:
-      - OLLAMA_API_URL=http://ollama:5000  # Point to Ollama server container
-    depends_on:
-      - ollama  # Ensure Ollama is started before the app
-    networks:
-      - ollama-network
+      context: ./App  # Assumes Dockerfile for your app is in the current directory
+    depends_on: # waits for server to start
+      - ollama-server
+    environment:  # Connects to Ollama using the internal network
+      - OLLAMA_SERVER_URL=${OLLAMA_SERVER_URL}
+    networks: # network containers are on
+      - app-network
+    stdin_open: true   # Keeps stdin open
+    tty: true          # Enables tty for interactive terminal
 
 networks:
-  ollama-network:
+  app-network:
     driver: bridge

@@ -2,9 +2,13 @@ from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
+import os
+import traceback
+
+ollama_url = os.getenv('OLLAMA_SERVER_URL')
 
 #sets llama 3.1 as the llm a varable
-llm = OllamaLLM(model="llama3.1:70b")
+llm = OllamaLLM(model="llama3.1", base_url=ollama_url)
 
 #loads data from markdown file
 loader = DirectoryLoader(
@@ -13,31 +17,39 @@ loader = DirectoryLoader(
 
 #assigns docs to the loaded documents
 docs = loader.load()
+
+print("passed loader")
 #splits the text into 1000 char chunks with a 150 char overlap to not cut off important context, also text is split by an empty line aswell
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=250, chunk_overlap=100, add_start_index=True
 )
 all_splits = text_splitter.split_documents(docs)
 
+print("passed text splitter")
 #chooses which model of ollama embeddings to use
 llamaEmbeddings = OllamaEmbeddings(
-    model="llama3.1:70b"
+    model="llama3.1", base_url=ollama_url
 )
+
 #creates vectore database with llama embeddings
-vectorstore = Chroma.from_documents(documents=all_splits, embedding=llamaEmbeddings)
+try:
+    vectorstore = Chroma.from_documents(documents=all_splits, embedding=llamaEmbeddings)
+except Exception as e:
+    print(f"Error creating Chroma vector store: {e}")
+    traceback.print_exc()
+    exit(1)
+
+print("paased vectore store and embeddings")
 
 #retrives 10 documents that meet search parameters of similar
-retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 10})
+retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
 
-question = input()
+question = "what is the dogs name"
 
 #prompt for serching avalible docuemnts
 retrieved_docs = retriever.invoke(question)
 
-for i in retrieved_docs:
-    print(i.page_content)
-    print("BREAK\n")
-
+print("retrived docs")
 #function to create a prompt from a predetermined prompt format and the context given from the retriver
 def create_prompt():
 
