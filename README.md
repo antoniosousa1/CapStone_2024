@@ -15,4 +15,3 @@ https://python.langchain.com/docs/tutorials/rag/
 3. Run the following command to build the image "docker build -t ollama-app ."
 4. After image is created run the following command "docker run -it ollama-app"
 5. You are now in the docker container control+d to exit
-6. "docker run -v .:/app -it ollama-app" will mount your local directory so when changes are made to your code they are reflected in the container

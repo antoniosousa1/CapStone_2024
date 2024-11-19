@@ -42,7 +42,8 @@ print("paased vectore store and embeddings")
 #retrives 10 documents that meet search parameters of similar
 retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
 
-question = "what is the dogs name"
+print("please enter question: ")
+question = input()
 
 #prompt for serching avalible docuemnts
 retrieved_docs = retriever.invoke(question)
