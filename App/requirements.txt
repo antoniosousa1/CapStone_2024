@@ -4,7 +4,5 @@ langchain-community==0.3.2
 langchain-core==0.3.12
 langchain-ollama==0.2.0
 langchain-text-splitters==0.3.0
-unstructured==0.16.2
-unstructured[pdf]
-unstructured[docx]
-unstructured[pptx]
+unstructured
+unstructured[pdf, docx, pptx]
