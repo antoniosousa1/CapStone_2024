@@ -2,13 +2,16 @@ from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
-import os
-import traceback
 
-ollama_url = os.getenv('OLLAMA_SERVER_URL')
+import os
+
+
+# Access the Ollama server URL
+ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
+print(f"Using Ollama server at: {ollama_server_url}")
 
 #sets llama 3.1 as the llm a varable
-llm = OllamaLLM(model="llama3.1", base_url=ollama_url)
+llm = OllamaLLM(model="llama3.1", base_url=ollama_server_url)
 
 #loads data from markdown file
 loader = DirectoryLoader(
@@ -28,16 +31,11 @@ all_splits = text_splitter.split_documents(docs)
 print("passed text splitter")
 #chooses which model of ollama embeddings to use
 llamaEmbeddings = OllamaEmbeddings(
-    model="llama3.1", base_url=ollama_url
+    model="llama3.1", base_url=ollama_server_url
 )
 
 #creates vectore database with llama embeddings
-try:
-    vectorstore = Chroma.from_documents(documents=all_splits, embedding=llamaEmbeddings)
-except Exception as e:
-    print(f"Error creating Chroma vector store: {e}")
-    traceback.print_exc()
-    exit(1)
+vectorstore = Chroma.from_documents(documents=all_splits, embedding=llamaEmbeddings)
 
 print("paased vectore store and embeddings")
 
