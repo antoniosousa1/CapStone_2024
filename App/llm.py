@@ -62,6 +62,7 @@ def get_answer(llm, prompt):
     return answer
 
 def main():
+    
     data_path = "./data"
     ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
     llama_model = "llama3.1"
@@ -73,20 +74,28 @@ def main():
 
     docs = load_docs(data_path)
     print("load_docs: PASS")
+
     splits = split_text(docs)
     print("split_text: PASS")
+
     vector_db = create_vector_db(splits, llama_embeddings)
     print("create_vector_db: PASS")
+
     retriever = create_retriever(vector_db)
     print("create_retriever: PASS")
+
     question = get_user_question()
     print("get_user_question: PASS")
+
     retrieved_docs = retrieve_docs(retriever, question)
     print("retrieve_docs: PASS")
+
     prompt = create_prompt(retrieved_docs, question)
     print("create_prompt: PASS")
+
     answer = get_answer(llm, prompt)
     print("get_answer: PASS")
+
     print(answer)
 
 main()
