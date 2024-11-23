@@ -2,57 +2,46 @@ from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
-
 import os
 
+# loads the data into usable docs
+def load_docs(data_path):
+    loader = DirectoryLoader(path=data_path)
+    docs = loader.load()
+    return docs
 
-# Access the Ollama server URL
-ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
-print(f"Using Ollama server at: {ollama_server_url}")
+# splits docs into chunks
+def split_text(docs):
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=250, chunk_overlap=100, add_start_index=True
+    )
+    splits = text_splitter.split_documents(docs)
+    return splits
 
-#sets llama 3.1 as the llm a varable
-llm = OllamaLLM(model="llama3.1", base_url=ollama_server_url)
+# creates vector database with llama embeddings
+def create_vector_db(splits, llama_embeddings):
+    vector_db = Chroma.from_documents(documents=splits, embedding=llama_embeddings)
+    return vector_db
 
-#loads data from markdown file
-loader = DirectoryLoader(
-    path="./data"
-)
+# creates retriever
+def create_retriever(vector_db):
+    retriever = vector_db.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+    return retriever
 
-#assigns docs to the loaded documents
-docs = loader.load()
+# gets the user question
+def get_user_question():
+    print("Please enter a question: ")
+    question = input()
+    return question
 
-print("passed loader")
-#splits the text into 1000 char chunks with a 150 char overlap to not cut off important context, also text is split by an empty line aswell
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=250, chunk_overlap=100, add_start_index=True
-)
-all_splits = text_splitter.split_documents(docs)
+# retrieves the chunks relevant to question
+def retrieve_docs(retriever, question):
+    retrieved_docs = retriever.invoke(question)
+    return retrieved_docs
 
-print("passed text splitter")
-#chooses which model of ollama embeddings to use
-llamaEmbeddings = OllamaEmbeddings(
-    model="llama3.1", base_url=ollama_server_url
-)
-
-#creates vectore database with llama embeddings
-vectorstore = Chroma.from_documents(documents=all_splits, embedding=llamaEmbeddings)
-
-print("paased vectore store and embeddings")
-
-#retrives 10 documents that meet search parameters of similar
-retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
-
-print("please enter question: ")
-question = input()
-
-#prompt for serching avalible docuemnts
-retrieved_docs = retriever.invoke(question)
-
-print("retrived docs")
-#function to create a prompt from a predetermined prompt format and the context given from the retriver
-def create_prompt():
-
-    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer he question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n"
+# create a prompt
+def create_prompt(retrieved_docs, question):
+    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n"
     
     Question = "Question: " + question + "\n"
 
@@ -67,5 +56,37 @@ def create_prompt():
 
     return final_prompt
 
-#print the respone from the ollama llm that was given the formated prompt
-print(llm.invoke(create_prompt()))
+# print the response from the Ollama LLM that was given the formatted prompt
+def get_answer(llm, prompt):
+    answer = llm.invoke(prompt)
+    return answer
+
+def main():
+    data_path = "./data"
+    ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
+    llama_model = "llama3.1"
+
+    print(f"Using Ollama server at: {ollama_server_url}")
+
+    llm = OllamaLLM(model=llama_model, base_url=ollama_server_url)
+    llama_embeddings = OllamaEmbeddings(model=llama_model, base_url=ollama_server_url)
+
+    docs = load_docs(data_path)
+    print("load_docs: PASS")
+    splits = split_text(docs)
+    print("split_text: PASS")
+    vector_db = create_vector_db(splits, llama_embeddings)
+    print("create_vector_db: PASS")
+    retriever = create_retriever(vector_db)
+    print("create_retriever: PASS")
+    question = get_user_question()
+    print("get_user_question: PASS")
+    retrieved_docs = retrieve_docs(retriever, question)
+    print("retrieve_docs: PASS")
+    prompt = create_prompt(retrieved_docs, question)
+    print("create_prompt: PASS")
+    answer = get_answer(llm, prompt)
+    print("get_answer: PASS")
+    print(answer)
+
+main()
