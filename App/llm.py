@@ -2,7 +2,7 @@ from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_milvus import Milvus # type: ignore
-import os, time
+import os, time, re
 
 start = time.time()
 # Sets the location where the db will be created and stored 
@@ -24,7 +24,7 @@ def load_docs(data_path):
 # splits docs into chunks
 def split_text(docs):
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=250, chunk_overlap=90, add_start_index=True
+        chunk_size=350, chunk_overlap=90, add_start_index=True
     )
     splits = text_splitter.split_documents(docs)
     return splits
@@ -89,7 +89,7 @@ def retrieve_docs(vector_store, llama_embeddings, question):
 
 # create a prompt
 def create_prompt(retrieved_docs, question):
-    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use five sentences maximum and keep the answer concise.\n"
+    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. Use five sentences maximum and keep the answer concise. If you don't know based on the given context, use background knowledge to answer. Also don't mix the content and background knowledge together. \n"
     
     Question = "Question: " + question + "\n"
 
@@ -110,6 +110,7 @@ def get_answer(llm, prompt):
     return answer
 
 def main():
+
     data_path = "./data"
     # Save the answer to a text file
     output_file = "Answer.txt"
@@ -147,29 +148,37 @@ def main():
     print(f"Time taken: {elapsed_time:.2f} seconds")
     print("-"*40)
 
-    question = get_user_question()
-    print("get_user_question: PASSED")
+    while True: 
+        question = get_user_question()
+        print("get_user_question: PASSED")
 
-    retrieved_docs = retrieve_docs(vector_store, llama_embeddings, question)
-    print("retrieve_docs: PASSED")
+        if question.lower() == "exit":
+            print("Exiting Code!")
+            break 
 
-    prompt = create_prompt(retrieved_docs, question)
-    print("create_prompt: PASSED")
+        retrieved_docs = retrieve_docs(vector_store, llama_embeddings, question)
+        print("retrieve_docs: PASSED")
 
-    answer = get_answer(llm, prompt)
-    print("get_answer: PASSED")
+        prompt = create_prompt(retrieved_docs, question)
+        print("create_prompt: PASSED")
 
-    print("-"*40)
+        answer = get_answer(llm, prompt)
+        print("get_answer: PASSED")
 
-    if os.path.exists(output_file):
-        os.remove(output_file)
-        print("Deleted Answer.txt: PASSED")
         print("-"*40)
 
-    with open(output_file, "w") as file:
-        file.write(answer)
+        if os.path.exists(output_file):
+            os.remove(output_file)
+            print("Deleted Answer.txt: PASSED")
+            print("-"*40)
 
-    print(f"Your answer has been saved to {output_file}.")
+        with open(output_file, "w") as file:
+            # Split the answer into sentences and write each sentence to a new line
+            sentences = re.split(r'(?<=[.!?])\s+', answer)  # Split on sentence boundaries
+            for sentence in sentences:
+                file.write(sentence.strip() + "\n")  # Strip leading/trailing spaces and add newline
+
+        print(f"Your answer has been saved to {output_file}.")
 
 
 # Runs the main function to run other functions
