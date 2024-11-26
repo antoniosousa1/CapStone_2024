@@ -24,7 +24,7 @@ def load_docs(data_path):
 # splits docs into chunks
 def split_text(docs):
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=450, chunk_overlap=90, add_start_index=True
+        chunk_size=250, chunk_overlap=90, add_start_index=True
     )
     splits = text_splitter.split_documents(docs)
     return splits
@@ -71,21 +71,25 @@ def get_user_question():
     return question
 
 # retrieves the chunks relevant to question
-def retrieve_docs(retriever, question):
-    retrieved_docs = retriever.invoke(question)
+def retrieve_docs(vector_store, llama_embeddings, question):
+    # Generate embedding for the question
+    question_embedding = llama_embeddings.embed_query(question)
 
-    if not retrieved_docs:
+    # Use the embedding to search the vector database
+    search_results = vector_store.similarity_search_by_vector(question_embedding, k=10)
+
+    if not search_results:
         print("No documents retrieved!")
     else:
-        for doc in retrieved_docs:
+        for doc in search_results:
             print(f"Retrieved Doc: {doc.page_content}")
             print()
 
-    return retrieved_docs
+    return search_results
 
 # create a prompt
 def create_prompt(retrieved_docs, question):
-    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n"
+    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use five sentences maximum and keep the answer concise.\n"
     
     Question = "Question: " + question + "\n"
 
@@ -106,8 +110,9 @@ def get_answer(llm, prompt):
     return answer
 
 def main():
-    
     data_path = "./data"
+    # Save the answer to a text file
+    output_file = "Answer.txt"
     ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
     llama_model = "llama3.1"
 
@@ -145,7 +150,7 @@ def main():
     question = get_user_question()
     print("get_user_question: PASSED")
 
-    retrieved_docs = retrieve_docs(retriever, question)
+    retrieved_docs = retrieve_docs(vector_store, llama_embeddings, question)
     print("retrieve_docs: PASSED")
 
     prompt = create_prompt(retrieved_docs, question)
@@ -155,6 +160,17 @@ def main():
     print("get_answer: PASSED")
 
     print("-"*40)
-    print("Answer: " + answer)
+
+    if os.path.exists(output_file):
+        os.remove(output_file)
+        print("Deleted Answer.txt: PASSED")
+        print("-"*40)
+
+    with open(output_file, "w") as file:
+        file.write(answer)
+
+    print(f"Your answer has been saved to {output_file}.")
+
+
 # Runs the main function to run other functions
 main()

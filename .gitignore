@@ -1,5 +1,6 @@
 .DS_Store
 settings.json
 data/
+Answer.txt
 App/DataEmbeddings.db
 App/.DataEmbeddings.db.lock
