@@ -1,58 +1,91 @@
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
+from langchain_milvus import Milvus # type: ignore
+import os, time
 
-import os
+start = time.time()
+# Sets the location where the db will be created and stored 
+db_path = "./DataEmbeddings.db"
 
+def delete_milvus_db():
+    # Checks if the milvus database already exists, if it does delete it. 
+    if os.path.exists(db_path):
+        os.remove(db_path)
+        print("delete_milvus_db: PASSED")
+        time.sleep(3)
 
-# Access the Ollama server URL
-ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
-print(f"Using Ollama server at: {ollama_server_url}")
+# loads the data into usable docs
+def load_docs(data_path):
+    loader = DirectoryLoader(path=data_path)
+    docs = loader.load()
+    return docs
 
-#sets llama 3.1 as the llm a varable
-llm = OllamaLLM(model="llama3.1", base_url=ollama_server_url)
+# splits docs into chunks
+def split_text(docs):
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=450, chunk_overlap=90, add_start_index=True
+    )
+    splits = text_splitter.split_documents(docs)
+    return splits
 
-#loads data from markdown file
-loader = DirectoryLoader(
-    path="./data"
-)
+# creates vector database with llama embeddings
+def create_milvus_db(splits, llama_embeddings):
+   
+    text_splits = [doc.page_content for doc in splits]
+    
+    vector_db = Milvus(
+        embedding_function=llama_embeddings,
+        connection_args={"uri": db_path},
+        collection_name="DataCollection",
+    )
+    
+    ids = [str(i) for i in range(len(text_splits))]
+    
+    vector_db.add_texts(texts=text_splits, ids=ids)
 
-#assigns docs to the loaded documents
-docs = loader.load()
+    return vector_db
 
-print("passed loader")
-#splits the text into 1000 char chunks with a 150 char overlap to not cut off important context, also text is split by an empty line aswell
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=250, chunk_overlap=100, add_start_index=True
-)
-all_splits = text_splitter.split_documents(docs)
+# Load the db and its contents 
+def load_milvus_db(llama_embeddings):
+     
+     vector_store_loaded = Milvus(
+        llama_embeddings,
+        connection_args={"uri": db_path},
+        collection_name="DataCollection",
+    )
+     
+     return vector_store_loaded
 
-print("passed text splitter")
-#chooses which model of ollama embeddings to use
-llamaEmbeddings = OllamaEmbeddings(
-    model="llama3.1", base_url=ollama_server_url
-)
+# creates retriever
+def create_retriever(vector_store):
+    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 10})
+    return retriever
 
-#creates vectore database with llama embeddings
-vectorstore = Chroma.from_documents(documents=all_splits, embedding=llamaEmbeddings)
+# gets the user question
+def get_user_question():
+    print("Please enter a question: ")
+    question = input()
+    print("-"*40)
 
-print("paased vectore store and embeddings")
+    return question
 
-#retrives 10 documents that meet search parameters of similar
-retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+# retrieves the chunks relevant to question
+def retrieve_docs(retriever, question):
+    retrieved_docs = retriever.invoke(question)
 
-print("please enter question: ")
-question = input()
+    if not retrieved_docs:
+        print("No documents retrieved!")
+    else:
+        for doc in retrieved_docs:
+            print(f"Retrieved Doc: {doc.page_content}")
+            print()
 
-#prompt for serching avalible docuemnts
-retrieved_docs = retriever.invoke(question)
+    return retrieved_docs
 
-print("retrived docs")
-#function to create a prompt from a predetermined prompt format and the context given from the retriver
-def create_prompt():
-
-    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer he question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n"
+# create a prompt
+def create_prompt(retrieved_docs, question):
+    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n"
     
     Question = "Question: " + question + "\n"
 
@@ -67,5 +100,61 @@ def create_prompt():
 
     return final_prompt
 
-#print the respone from the ollama llm that was given the formated prompt
-print(llm.invoke(create_prompt()))
+# print the response from the Ollama LLM that was given the formatted prompt
+def get_answer(llm, prompt):
+    answer = llm.invoke(prompt)
+    return answer
+
+def main():
+    
+    data_path = "./data"
+    ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
+    llama_model = "llama3.1"
+
+    print(f"Using Ollama server at: {ollama_server_url}")
+    print("-"*40)
+
+    llm = OllamaLLM(model=llama_model, base_url=ollama_server_url)
+    llama_embeddings = OllamaEmbeddings(model=llama_model, base_url=ollama_server_url)
+
+    docs = load_docs(data_path)
+    print("load_docs: PASSED")
+
+    splits = split_text(docs)
+    print("split_text: PASSED")
+
+    delete_milvus_db()
+    
+    create_milvus_db(splits, llama_embeddings)
+    print("create_milvus_db: PASSED")
+
+    vector_store = load_milvus_db(llama_embeddings)
+    print("load_db: PASSED")
+
+    retriever = create_retriever(vector_store)
+    print("create_retriever: PASSED")
+
+    # Get the time it takes to split the text and generate the embeddings into the mivlus db and then load it so the user can ask a question
+    end = time.time()  # End timer
+    elapsed_time = end - start  # Calculate elapsed time
+    
+    print("-"*40)
+    print(f"Time taken: {elapsed_time:.2f} seconds")
+    print("-"*40)
+
+    question = get_user_question()
+    print("get_user_question: PASSED")
+
+    retrieved_docs = retrieve_docs(retriever, question)
+    print("retrieve_docs: PASSED")
+
+    prompt = create_prompt(retrieved_docs, question)
+    print("create_prompt: PASSED")
+
+    answer = get_answer(llm, prompt)
+    print("get_answer: PASSED")
+
+    print("-"*40)
+    print("Answer: " + answer)
+# Runs the main function to run other functions
+main()
