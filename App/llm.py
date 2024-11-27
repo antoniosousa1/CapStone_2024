@@ -8,7 +8,7 @@ import os, time, re
 start = time.time()
 
 # Sets the location where the db will be created and stored (Inside the App directory)
-db_path = "./DataEmbeddings.db"
+db_path = "./DataEmbeddings.db" 
 
 # Function that is used to check if the path to the milvus DB already exists, if so it deletes it so a new DB with new embeddings can be created
 def delete_milvus_db():
