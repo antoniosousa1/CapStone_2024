@@ -2,5 +2,5 @@
 settings.json
 data/
 Answer.txt
-App/DataEmbeddings.db
-App/.DataEmbeddings.db.lock
+App/milvus_lite.db
+App/.milvus_lite.db.lock

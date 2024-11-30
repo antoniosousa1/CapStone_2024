@@ -2,14 +2,13 @@ from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_milvus import Milvus # type: ignore
+from langchain.schema import Document
+from langchain.vectorstores.base import VectorStoreRetriever
 import os, time, re
 
 start = time.time()
 
-# Sets the location where the db will be created and stored (Inside the App directory)
-db_path = "./DataEmbeddings.db"
-
-def delete_milvus_db():
+def delete_milvus_db(db_path: str):
     # Checks if the milvus database already exists, if it does delete it. 
     if os.path.exists(db_path):
         os.remove(db_path)
@@ -17,38 +16,38 @@ def delete_milvus_db():
         time.sleep(3)
 
 # loads the data into usable docs
-def load_docs(data_path):
+def load_docs(data_path: str) -> list[Document]:
     loader = DirectoryLoader(path=data_path)
     docs = loader.load()
     return docs
 
 # splits docs into chunks
-def split_text(docs):
+def split_text(docs: list[Document]) -> list[Document]:
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=350, chunk_overlap=90, add_start_index=True
+        chunk_size=750, chunk_overlap=90, add_start_index=True
     )
     splits = text_splitter.split_documents(docs)
     return splits
 
 # creates vector database with llama embeddings
-def create_milvus_db(splits, llama_embeddings):
+def create_milvus_db(splits: list[Document], llama_embeddings: OllamaEmbeddings, db_path: str) -> Milvus:
    
     text_splits = [doc.page_content for doc in splits]
-    
+
     vector_db = Milvus(
         embedding_function=llama_embeddings,
         connection_args={"uri": db_path},
         collection_name="DataCollection",
     )
-    
+   
     ids = [str(i) for i in range(len(text_splits))]
-    
+   
     vector_db.add_texts(texts=text_splits, ids=ids)
 
     return vector_db
 
 # Load the db and its contents 
-def load_milvus_db(llama_embeddings):
+def load_milvus_db(llama_embeddings: OllamaEmbeddings, db_path: str) -> Milvus:
      
      vector_store_loaded = Milvus(
         llama_embeddings,
@@ -59,26 +58,16 @@ def load_milvus_db(llama_embeddings):
      return vector_store_loaded
 
 # creates retriever
-def create_retriever(vector_store):
-    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 10})
+def create_retriever(vector_store: Milvus) -> VectorStoreRetriever:
+    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 15})
     return retriever
 
-# gets the user question
-def get_user_question():
-    print("Please enter a question: ")
-    question = input()
-    print("-"*40)
+# Retrieves the chunks relevant to the question using a retriever
+def retrieve_docs(retriever: VectorStoreRetriever, question: str) -> list[Document]:
+    # Use the retriever to search the vector database directly with the raw question text
+    search_results = retriever.invoke(question, k=15)
 
-    return question
-
-# retrieves the chunks relevant to question
-def retrieve_docs(vector_store, llama_embeddings, question):
-    # Generate embedding for the question
-    question_embedding = llama_embeddings.embed_query(question)
-
-    # Use the embedding to search the vector database
-    search_results = vector_store.similarity_search_by_vector(question_embedding, k=10)
-
+    # Check if no results were returned
     if not search_results:
         print("No documents retrieved!")
     else:
@@ -88,9 +77,17 @@ def retrieve_docs(vector_store, llama_embeddings, question):
 
     return search_results
 
+# gets the user question
+def get_user_question() -> str:
+    print("Please enter a question: ")
+    question = input()
+    print("-"*40)
+
+    return question
+
 # create a prompt
-def create_prompt(retrieved_docs, question):
-    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. Use five sentences maximum and keep the answer concise. If you don't know based on the given context, use background knowledge to answer. Also don't mix the content and background knowledge together. \n"
+def create_prompt(retrieved_docs: list[Document], question: str) -> str:
+    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. Use five sentences maximum and keep the answer concise. If you don't know based on the given context, say I don't know.  \n"
     
     Question = "Question: " + question + "\n"
 
@@ -106,17 +103,21 @@ def create_prompt(retrieved_docs, question):
     return final_prompt
 
 # print the response from the Ollama LLM that was given the formatted prompt
-def get_answer(llm, prompt):
+def get_answer(llm: OllamaLLM, prompt: str) -> str:
     answer = llm.invoke(prompt)
     return answer
 
 def main():
 
     data_path = "./data"
+
+    # Sets the location where the db will be created and stored (Inside the App directory)
+    db_path = "./milvus_lite.db"
+
     # Save the answer to a text file
     output_file = "Answer.txt"
     ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
-    llama_model = "llama3.1"
+    llama_model = "llama3.1:70b"
 
     print(f"Using Ollama server at: {ollama_server_url}")
     print("-"*40)
@@ -129,13 +130,18 @@ def main():
 
     splits = split_text(docs)
     print("split_text: PASSED")
-
-    delete_milvus_db()
     
-    create_milvus_db(splits, llama_embeddings)
-    print("create_milvus_db: PASSED")
+    # Check if the path exists
+    if os.path.exists(db_path):
+        # If it doesn't exist, print an error message
+        print(f"The path {db_path} exists.  ")
+        #delete_milvus_db(db_path)
+    else:
+        print(f"The path {db_path} does not exists, creating now...")
+        create_milvus_db(splits, llama_embeddings, db_path)
+        print("create_milvus_db: PASSED")
 
-    vector_store = load_milvus_db(llama_embeddings)
+    vector_store = load_milvus_db(llama_embeddings, db_path)
     print("load_db: PASSED")
 
     retriever = create_retriever(vector_store)
@@ -157,7 +163,7 @@ def main():
             print("Exiting Code!")
             break 
 
-        retrieved_docs = retrieve_docs(vector_store, llama_embeddings, question)
+        retrieved_docs = retrieve_docs(retriever, question)
         print("retrieve_docs: PASSED")
 
         prompt = create_prompt(retrieved_docs, question)
