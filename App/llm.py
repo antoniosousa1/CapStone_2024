@@ -1,21 +1,38 @@
+'''
+File: llm.py
+Authors: Antonio Sousa Jr(Team Lead), Matthew Greeson, Goncalo Felix, Antonio Morais, Dylan Ricci, Ryan Medeiros
+Affiliation: University of Massachusetts Dartmouth
+Course: CIS 498 & 499 (Senior Capstone Project)
+Ownership: Rite-Solutions, Inc. 
+Client/Stakeholder: Brandon Carvhalo  
+Date: 2024-12-01
+Description: This code utilizes Ollama as our LLM and a Retrieval-Augmented Generation (RAG) approach to take documents from a specifc directory, load them and then
+             split the documents into texts and store it into a local database using Milvus Lite. Once stored the user then asks a questions which retrieves the most
+             relevant documents and the LLM generates a response as best as it can.  
+
+'''
+
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_milvus import Milvus # type: ignore
 from langchain.schema import Document
+from langchain_milvus import Milvus # type: ignore
 from langchain.vectorstores.base import VectorStoreRetriever
-import os, time, re
+import os, time
 
+# Timer to check for the runtime of our code (Used for testing purposes)
 start = time.time()
 
+# Function that will check if the database exists and delete it, takes in the path of the locally created database
 def delete_milvus_db(db_path: str):
+
     # Checks if the milvus database already exists, if it does delete it. 
     if os.path.exists(db_path):
         os.remove(db_path)
         print("delete_milvus_db: PASSED")
-        time.sleep(3)
+        time.sleep(2)
 
-# loads the data into usable docs
+# Loads the data into usable docs
 def load_docs(data_path: str) -> list[Document]:
     loader = DirectoryLoader(path=data_path)
     docs = loader.load()
@@ -49,6 +66,7 @@ def create_milvus_db(splits: list[Document], llama_embeddings: OllamaEmbeddings,
 # Load the db and its contents 
 def load_milvus_db(llama_embeddings: OllamaEmbeddings, db_path: str) -> Milvus:
      
+
      vector_store_loaded = Milvus(
         llama_embeddings,
         connection_args={"uri": db_path},
@@ -64,20 +82,24 @@ def create_retriever(vector_store: Milvus) -> VectorStoreRetriever:
 
 # Retrieves the chunks relevant to the question using a retriever
 def retrieve_docs(retriever: VectorStoreRetriever, question: str) -> list[Document]:
+
     # Use the retriever to search the vector database directly with the raw question text
     search_results = retriever.invoke(question, k=15)
 
+    # Uncomment this code to check the returned docs by the line of code above
     # Check if no results were returned
+    '''
     if not search_results:
         print("No documents retrieved!")
     else:
         for doc in search_results:
             print(f"Retrieved Doc: {doc.page_content}")
             print()
+    '''
 
     return search_results
 
-# gets the user question
+# Gets the user question
 def get_user_question() -> str:
     print("Please enter a question: ")
     question = input()
@@ -85,9 +107,9 @@ def get_user_question() -> str:
 
     return question
 
-# create a prompt
+# Create a prompt
 def create_prompt(retrieved_docs: list[Document], question: str) -> str:
-    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. Use five sentences maximum and keep the answer concise. If you don't know based on the given context, say I don't know.  \n"
+    prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. Use five sentences maximum and keep the answer concise. If you don't know based on the given context, respond with I don't know.  \n"
     
     Question = "Question: " + question + "\n"
 
@@ -102,20 +124,38 @@ def create_prompt(retrieved_docs: list[Document], question: str) -> str:
 
     return final_prompt
 
-# print the response from the Ollama LLM that was given the formatted prompt
+# Print the response from the Ollama LLM that was given the formatted prompt
 def get_answer(llm: OllamaLLM, prompt: str) -> str:
     answer = llm.invoke(prompt)
     return answer
 
+# Function that checks of the 
+def save_answer_to_file(output_file: str, answer: str):
+
+    # Split the answer into sentences based only on periods
+    with open(output_file, "w") as file:
+
+        # Split answer by periods for user readability 
+        sentences = answer.strip().split(".")
+        
+        # Loop to write the sentences into the txt file
+        for sentence in sentences:
+            cleaned_sentence = sentence.strip()  # Remove leading/trailing whitespace
+            if cleaned_sentence:  # Only write non-empty sentences
+                file.write(cleaned_sentence + ".\n")  # Add the period back
+
+    print(f"Your answer has been saved to {output_file}")
+
+# Main function
 def main():
 
     data_path = "./data"
 
     # Sets the location where the db will be created and stored (Inside the App directory)
-    db_path = "./milvus_lite.db"
+    db_path = "./Milvus_Lite.db"
 
     # Save the answer to a text file
-    output_file = "Answer.txt"
+    output_file = "User_Answer.txt"
     ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
     llama_model = "llama3.1:70b"
 
@@ -131,18 +171,33 @@ def main():
     splits = split_text(docs)
     print("split_text: PASSED")
     
-    # Check if the path exists
+    # Checks if the path exists for the database
     if os.path.exists(db_path):
-        # If it doesn't exist, print an error message
-        print(f"The path {db_path} exists.  ")
-        #delete_milvus_db(db_path)
-    else:
-        print(f"The path {db_path} does not exists, creating now...")
-        create_milvus_db(splits, llama_embeddings, db_path)
-        print("create_milvus_db: PASSED")
+        # If the path exists print out the name of the path and tell the user
+        print("-"*40)
+        print(f"The path {db_path} exists! ")
+        print("-"*40)
+        # Call the function to delete the database and its contents
+        delete_milvus_db(db_path)
 
+    print("-"*40)
+    # Tell the user that the database doesn't exists and that it is getting created
+    print(f"The path {db_path} does not exists, creating database now...")
+
+    print("-"*40)
+
+    # Function that gets called to create the database and its schema
+    create_milvus_db(splits, llama_embeddings, db_path)
+
+    # Tell the user that the function has passed and works 
+    print("create_milvus_db: PASSED")
+
+    # Calls the function to load the exists database and store it into vector_store variable 
     vector_store = load_milvus_db(llama_embeddings, db_path)
+
+    # Tell the user that the function has passed
     print("load_db: PASSED")
+
 
     retriever = create_retriever(vector_store)
     print("create_retriever: PASSED")
@@ -155,12 +210,16 @@ def main():
     print(f"Time taken: {elapsed_time:.2f} seconds")
     print("-"*40)
 
+    # While loop to ask the user multiple questions
     while True: 
+        
         question = get_user_question()
         print("get_user_question: PASSED")
 
+        # If that checks if the user types exit to exit the code 
         if question.lower() == "exit":
             print("Exiting Code!")
+            print("-"*40)
             break 
 
         retrieved_docs = retrieve_docs(retriever, question)
@@ -174,19 +233,8 @@ def main():
 
         print("-"*40)
 
-        if os.path.exists(output_file):
-            os.remove(output_file)
-            print("Deleted Answer.txt: PASSED")
-            print("-"*40)
-
-        with open(output_file, "w") as file:
-            # Split the answer into sentences and write each sentence to a new line
-            sentences = re.split(r'(?<=[.!?])\s+', answer)  # Split on sentence boundaries
-            for sentence in sentences:
-                file.write(sentence.strip() + "\n")  # Strip leading/trailing spaces and add newline
-
-        print(f"Your answer has been saved to {output_file}.")
-
-
+        # Call the function to save the answer to a txt file 
+        save_answer_to_file(output_file, answer)
+        
 # Runs the main function to run other functions
 main()

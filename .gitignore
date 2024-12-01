@@ -1,6 +1,6 @@
 .DS_Store
 settings.json
 data/
-Answer.txt
-App/milvus_lite.db
-App/.milvus_lite.db.lock
+User_Answer.txt
+App/Milvus_Lite.db
+App/.Milvus_Lite.db.lock
