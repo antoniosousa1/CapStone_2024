@@ -18,6 +18,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 from langchain_milvus import Milvus # type: ignore
 from langchain.vectorstores.base import VectorStoreRetriever
+
+from ragas.llms import LangchainLLMWrapper
+from ragas.testset import TestsetGenerator
+
 import os, time
 
 # Timer to check for the runtime of our code (Used for testing purposes)
@@ -146,6 +150,21 @@ def save_answer_to_file(output_file: str, answer: str):
 
     print(f"Your answer has been saved to {output_file}")
 
+# Function to evaluate the LLM
+def eval(llm: OllamaLLM, llama_embeddings: OllamaEmbeddings, docs:list[Document]):
+
+    #Generate Dataset using LLM
+    gen_llm = LangchainLLMWrapper(llm)
+
+    generator = TestsetGenerator(llm=gen_llm, embedding_model=llama_embeddings)
+    dataset=generator.generate_with_langchain_docs(docs, testset_size=10)
+
+    dataset.to_csv("./tests/test_result")
+    # Get a data set this must be of type list[dict]
+
+    # use the evualator proivded by ragas on data set 
+    return
+
 # Main function
 def main():
 
@@ -157,7 +176,7 @@ def main():
     # Save the answer to a text file
     output_file = "User_Answer.txt"
     ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
-    llama_model = "llama3.1:70b"
+    llama_model = "llama3.1"
 
     print(f"Using Ollama server at: {ollama_server_url}")
     print("-"*40)
@@ -229,12 +248,11 @@ def main():
         print("create_prompt: PASSED")
 
         answer = get_answer(llm, prompt)
+        print(answer)
         print("get_answer: PASSED")
+        eval = eval(llm, llama_embeddings, docs)
 
         print("-"*40)
-
-        # Call the function to save the answer to a txt file 
-        save_answer_to_file(output_file, answer)
         
 # Runs the main function to run other functions
 main()
