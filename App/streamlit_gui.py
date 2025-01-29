@@ -11,7 +11,7 @@ data_path = "./data"
 
 st.title("Rite Solutions Inc. Content Creator")
 st.sidebar.header("Upload Documents")
-uploaded_files = st.sidebar.file_uploader("Upload your documents", accept_multiple_files=True, type=["pdf", "docx", "txt"])
+uploaded_files = st.sidebar.file_uploader("Upload your documents", accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx"])
 
 if st.sidebar.button("Process Documents"):
     if uploaded_files:
@@ -25,6 +25,10 @@ if st.sidebar.button("Process Documents"):
         st.sidebar.success("Database created successfully!")
 
 st.header("Ask a Question")
-question = st.text_input("Enter your question:")
+("Enter your question:")
+
+question = st.chat_input("Say something")
+if question:
+    st.write(f"User has sent the following text: {question}")
 
 # if st.button("Get Answer"):
