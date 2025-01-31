@@ -8,10 +8,75 @@ from langchain.schema import Document
 
 data_path = "./data"
 
+st.markdown(
+    """
+    <style>
+        body {
+            background-color: #f0f2f6;  /* Change to your preferred color */
+        }
+        [data-testid="stAppViewContainer"] {
+            background-color: #f0f2f6;  /* Main background */
+        }
+        [data-testid="stHeader"] {
+            background-color: #f0f2f6;  /* Header background */
+        }
+        [data-testid="stToolbar"] {
+            background-color: #d1e0e0;  /* Toolbar background */
+        }
+        [data-testid="stSidebar"] {
+            background-color: #98989d;  /* Sidebar background */
+        }
+        footer {
+            background-color: #b0bec5;  /* Footer background */
+            padding: 10px;
+        }
+        h1 {
+            color: #000000 !important;  /* Change title color */
+            text-align: center;  /* Optional: Center align */
+            font-size: 36px;  /* Optional: Change font size */
+        }
+        h2 {
+            color: #000000 !important;  /* Header (st.header) color */
+            text-align: left;  /* Align text left */
+            font-size: 30px;  /* Adjust font size */
+            font-weight: bold;  /* Make it bold */
+        }
+        p, div[data-testid="stMarkdownContainer"] {
+            color: #4a4a4a !important;  /* Body text color */
+            font-size: 18px;  /* Adjust font size */
+            line-height: 1.6;  /* Improve readability */
+        }
+        [data-testid="stSidebar"] button {
+            background-color: #f0f2f6; 
+            color: black;
+            border-radius: 10px;
+            padding: 10px 24px;
+            border: none;
+            font-size: 16px;
+        }
+        [data-testid="stSidebar"] button:hover {
+            background-color: #d1e0e0;
+            color: black;
+        }
+        [data-testid="stSidebar"] h1, 
+        [data-testid="stSidebar"] h2, 
+        [data-testid="stSidebar"] h3 {
+            color: #000000;
+        }
+        [data-testid="stSidebar"] label {
+            color: #000000;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 st.title("Rite Solutions Inc. Content Creator")
-st.sidebar.header("Upload Documents")
-uploaded_files = st.sidebar.file_uploader("Upload your documents", accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx"])
+st.sidebar.header("Context Loader")
+uploaded_files = st.sidebar.file_uploader("Upload Documents",accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx"])
 
 if st.sidebar.button("Process Documents"):
     if uploaded_files:
@@ -25,7 +90,6 @@ if st.sidebar.button("Process Documents"):
         st.sidebar.success("Database created successfully!")
 
 st.header("Ask a Question")
-("Enter your question:")
 
 question = st.chat_input("Say something")
 if question:
