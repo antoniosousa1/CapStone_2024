@@ -35,6 +35,7 @@ def response_generator():
 
 # Title
 st.title("Rite Solutions Inc. Content Creator")
+
 # Side bar
 st.sidebar.header("Upload Documents")
 
@@ -51,6 +52,9 @@ if st.sidebar.button("Process Documents"):
       
         st.sidebar.success("Database created successfully!")
 
+
+if st.sidebar.button("Help?", use_container_width=False):
+    st.sidebar.markdown("This is a help button.")
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -74,3 +78,5 @@ if prompt := st.chat_input("Message Rite Content Creator"):
         response = st.write_stream(response_generator())
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
+
+  
