@@ -1,4 +1,6 @@
+
 import streamlit as st
+import random
 import os
 import time
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
@@ -17,8 +19,26 @@ def load_css(file_name):
 # Apply the external CSS
 load_css("styles.css")
 
+
+# Response emulator
+def response_generator():
+    response = random.choice(
+        [
+            "Hello there! How can I assist you today?",
+            "Hi, human! Is there anything I can help you with?",
+            "Do you need help?",
+        ]
+    )
+    for word in response.split():
+        yield word + " "
+        time.sleep(0.05)
+
+
+# Title
 st.title("Rite Solutions Inc. Content Creator")
+# Side bar
 st.sidebar.header("Context Loader")
+
 uploaded_files = st.sidebar.file_uploader("Upload Documents",accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx"])
 
 if st.sidebar.button("Process Documents"):
@@ -32,10 +52,26 @@ if st.sidebar.button("Process Documents"):
       
         st.sidebar.success("Database created successfully!")
 
-st.header("Ask a Question")
 
-question = st.chat_input("Say something")
-if question:
-    st.write(f"User has sent the following text: {question}")
+# Initialize chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# if st.button("Get Answer"):
+# Display chat messages from history on app rerun
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Accept user input
+if prompt := st.chat_input("Message Rite Content Creator"):
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    # Display user message in chat message container
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Display assistant response in chat message container
+    with st.chat_message("assistant"):
+        response = st.write_stream(response_generator())
+    # Add assistant response to chat history
+    st.session_state.messages.append({"role": "assistant", "content": response})
