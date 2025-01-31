@@ -19,13 +19,12 @@ def load_css(file_name):
 # Apply the external CSS
 load_css("styles.css")
 
-
 # Response emulator
 def response_generator():
     response = random.choice(
         [
             "Hello there! How can I assist you today?",
-            "Hi, human! Is there anything I can help you with?",
+            "Hi! Is there anything I can help you with?",
             "Do you need help?",
         ]
     )
@@ -37,9 +36,9 @@ def response_generator():
 # Title
 st.title("Rite Solutions Inc. Content Creator")
 # Side bar
-st.sidebar.header("Context Loader")
+st.sidebar.header("Upload Documents")
 
-uploaded_files = st.sidebar.file_uploader("Upload Documents",accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx"])
+uploaded_files = st.sidebar.file_uploader("",accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx"])
 
 if st.sidebar.button("Process Documents"):
     if uploaded_files:

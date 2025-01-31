@@ -7,9 +7,10 @@ body {
 [data-testid="stHeader"] {
     background-color: #d9dada;  /* Header background */
 }
-[data-testid="stSidebar"] {
-    background-color: #98989d;  /* Sidebar background */
+[data-testid="stMainBlockContainer"]{
+    padding-top: 2rem;
 }
+
 h1 {
     color: #000000 !important;  /* Change title color */
     text-align: center;  /* Optional: Center align */
@@ -26,11 +27,14 @@ p, div[data-testid="stMarkdownContainer"] {
     font-size: 18px;  /* Adjust font size */
     line-height: 1.6;  /* Improve readability */
 }
+[data-testid="stSidebar"] {
+    background-color: #98989d;  /* Sidebar background */
+}
 [data-testid="stSidebar"] button {
     background-color: #d9dada; 
     color: black;
     border-radius: 10px;
-    padding: 10px 24px;
+    padding: 5px 12px;
     border: none;
     font-size: 16px;
 }
@@ -48,12 +52,31 @@ p, div[data-testid="stMarkdownContainer"] {
     font-weight: bold;
     font-size: 16px;
 }
-
+[data-testid="stFileUploaderDropzone"]{
+    background-color: #4a4a4a;
+}
+[data-testid="stChatMessageAvatarUser"] {
+    background-color: #d9dada;
+    color: #00539f
+}
+[data-testid="stChatMessageAvatarAssistant"]{
+    background-color: #00539f;
+    color: #d9dada;
+}
 .st-emotion-cache-hzygls.ekr3hml3 {
-background-color: #d9dada;  /* Dark blue-gray background */
-color: black;               /* White text */
-text-align: center;         /* Centered text */
-font-size: 14px;            /* Font size */
-width: 100%;                /* Full width */
-z-index: 1000;              /* Above other elements */
+background-color: #d9dada;  
+color: black;               
+text-align: center;         
+font-size: 14px;
+width: 100%; 
+z-index: 1000; 
+}
+.st-emotion-cache-1cvow4s h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    text-align: left;
+    }
+[data-testid="stChatInput"]{
+    background-color: #4a4a4a;
+    color: #98989d;
 }
