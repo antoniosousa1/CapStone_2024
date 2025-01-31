@@ -1,0 +1,59 @@
+body {
+    background-color: #d9dada;  /* Change to your preferred color */
+}
+[data-testid="stAppViewContainer"] {
+    background-color: #d9dada;  /* Main background */
+}
+[data-testid="stHeader"] {
+    background-color: #d9dada;  /* Header background */
+}
+[data-testid="stSidebar"] {
+    background-color: #98989d;  /* Sidebar background */
+}
+h1 {
+    color: #000000 !important;  /* Change title color */
+    text-align: center;  /* Optional: Center align */
+    font-size: 36px;  /* Optional: Change font size */
+}
+h2 {
+    color: #000000 !important;  /* Header (st.header) color */
+    text-align: left;  /* Align text left */
+    font-size: 30px;  /* Adjust font size */
+    font-weight: bold;  /* Make it bold */
+}
+p, div[data-testid="stMarkdownContainer"] {
+    color: #4a4a4a !important;  /* Body text color */
+    font-size: 18px;  /* Adjust font size */
+    line-height: 1.6;  /* Improve readability */
+}
+[data-testid="stSidebar"] button {
+    background-color: #d9dada; 
+    color: black;
+    border-radius: 10px;
+    padding: 10px 24px;
+    border: none;
+    font-size: 16px;
+}
+[data-testid="stSidebar"] button:hover {
+    background-color: #d1e0e0;
+    color: black;
+}
+[data-testid="stSidebar"] h1, 
+[data-testid="stSidebar"] h2, 
+[data-testid="stSidebar"] h3 {
+    color: #000000;
+}
+[data-testid="stSidebar"] label {
+    color: #000000;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.st-emotion-cache-hzygls.ekr3hml3 {
+background-color: #d9dada;  /* Dark blue-gray background */
+color: black;               /* White text */
+text-align: center;         /* Centered text */
+font-size: 14px;            /* Font size */
+width: 100%;                /* Full width */
+z-index: 1000;              /* Above other elements */
+}

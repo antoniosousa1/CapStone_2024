@@ -8,71 +8,14 @@ from langchain.schema import Document
 
 data_path = "./data"
 
-st.markdown(
-    """
-    <style>
-        body {
-            background-color: #f0f2f6;  /* Change to your preferred color */
-        }
-        [data-testid="stAppViewContainer"] {
-            background-color: #f0f2f6;  /* Main background */
-        }
-        [data-testid="stHeader"] {
-            background-color: #f0f2f6;  /* Header background */
-        }
-        [data-testid="stToolbar"] {
-            background-color: #d1e0e0;  /* Toolbar background */
-        }
-        [data-testid="stSidebar"] {
-            background-color: #98989d;  /* Sidebar background */
-        }
-        footer {
-            background-color: #b0bec5;  /* Footer background */
-            padding: 10px;
-        }
-        h1 {
-            color: #000000 !important;  /* Change title color */
-            text-align: center;  /* Optional: Center align */
-            font-size: 36px;  /* Optional: Change font size */
-        }
-        h2 {
-            color: #000000 !important;  /* Header (st.header) color */
-            text-align: left;  /* Align text left */
-            font-size: 30px;  /* Adjust font size */
-            font-weight: bold;  /* Make it bold */
-        }
-        p, div[data-testid="stMarkdownContainer"] {
-            color: #4a4a4a !important;  /* Body text color */
-            font-size: 18px;  /* Adjust font size */
-            line-height: 1.6;  /* Improve readability */
-        }
-        [data-testid="stSidebar"] button {
-            background-color: #f0f2f6; 
-            color: black;
-            border-radius: 10px;
-            padding: 10px 24px;
-            border: none;
-            font-size: 16px;
-        }
-        [data-testid="stSidebar"] button:hover {
-            background-color: #d1e0e0;
-            color: black;
-        }
-        [data-testid="stSidebar"] h1, 
-        [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3 {
-            color: #000000;
-        }
-        [data-testid="stSidebar"] label {
-            color: #000000;
-            font-weight: bold;
-            font-size: 16px;
-        }
+# Function to load and apply the CSS file
+def load_css(file_name):
+    with open(file_name, "r") as f:
+        css = f.read()
+        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Apply the external CSS
+load_css("styles.css")
 
 st.title("Rite Solutions Inc. Content Creator")
 st.sidebar.header("Context Loader")
