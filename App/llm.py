@@ -5,13 +5,15 @@ Affiliation: University of Massachusetts Dartmouth
 Course: CIS 498 & 499 (Senior Capstone Project)
 Ownership: Rite-Solutions, Inc. 
 Client/Stakeholder: Brandon Carvhalo  
-Date: 2024-1-27
-Description: This code utilizes Ollama as our LLM and a Retrieval-Augmented Generation (RAG) approach to take documents from a specifc directory, load them and then
+Date: 2025-4-25
+Project Description: This code utilizes Ollama as our LLM and a Retrieval-Augmented Generation (RAG) approach to take documents from a specifc directory, load them and then
              split the documents into texts and store it into a local database using Milvus Lite. Once stored the user then asks a questions which retrieves the most
              relevant documents and the LLM generates a response as best as it can.  
 
 '''
 import os, time
+from LLMfeatures import vector_db
+
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader, TextLoader, CSVLoader, UnstructuredPDFLoader, UnstructuredWordDocumentLoader, UnstructuredPowerPointLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -22,141 +24,27 @@ from langchain.vectorstores.base import VectorStoreRetriever
 # Timer to check for the runtime of our code (Used for testing purposes)
 start = time.time()
 
-# Function that will check if the database exists and delete it, takes in the path of the locally created database
-def delete_milvus_db(db_path: str):
-
-    # Checks if the milvus database already exists, if it does delete it. 
-    if os.path.exists(db_path):
-        os.remove(db_path)
-        print("-"*80)
-        print("delete_milvus_db: PASSED")
-        time.sleep(2)
-
-# Loads the data into usable docs 
-def load_docs(data_path: str) -> list[Document]:
-
-    # Load the initial documents from the directory
-    loader = DirectoryLoader(path=data_path)
-    docs = loader.load()
-
-    return docs
-
-# This function is called only when new documents are added into the data folder, the new files are passed in as a set and the data_path is also passed in
-def load_new_docs(new_files: set, data_path: str) -> list[Document]:
-
-    #
-    new_loaded_docs = []  # Initialize the list to hold loaded documents
-
-    #
-    for file_name in new_files:
-            # Build the full file path by joining the directory path and the file name
-            file_path = os.path.join(data_path, file_name)
-            
-            # Ensure the file is valid
-            if os.path.isfile(file_path):  # Check if the file exists
-                #
-                try:
-                    # Handle TXT files
-                    if file_path.endswith(".txt"):
-                        loader = TextLoader(file_path, encoding="utf-8")
-                        docs = loader.load()
-                        new_loaded_docs.extend(docs)
-                        print(f"Loaded TXT file: {file_path}")
-                    
-                    # Handle DOCX files
-                    elif file_path.endswith(".docx"):
-                        loader = UnstructuredWordDocumentLoader(file_path)
-                        docs = loader.load()
-                        new_loaded_docs.extend(docs)
-                        print(f"Loaded DOCX file: {file_path}")
-                    
-                    # Handle PDF files
-                    elif file_path.endswith(".pdf"):
-                        loader = UnstructuredPDFLoader(file_path)
-                        docs = loader.load()
-                        new_loaded_docs.extend(docs)
-                        print(f"Loaded PDF file: {file_path}")
-                    
-                    # Handle PPTX files
-                    elif file_path.endswith(".pptx"):
-                        loader = UnstructuredPowerPointLoader(file_path)
-                        docs = loader.load()
-                        new_loaded_docs.extend(docs)
-                        print(f"Loaded PPTX file: {file_path}")
-                       
-                    
-                    # Handle CSV files
-                    elif file_path.endswith(".csv"):
-                        loader = CSVLoader(file_path)
-                        docs = loader.load()
-                        new_loaded_docs.extend(docs)
-                        print(f"Loaded CSV file: {file_path}")
-                       
-
-                    else:
-                        print(f"Unsupported file type: {file_path}")
-                
-                except Exception as e:
-                    print(f"Error loading {file_path}: {e}")
-            
-            else:
-                print(f"File not found: {file_path}")
-    
-    # Returns the loaded docs content back and stores it in a list
-    return new_loaded_docs
-    
-
 # splits docs into chunks
 def split_text(docs: list[Document]) -> list[Document]:
+
+    #
     text_splitter = RecursiveCharacterTextSplitter(
+        #
         chunk_size=600, chunk_overlap=200, add_start_index=True
     )
+    #
     splits = text_splitter.split_documents(docs)
+
+    #
     return splits
-
-# creates vector database with llama embeddings
-def create_milvus_db(splits: list[Document], llama_embeddings: OllamaEmbeddings, db_path: str) -> Milvus:
-   
-    text_splits = [doc.page_content for doc in splits]
-
-    vector_db = Milvus(
-        embedding_function=llama_embeddings,
-        connection_args={"uri": db_path},
-        collection_name="DataCollection",
-    )
-   
-    ids = [str(i) for i in range(len(text_splits))]
-   
-    vector_db.add_texts(texts=text_splits, ids=ids)
-
-    return vector_db
-
-# This function is called whenever new documents are split and need to be added to the database
-def add_to_milvus_db(splits: list[Document], vector_db) -> Milvus:
-
-    text_splits = [doc.page_content for doc in splits]
-
-    ids = [str(i) for i in range(len(text_splits))]
-   
-    vector_db.add_texts(texts=text_splits, ids=ids)
-
-    return vector_db
-
-# Load the db and its contents 
-def load_milvus_db(llama_embeddings: OllamaEmbeddings, db_path: str) -> Milvus:
-     
-
-     vector_store_loaded = Milvus(
-        llama_embeddings,
-        connection_args={"uri": db_path},
-        collection_name="DataCollection",
-    )
-     
-     return vector_store_loaded
 
 # creates retriever
 def create_retriever(vector_store: Milvus) -> VectorStoreRetriever:
+
+    #
     retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 15})
+
+    #
     return retriever
 
 # Retrieves the chunks relevant to the question using a retriever
@@ -177,41 +65,60 @@ def retrieve_docs(retriever: VectorStoreRetriever, question: str) -> list[Docume
             print()
     '''
     
+    #
     return search_results
 
 # Gets the user question
 def get_user_question() -> str:
+
+    #
     print("Please Enter A Question Below, Or One Of The Commands Listed: ")
     print("-"*80)
+
+    #
     print("1.) Type 'EXIT' to exit the program!")
     print("2.) Type 'DELETE' to delete the database!")
     print("-"*80)
     
+    #
     question = input()
     print("-"*80)
 
+    #
     return question
 
 # Create a prompt
 def create_prompt(retrieved_docs: list[Document], question: str) -> str:
+
+    #
     prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. Generate two to three sentences only.\n"
     
+    #
     Question = "Question: " + question + "\n"
 
+    #
     Context_str = "Context: \n\n"
 
+    #
     for i in retrieved_docs:
         Context_str += i.page_content + "\n\n"
 
+    #
     Answer = "Answer: "
 
+    #
     final_prompt = prompt + Question + Context_str + Answer
 
+    #
     return final_prompt
 
 # Print the response from the Ollama LLM that was given the formatted prompt
 def get_answer(llm: OllamaLLM, prompt: str) -> str:
+
+    #
     answer = llm.invoke(prompt)
+
+    #
     return answer
 
 # Function that checks of the 
@@ -225,30 +132,48 @@ def save_answer_to_file(output_file: str, answer: str):
         
         # Loop to write the sentences into the txt file
         for sentence in sentences:
+
+            #
             cleaned_sentence = sentence.strip()  # Remove leading/trailing whitespace
+
+            #
             if cleaned_sentence:  # Only write non-empty sentences
+
+                #
                 file.write(cleaned_sentence + ".\n")  # Add the period back
 
 
+    #
     print(f"Your answer has been saved to {output_file}")
     print("-"*80)
 
 # Function to get current files in the directory
 def get_files_in_directory(data_path):
+
+    #
     return set(os.listdir(data_path))
 
 # Main function
 def main():
+
+    #
     data_path = "./data"
+    #
     db_path = "./Milvus_Lite.db"
+    #
     output_file = "User_Answer.txt"
+    #
     ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
+    #
     llama_model = "llama3.1:70b"
 
+    #
     print(f"Using Ollama server at: {ollama_server_url}")
     print("-" * 80)
 
+    #
     llm = OllamaLLM(model=llama_model, base_url=ollama_server_url)
+    #
     llama_embeddings = OllamaEmbeddings(model=llama_model, base_url=ollama_server_url)
 
     # Initialize file tracking
@@ -257,17 +182,22 @@ def main():
     # Start timer for elapsed time calculation
     start = time.time()
 
+    #
     if os.path.exists(db_path):
+        #
         print(f"The path {db_path} exists!")
         print("-" * 80)
-
+    #
     else:
         # Load, split, and create the database if it doesn't exist
         print(f"The path {db_path} does not exist, creating Milvus Lite database now...")
         print("-"*80)
-        docs = load_docs(data_path)
+
+        #
+        docs = vector_db.load_docs(data_path)
         print("load_docs: PASSED")
 
+        #
         splits = split_text(docs)
         print("split_text: PASSED")
 
@@ -275,14 +205,16 @@ def main():
         print("Generating Embeddings...")
         print("-"*80)
 
-        create_milvus_db(splits, llama_embeddings, db_path)
+        #
+        vector_db.create_milvus_db(splits, llama_embeddings, db_path)
         print("create_milvus_db: PASSED")
-        print("-" * 80)
+       
 
     # Load the existing database into the vector store
-    vector_store = load_milvus_db(llama_embeddings, db_path)
+    vector_store = vector_db.load_milvus_db(llama_embeddings, db_path)
     print("load_db: PASSED")
 
+    #
     retriever = create_retriever(vector_store)
     print("create_retriever: PASSED")
 
@@ -295,7 +227,11 @@ def main():
 
     # While loop to ask the user multiple questions
     while True:
+        
+        #
         current_files = get_files_in_directory(data_path)
+
+        #
         new_files = current_files - initial_files  # Detect any new files  by taking the current_files after the user asks a question and then subtract from the initial files
 
         # Check if a new file has been added to the directory
@@ -303,22 +239,27 @@ def main():
             # Timer to check for the runtime of our code (Used for testing purposes)
             start2 = time.time()
 
+            #
             print(f"New Files Detected: {new_files}")
             print("-" * 80)
 
             # Initialize a list for any new documents that get added after runtime 
-            new_docs = load_new_docs(new_files, data_path)
+            new_docs = vector_db.load_new_docs(new_files, data_path)
             print("-"*80)
             print("load_new_docs: PASSED")
 
+            #
             new_splits = split_text(new_docs)
             print("new_split_text: PASSED")
-            
+            print("-"*80)
+            print("Currently adding the embeddings into the database...")
+            print("-"*80)
 
             # Adds any new split texts to the milvus lite database
-            add_to_milvus_db(new_splits, vector_store )
+            vector_db.add_to_milvus_db(new_splits, vector_store )
             print("add_to_milvus_db: PASSED")
             print("-"*80)
+
             # Update initial_files to include the new files
             initial_files = current_files  # Update the list to track the newly added files
 
@@ -327,6 +268,7 @@ def main():
             elapsed_time2 = end2 - start2
             print(f"Time taken: {elapsed_time2:.2f} seconds")
             print("-" * 80)
+        #
         else:
             print("No new files have been added!")
             print("-" * 80)
@@ -335,31 +277,46 @@ def main():
         question = get_user_question()
         print("get_user_question: PASSED")
 
+        #
         if question.upper() == "EXIT":
             print("-" * 80)
             print("Exiting Code!")
             print("-" * 80)
+
+            #
             break
+
+        #
         elif question.upper() == "DELETE":
             print("DO YOU WISH TO DELETE THE DATABASE(YES/NO)?")
+
+            #
             response = input()
 
+            #
             if response.upper() == "YES":
-                delete_milvus_db(db_path)
+                #
+                vector_db.delete_milvus_db(db_path)
                 print("-" * 80)
                 print("Database has been deleted, Exiting code!")
+                #
                 break
+
+            #
             elif response.upper() == "NO":
                 print("Database still exists :)")
+                #
                 continue
 
         # Perform retrieval and answering based on the question
         retrieved_docs = retrieve_docs(retriever, question)
         print("retrieve_docs: PASSED")
 
+        #
         prompt = create_prompt(retrieved_docs, question)
         print("create_prompt: PASSED")
 
+        #
         answer = get_answer(llm, prompt)
         print("get_answer: PASSED")
 
