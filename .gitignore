@@ -4,3 +4,4 @@ data/
 User_Answer.txt
 App/Milvus_Lite.db
 App/.Milvus_Lite.db.lock
+LLMfeatures/__pycache__/crud.cpython-312.pyc
