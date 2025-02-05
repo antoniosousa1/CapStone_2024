@@ -11,7 +11,9 @@ Project Description: This code utilizes Ollama as our LLM and a Retrieval-Augmen
              relevant documents and the LLM generates a response as best as it can.  
 
 '''
+
 import os, time
+from LLMfeatures import hashing
 from LLMfeatures import vector_db
 
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
@@ -72,7 +74,7 @@ def retrieve_docs(retriever: VectorStoreRetriever, question: str) -> list[Docume
 def get_user_question() -> str:
 
     #
-    print("Please Enter A Question Below, Or One Of The Commands Listed: ")
+    print("\nPlease Enter A Question Below, Or One Of The Commands Listed: \n")
     print("-"*80)
 
     #
@@ -82,7 +84,7 @@ def get_user_question() -> str:
     
     #
     question = input()
-    print("-"*80)
+    print("\n"+"-"*80)
 
     #
     return question
@@ -144,26 +146,41 @@ def save_answer_to_file(output_file: str, answer: str):
 
 
     #
-    print(f"Your answer has been saved to {output_file}")
+    print(f"\nYour answer has been saved to {output_file}\n")
     print("-"*80)
 
 # Function to get current files in the directory
-def get_files_in_directory(data_path):
+def get_files_in_directory(document_path):
 
     #
-    return set(os.listdir(data_path))
+    return set(os.listdir(document_path))
+
+
+
 
 # Main function
 def main():
+    
+    # Declares the path where the documents the user gives us will be located
+    document_path = "./documents"
+
+    # Declares the path for the milvus lite database 
+    db_path = "./Milvus_Lite.db"
+
+    # Saves answer to a txt file
+    output_file = "./results/User_Answer.txt"
+
+    # Stores the hash values into a txt file (This is not final just so I can see the hash values)
+    hash_results = "./results/hash_values.txt"
+
+    # Clear the contents in the hash_values.txt (Testing purposes) 
+    with open(hash_results, "w") as f:
+        #
+        pass
 
     #
-    data_path = "./data"
-    #
-    db_path = "./Milvus_Lite.db"
-    #
-    output_file = "User_Answer.txt"
-    #
     ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
+
     #
     llama_model = "llama3.1:70b"
 
@@ -173,20 +190,69 @@ def main():
 
     #
     llm = OllamaLLM(model=llama_model, base_url=ollama_server_url)
+
     #
     llama_embeddings = OllamaEmbeddings(model=llama_model, base_url=ollama_server_url)
 
     # Initialize file tracking
-    initial_files = get_files_in_directory(data_path)
+    initial_files = get_files_in_directory(document_path)
 
-    # Start timer for elapsed time calculation
-    start = time.time()
+    # Check the documents given initially before generating any emebeddings, 
+    if not any(os.path.isfile(os.path.join(document_path, f)) for f in os.listdir(document_path)):
 
+        #
+        print("No documents given in the directory, no hash values to generate!")
+        print("-"*80)
+
+        # Create the hash set {}
+        hash_set = hashing.create_hashset()
+        print("create_hashset: PASSED")
+        print("-"*80)
+
+    #
+    else: 
+        #
+        print("Currently generating hash values and comparing them before generating any embeddings!")
+        print("-"*80)
+
+        # Create the hash set {}
+        hash_set = hashing.create_hashset()
+
+        #
+        print("create_hashset: PASSED")
+        print("-"*80)
+
+        # Open the file to save the hashes
+        with open(hash_results, 'w') as f:  # Open a text file for writing hash values
+
+            # Process each file
+            for file_path in initial_files:
+                #
+                file_hash = hashing.compute_file_hash_value(file_path, document_path)  # Compute hash
+                
+                #
+                if file_hash:  # Only process if the hash was successfully computed
+
+                    # Store the file path and corresponding hash in the dictionary
+                    hash_set[file_path] = file_hash
+                    
+                    # Write the file path and hash value to the file
+                    f.write(f"File: {file_path}\nHash: {file_hash}\n")
+
+                    f.write("-" * 80 + "\n")  # Add separator for readability
+
+            #
+            print(f"Hash values have been written to '{hash_results}'")
+            print("-"*80)
+
+    hashing.compare_hash_values(hash_set)
+    
     #
     if os.path.exists(db_path):
         #
         print(f"The path {db_path} exists!")
         print("-" * 80)
+
     #
     else:
         # Load, split, and create the database if it doesn't exist
@@ -194,7 +260,7 @@ def main():
         print("-"*80)
 
         #
-        docs = vector_db.load_docs(data_path)
+        docs = vector_db.load_docs(document_path)
         print("load_docs: PASSED")
 
         #
@@ -222,29 +288,38 @@ def main():
     end = time.time()
     elapsed_time = end - start
     print("-" * 80)
-    print(f"Time taken: {elapsed_time:.2f} seconds")
+    print(f"\nTime taken: {elapsed_time:.2f} seconds\n")
     print("-" * 80)
 
     # While loop to ask the user multiple questions
     while True:
-        
+
         #
-        current_files = get_files_in_directory(data_path)
+        current_files = get_files_in_directory(document_path)
 
         #
         new_files = current_files - initial_files  # Detect any new files  by taking the current_files after the user asks a question and then subtract from the initial files
 
         # Check if a new file has been added to the directory
         if new_files:
+
             # Timer to check for the runtime of our code (Used for testing purposes)
             start2 = time.time()
 
             #
             print(f"New Files Detected: {new_files}")
             print("-" * 80)
+            hashing.new_compute_hash_values(new_files, hash_results, document_path, hash_set)
+
+            print(f"New hash values have been written to '{hash_results}'")
+            print("-"*80)
+            print("new_compute_hash_values: PASSED")
+            print("-"*80)
+
+
 
             # Initialize a list for any new documents that get added after runtime 
-            new_docs = vector_db.load_new_docs(new_files, data_path)
+            new_docs = vector_db.load_new_docs(new_files, document_path)
             print("-"*80)
             print("load_new_docs: PASSED")
 
@@ -252,6 +327,7 @@ def main():
             new_splits = split_text(new_docs)
             print("new_split_text: PASSED")
             print("-"*80)
+
             print("Currently adding the embeddings into the database...")
             print("-"*80)
 
@@ -266,12 +342,14 @@ def main():
             # Calculate elapsed time
             end2 = time.time()
             elapsed_time2 = end2 - start2
-            print(f"Time taken: {elapsed_time2:.2f} seconds")
+            print(f"\nTime taken: {elapsed_time2:.2f} seconds\n")
             print("-" * 80)
         #
         else:
             print("No new files have been added!")
             print("-" * 80)
+
+        hashing.compare_hash_values(hash_set)
 
         # Get user question for retrieval
         question = get_user_question()
@@ -288,16 +366,17 @@ def main():
 
         #
         elif question.upper() == "DELETE":
+            print("-"*80)
             print("DO YOU WISH TO DELETE THE DATABASE(YES/NO)?")
 
             #
             response = input()
-
+        
             #
             if response.upper() == "YES":
                 #
                 vector_db.delete_milvus_db(db_path)
-                print("-" * 80)
+                print("\n"+"-" * 80)
                 print("Database has been deleted, Exiting code!")
                 #
                 break

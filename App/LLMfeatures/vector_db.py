@@ -8,7 +8,8 @@ Client/Stakeholder: Brandon Carvhalo
 Date: 2025-4-25
         
 vector_db.py description and purpose: 
-    -
+    - This python file allows the vector database to handle any CRUD operations, it is called by the main python file llm.py which then calls the specific functions 
+      as needed. More details to follow for the description! :) 
 '''
 
 # BEGINNING OF CODE !!!
@@ -27,7 +28,7 @@ def create_milvus_db(splits: list[Document], llama_embeddings: OllamaEmbeddings,
 
     # If no documents are provided, return the database without adding any texts
     if not splits:
-        print("No documents to add. Returning an empty database!")
+        print("No documents to add! Returning an empty database...")
         print("-"*80)
         vector_db = Milvus(
             embedding_function=llama_embeddings,
