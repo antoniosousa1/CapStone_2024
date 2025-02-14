@@ -12,397 +12,312 @@ Project Description: This code utilizes Ollama as our LLM and a Retrieval-Augmen
 
 '''
 
+# Import the threading module to handle multi-threading
+import threading
+# Import os and time modules for file handling and timing
 import os, time
-from LLMfeatures import hashing
-from LLMfeatures import vector_db
-
+# Import hashing functionality from llm_features module
+from llm_features import hashing
+# Import vector database functionality from llm_features module
+from llm_features import vector_db
+# Import the Observer class from watchdog for file system monitoring
+from watchdog.observers import Observer # type: ignore
+# Import FileSystemEventHandler class from watchdog for handling file system events
+from watchdog.events import FileSystemEventHandler # type: ignore
+# Import necessary classes for using the Ollama language model and embeddings
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
+# Import document loader classes from langchain_community for various document formats
 from langchain_community.document_loaders import DirectoryLoader, TextLoader, CSVLoader, UnstructuredPDFLoader, UnstructuredWordDocumentLoader, UnstructuredPowerPointLoader
+# Import text splitter to split documents into smaller chunks
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+# Import Document schema class from langchain
 from langchain.schema import Document
+# Import Milvus from langchain_milvus for managing vector databases
 from langchain_milvus import Milvus # type: ignore
+# Import VectorStoreRetriever from langchain.vectorstores to query the vector store
 from langchain.vectorstores.base import VectorStoreRetriever
 
-# Timer to check for the runtime of our code (Used for testing purposes)
+# Start a timer to track the total execution time of the code
 start = time.time()
-
-# splits docs into chunks
+lock = threading.Lock()
+# Function to split documents into smaller chunks
 def split_text(docs: list[Document]) -> list[Document]:
-
-    #
+    # Initialize the RecursiveCharacterTextSplitter with parameters for chunk size and overlap
     text_splitter = RecursiveCharacterTextSplitter(
-        #
         chunk_size=600, chunk_overlap=200, add_start_index=True
     )
-    #
+    # Split the documents into chunks
     splits = text_splitter.split_documents(docs)
-
-    #
     return splits
 
-# creates retriever
+# Function to create a retriever from a vector store
 def create_retriever(vector_store: Milvus) -> VectorStoreRetriever:
-
-    #
+    # Create and return the retriever for querying the vector store
     retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 15})
-
-    #
     return retriever
 
-# Retrieves the chunks relevant to the question using a retriever
+# Function to retrieve relevant documents using the retriever
 def retrieve_docs(retriever: VectorStoreRetriever, question: str) -> list[Document]:
-
-    # Use the retriever to search the vector database directly with the raw question text
+    # Retrieve and return the top 15 documents relevant to the user's question
     search_results = retriever.invoke(question, k=15)
-
-    # Uncomment this code to check the returned docs by the line of code above
-    # Check if no results were returned
-
-    '''
-    if not search_results:
-        print("No documents retrieved!")
-    else:
-        for doc in search_results:
-            print(f"Retrieved Doc: {doc.page_content}")
-            print()
-    '''
-    
-    #
     return search_results
 
-# Gets the user question
+# Function to check if any new files have been added to the directory
+def check_dir():
+    # Return nothing for now, it's a placeholder function
+    return 
+
+# Function to prompt the user for a question
 def get_user_question() -> str:
-
-    #
+    # Print options for the user to interact with the program
     print("\nPlease Enter A Question Below, Or One Of The Commands Listed: \n")
-    print("-"*80)
-
-    #
+    print("-"*100)
     print("1.) Type 'EXIT' to exit the program!")
     print("2.) Type 'DELETE' to delete the database!")
-    print("-"*80)
-    
-    #
-    question = input()
-    print("\n"+"-"*80)
-
-    #
+    print("3.) Type 'CLEAR' to clear the document directory!")
+    print("4.) Type 'INFO' to get information regarding the program!")
+    print("\n"+ "-"*100)
+    # Get the user's input and return it
+    question = input(f"What would you like to ask? \n")
+    print("\n"+"-"*100)
     return question
 
-# Create a prompt
+# Function to create a prompt to send to the LLM
 def create_prompt(retrieved_docs: list[Document], question: str) -> str:
-
-    #
+    # Initialize the prompt format for the LLM
     prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. Generate two to three sentences only.\n"
-    
-    #
+    # Add the question to the prompt
     Question = "Question: " + question + "\n"
-
-    #
+    # Start the context section
     Context_str = "Context: \n\n"
-
-    #
+    # Add the content of each retrieved document to the context section
     for i in retrieved_docs:
         Context_str += i.page_content + "\n\n"
-
-    #
+    # Define the answer section of the prompt
     Answer = "Answer: "
-
-    #
+    # Combine all sections to form the final prompt
     final_prompt = prompt + Question + Context_str + Answer
-
-    #
     return final_prompt
 
-# Print the response from the Ollama LLM that was given the formatted prompt
+# Function to query the LLM with the created prompt and return the answer
 def get_answer(llm: OllamaLLM, prompt: str) -> str:
-
-    #
+    # Get the answer from the LLM
     answer = llm.invoke(prompt)
-
-    #
     return answer
 
-# Function that checks of the 
+# Function to save the generated answer to a file
 def save_answer_to_file(output_file: str, answer: str):
-
-    # Split the answer into sentences based only on periods
+    # Open the file for writing
     with open(output_file, "w") as file:
-
-        # Split answer by periods for user readability 
+        # Split the answer into sentences and clean each one before writing
         sentences = answer.strip().split(".")
-        
-        # Loop to write the sentences into the txt file
         for sentence in sentences:
-
-            #
-            cleaned_sentence = sentence.strip()  # Remove leading/trailing whitespace
-
-            #
-            if cleaned_sentence:  # Only write non-empty sentences
-
-                #
-                file.write(cleaned_sentence + ".\n")  # Add the period back
-
-
-    #
+            cleaned_sentence = sentence.strip()
+            if cleaned_sentence:
+                file.write(cleaned_sentence + ".\n")
+    # Print a message confirming that the answer has been saved
     print(f"\nYour answer has been saved to {output_file}\n")
-    print("-"*80)
+    print("-"*100)
 
-# Function to get current files in the directory
-def get_files_in_directory(document_path):
-
-    #
+# Function to get the current files in the specified directory
+def get_files_in_directory(document_path: set) -> set:
+    # Return a set of files in the given directory
     return set(os.listdir(document_path))
 
+# Function to clear all files in the specified directory
+def clear_directory(directory_path):
+    # Iterate over all files in the directory and remove them
+    for filename in os.listdir(directory_path):
+        file_path = os.path.join(directory_path, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
 
+# Function to start the file observer to detect new files in the directory
+def start_observer(document_path, new_files, hash_set, vector_store, hash_values):
+    # Create a file system event handler
+    event_handler = FileSystemEventHandler()
+    # Assign the on_created function to handle new file creation events
+    event_handler.on_created = lambda event: on_created(event, new_files, document_path, hash_set, vector_store, hash_values)
+    # Initialize the observer to watch the directory for changes
+    observer = Observer()
+    # Schedule the event handler to monitor the directory
+    observer.schedule(event_handler, document_path, recursive=False)
+    observer.start()
+    try:
+        observer.join()
+    except KeyboardInterrupt:
+        # Stop the observer if interrupted
+        observer.stop()
+        observer.join()
 
+# Function to start the observer in a separate thread to monitor file creation
+def start_observer_thread(document_path, new_files, hash_set, vector_store, hash_values):
+    # Start the observer in a new thread
+    observer_thread = threading.Thread(target=start_observer, args=(document_path, new_files, hash_set, vector_store, hash_values), daemon=True)
+    observer_thread.start()
 
-# Main function
-def main():
-    
-    # Declares the path where the documents the user gives us will be located
+# Function to handle the creation of new files in the directory
+def on_created(event, new_files, document_path, hash_set, vector_store, hash_values):
+    # Check if the event is not a directory creation
+    if not event.is_directory:
+        with lock:
+            # Get the file name from the event
+            filename = os.path.basename(event.src_path)
+            # Proceed only if this file is new
+            if filename not in new_files:
+                new_timer = time.time()
+                print("\n" + "-" * 100)
+                print(f"\nNew file detected: {filename}\n")
+                print("-" * 100)
+                new_files.add(filename)
+                # Compute the file hash and compare it
+                file_hash = hashing.compute_file_hash_value(filename, document_path)
+                if file_hash and filename not in hash_set:
+                    hash_set[filename] = file_hash
+                    with open(hash_values, 'a') as f:
+                        f.write(f"File: {filename}\nHash: {file_hash}\n")
+                        f.write("-" * 100 + "\n")
+                    hashing.compare_hash_values(hash_set)
+                    # Load the new document and split it into chunks
+                    new_docs = vector_db.load_new_docs([filename], document_path)
+                    new_splits = split_text(new_docs)
+                    print("-" * 100)
+                    print("\nGenerating new embeddings, this may take a while!\n")
+                    print("-" * 100)
+                    # Add the new embeddings to the vector store
+                    vector_db.add_to_milvus_db(new_splits, vector_store)
+                    new_end = time.time()
+                    elapsed_time = new_end - new_timer
+                    print(f"\nTime taken: {elapsed_time:.2f} seconds\n")
+                    print("-" * 80)
+                    print("\nPlease Enter A Question Below, Or One Of The Commands Listed: \n")
+                    print("-"*100)
+                    print("1.) Type 'EXIT' to exit the program!")
+                    print("2.) Type 'DELETE' to delete the database!")
+                    print("3.) Type 'CLEAR' to clear the document directory!")
+                    print("4.) Type 'INFO' to get information regarding the program!")
+                    print("\n"+ "-"*100)
+                    print("What would you like to ask?")
+
+# Main function to run the program
+def main():  
+    # Start a timer to track the execution time
+    start = time.time()
+
+    # Define paths for documents, database, and result files
     document_path = "./documents"
-
-    # Declares the path for the milvus lite database 
-    db_path = "./Milvus_Lite.db"
-
-    # Saves answer to a txt file
+    db_path = "./database/Milvus_Lite.db"
     output_file = "./results/User_Answer.txt"
+    hash_values = "./results/hash_values.txt"
 
-    # Stores the hash values into a txt file (This is not final just so I can see the hash values)
-    hash_results = "./results/hash_values.txt"
-
-    # Clear the contents in the hash_values.txt (Testing purposes) 
-    with open(hash_results, "w") as f:
-        #
+    # Create or clear the hash values file
+    with open(hash_values, "w") as f:
         pass
 
-    #
+    # Get the Ollama server URL and model name
     ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
-
-    #
     llama_model = "llama3.1:70b"
 
-    #
-    print(f"Using Ollama server at: {ollama_server_url}")
-    print("-" * 80)
+    # Print the Ollama server URL being used
+    print(f"\nUsing Ollama server at: {ollama_server_url}")
+    print("-" * 100)
 
-    #
+    # Initialize the Ollama LLM and embeddings
     llm = OllamaLLM(model=llama_model, base_url=ollama_server_url)
-
-    #
     llama_embeddings = OllamaEmbeddings(model=llama_model, base_url=ollama_server_url)
 
-    # Initialize file tracking
+    # Create a hash set to store file hashes
+    hash_set = hashing.create_hashset()
+    # Get initial files in the directory
     initial_files = get_files_in_directory(document_path)
+    # Convert initial files to a set for easy comparison
+    new_files = set(initial_files)
 
-    # Check the documents given initially before generating any emebeddings, 
-    if not any(os.path.isfile(os.path.join(document_path, f)) for f in os.listdir(document_path)):
-
-        #
-        print("No documents given in the directory, no hash values to generate!")
-        print("-"*80)
-
-        # Create the hash set {}
-        hash_set = hashing.create_hashset()
-        print("create_hashset: PASSED")
-        print("-"*80)
-
-    #
-    else: 
-        #
-        print("Currently generating hash values and comparing them before generating any embeddings!")
-        print("-"*80)
-
-        # Create the hash set {}
-        hash_set = hashing.create_hashset()
-
-        #
-        print("create_hashset: PASSED")
-        print("-"*80)
-
-        # Open the file to save the hashes
-        with open(hash_results, 'w') as f:  # Open a text file for writing hash values
-
-            # Process each file
-            for file_path in initial_files:
-                #
-                file_hash = hashing.compute_file_hash_value(file_path, document_path)  # Compute hash
-                
-                #
-                if file_hash:  # Only process if the hash was successfully computed
-
-                    # Store the file path and corresponding hash in the dictionary
+    # If there are existing files, generate hash values for them
+    if new_files:
+        print("\nGenerating hash values for existing files!\n")
+        print("-" * 100)
+        with open(hash_values, 'w') as f:
+            for file_path in new_files:
+                file_hash = hashing.compute_file_hash_value(file_path, document_path)
+                if file_hash and file_path not in hash_set:
                     hash_set[file_path] = file_hash
-                    
-                    # Write the file path and hash value to the file
                     f.write(f"File: {file_path}\nHash: {file_hash}\n")
-
-                    f.write("-" * 80 + "\n")  # Add separator for readability
-
-            #
-            print(f"Hash values have been written to '{hash_results}'")
-            print("-"*80)
-
-    hashing.compare_hash_values(hash_set)
-    
-    #
-    if os.path.exists(db_path):
-        #
-        print(f"The path {db_path} exists!")
-        print("-" * 80)
-
-    #
+                    f.write("-" * 100 + "\n")
+        hashing.compare_hash_values(hash_set)
     else:
-        # Load, split, and create the database if it doesn't exist
-        print(f"The path {db_path} does not exist, creating Milvus Lite database now...")
-        print("-"*80)
+        print("\nNo new documents to generate hash values for!\n")
+        print("-" * 100)
 
-        #
+    # Check if the database exists
+    if os.path.exists(db_path):
+        print(f"\nThe path {db_path} exists!\n")
+        print("-" * 100)
+    else:
+        print(f"\nThe path {db_path} does not exist, creating Milvus Lite database now!!\n")
+        print("-" * 100)
+        # Load documents and create the vector store if the database does not exist
         docs = vector_db.load_docs(document_path)
-        print("load_docs: PASSED")
-
-        #
         splits = split_text(docs)
-        print("split_text: PASSED")
-
-        print("-"*80)
-        print("Generating Embeddings...")
-        print("-"*80)
-
-        #
+        print("\nGenerating embeddings, this may take a while!\n")
+        print("-" * 100)
         vector_db.create_milvus_db(splits, llama_embeddings, db_path)
-        print("create_milvus_db: PASSED")
-       
 
-    # Load the existing database into the vector store
-    vector_store = vector_db.load_milvus_db(llama_embeddings, db_path)
-    print("load_db: PASSED")
-
-    #
-    retriever = create_retriever(vector_store)
-    print("create_retriever: PASSED")
-
-    # Calculate elapsed time
+    # Track the elapsed time for the setup
     end = time.time()
     elapsed_time = end - start
-    print("-" * 80)
     print(f"\nTime taken: {elapsed_time:.2f} seconds\n")
-    print("-" * 80)
+    print("-" * 100)
 
-    # While loop to ask the user multiple questions
+    # Load the vector store and initialize the retriever
+    vector_store = vector_db.load_milvus_db(llama_embeddings, db_path)
+    retriever = create_retriever(vector_store)
+
+    # Start the file observer thread
+    start_observer_thread(document_path, new_files, hash_set, vector_store, hash_values)
+
+    # Enter a loop to allow the user to ask questions
     while True:
-
-        #
-        current_files = get_files_in_directory(document_path)
-
-        #
-        new_files = current_files - initial_files  # Detect any new files  by taking the current_files after the user asks a question and then subtract from the initial files
-
-        # Check if a new file has been added to the directory
-        if new_files:
-
-            # Timer to check for the runtime of our code (Used for testing purposes)
-            start2 = time.time()
-
-            #
-            print(f"New Files Detected: {new_files}")
-            print("-" * 80)
-            hashing.new_compute_hash_values(new_files, hash_results, document_path, hash_set)
-
-            print(f"New hash values have been written to '{hash_results}'")
-            print("-"*80)
-            print("new_compute_hash_values: PASSED")
-            print("-"*80)
-
-
-
-            # Initialize a list for any new documents that get added after runtime 
-            new_docs = vector_db.load_new_docs(new_files, document_path)
-            print("-"*80)
-            print("load_new_docs: PASSED")
-
-            #
-            new_splits = split_text(new_docs)
-            print("new_split_text: PASSED")
-            print("-"*80)
-
-            print("Currently adding the embeddings into the database...")
-            print("-"*80)
-
-            # Adds any new split texts to the milvus lite database
-            vector_db.add_to_milvus_db(new_splits, vector_store )
-            print("add_to_milvus_db: PASSED")
-            print("-"*80)
-
-            # Update initial_files to include the new files
-            initial_files = current_files  # Update the list to track the newly added files
-
-            # Calculate elapsed time
-            end2 = time.time()
-            elapsed_time2 = end2 - start2
-            print(f"\nTime taken: {elapsed_time2:.2f} seconds\n")
-            print("-" * 80)
-        #
-        else:
-            print("No new files have been added!")
-            print("-" * 80)
-
-        hashing.compare_hash_values(hash_set)
-
-        # Get user question for retrieval
+        # Get a question from the user
         question = get_user_question()
-        print("get_user_question: PASSED")
-
-        #
         if question.upper() == "EXIT":
-            print("-" * 80)
-            print("Exiting Code!")
-            print("-" * 80)
-
-            #
+            # Exit the program if the user types 'EXIT'
+            print("\nExiting Code!\n")
             break
-
-        #
         elif question.upper() == "DELETE":
-            print("-"*80)
-            print("DO YOU WISH TO DELETE THE DATABASE(YES/NO)?")
-
-            #
-            response = input()
-        
-            #
-            if response.upper() == "YES":
-                #
+            # Prompt the user to confirm deletion of the database
+            print("\nDO YOU WISH TO DELETE THE DATABASE? (This process is irreversible!)\n")
+            print("-"*100)
+            response = input(f"YES or NO? ").strip().upper()
+            if response == "YES":
+                # Delete the database if confirmed
                 vector_db.delete_milvus_db(db_path)
-                print("\n"+"-" * 80)
-                print("Database has been deleted, Exiting code!")
-                #
+                print("-"*100)
+                print("\nDatabase has been deleted, exiting code!\n")
                 break
-
-            #
-            elif response.upper() == "NO":
-                print("Database still exists :)")
-                #
+            elif response == "NO":
+                print("\nDatabase still exists! :)")
                 continue
+        elif question.upper() == "CLEAR":
+            # Clear the document directory if the user types 'CLEAR'
+            print("\nClearing the document directory!\n")
+            print("-"*100)
+            clear_directory(document_path)
+            print("\nNo documents are in the document directory!\n")
+            print("-"*100)
+            continue
+        elif question.upper() == "INFO":
+            # Provide info if requested by the user
+            print("\nNo info yet sorry!\n")
+            print("-"*100)
+            continue
 
-        # Perform retrieval and answering based on the question
+        # Retrieve documents and generate the answer
         retrieved_docs = retrieve_docs(retriever, question)
-        print("retrieve_docs: PASSED")
-
-        #
         prompt = create_prompt(retrieved_docs, question)
-        print("create_prompt: PASSED")
-
-        #
         answer = get_answer(llm, prompt)
-        print("get_answer: PASSED")
-
-        print("-" * 80)
-
         # Save the answer to a file
         save_answer_to_file(output_file, answer)
 
-# Runs the main function to execute other functions
+# Run the main function to start the program
 main()

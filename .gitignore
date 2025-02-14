@@ -1,6 +1,8 @@
 .DS_Store
 settings.json
 documents/
+test_documents/
+database/
 App/Milvus_Lite.db
 App/.Milvus_Lite.db.lock
 __pycache__/

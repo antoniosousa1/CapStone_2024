@@ -11,12 +11,12 @@ vector_db.py description and purpose:
     - This python file allows the vector database to handle any CRUD operations, it is called by the main python file llm.py which then calls the specific functions 
       as needed. More details to follow for the description! :) 
 '''
-
-# BEGINNING OF CODE !!!
+# Import necessary libraries for file handling and time management
 import os, time
 
+# Importing classes for working with Llama embeddings, document loaders, and Milvus database from LangChain
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
-from langchain_community.document_loaders import DirectoryLoader, TextLoader, CSVLoader, UnstructuredPDFLoader, UnstructuredWordDocumentLoader, UnstructuredPowerPointLoader
+from langchain_community.document_loaders import DirectoryLoader, TextLoader, CSVLoader, PyMuPDFLoader, UnstructuredPDFLoader, UnstructuredWordDocumentLoader, UnstructuredPowerPointLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 from langchain_milvus import Milvus # type: ignore
@@ -28,8 +28,8 @@ def create_milvus_db(splits: list[Document], llama_embeddings: OllamaEmbeddings,
 
     # If no documents are provided, return the database without adding any texts
     if not splits:
-        print("No documents to add! Returning an empty database...")
-        print("-"*80)
+        print("\n"+ "No documents to add! Returning an empty database...")
+        print("\n"+ "-"*100)
         vector_db = Milvus(
             embedding_function=llama_embeddings,
             connection_args={"uri": db_path},
@@ -39,6 +39,9 @@ def create_milvus_db(splits: list[Document], llama_embeddings: OllamaEmbeddings,
     
     # Extract page content from documents for embedding
     text_splits = [doc.page_content for doc in splits]
+    if not text_splits:
+        print("Warning: No valid content found in the documents!")
+        return vector_db  # or handle this case differently
 
     # Initialize Milvus vector database
     vector_db = Milvus(
@@ -60,6 +63,10 @@ def create_milvus_db(splits: list[Document], llama_embeddings: OllamaEmbeddings,
 def add_to_milvus_db(splits: list[Document], vector_db) -> Milvus:
     # Extract page content from documents for embedding
     text_splits = [doc.page_content for doc in splits]
+    if not text_splits:
+        print("\nWarning: No valid content found in the documents!\n")
+        print("-"*100)
+        return vector_db  # or handle this case differently
 
     # Generate unique IDs for each document
     ids = [str(i) for i in range(len(text_splits))]
@@ -100,41 +107,41 @@ def load_new_docs(new_files: set, data_path: str) -> list[Document]:
                     loader = TextLoader(file_path, encoding="utf-8")
                     docs = loader.load()
                     new_loaded_docs.extend(docs)
-                    print(f"Loaded TXT file: {file_path}")
+                    print(f"\nLoaded TXT file: {file_path}\n")
                 
                 elif file_path.endswith(".docx"):
                     loader = UnstructuredWordDocumentLoader(file_path)
                     docs = loader.load()
                     new_loaded_docs.extend(docs)
-                    print(f"Loaded DOCX file: {file_path}")
+                    print(f"\nLoaded DOCX file: {file_path}\n")
                 
                 elif file_path.endswith(".pdf"):
                     loader = UnstructuredPDFLoader(file_path)
                     docs = loader.load()
                     new_loaded_docs.extend(docs)
-                    print(f"Loaded PDF file: {file_path}")
+                    print(f"\nLoaded PDF file: {file_path}\n")
                 
                 elif file_path.endswith(".pptx"):
                     loader = UnstructuredPowerPointLoader(file_path)
                     docs = loader.load()
                     new_loaded_docs.extend(docs)
-                    print(f"Loaded PPTX file: {file_path}")
+                    print(f"\nLoaded PPTX file: {file_path}\n")
                 
                 elif file_path.endswith(".csv"):
                     loader = CSVLoader(file_path)
                     docs = loader.load()
                     new_loaded_docs.extend(docs)
-                    print(f"Loaded CSV file: {file_path}")
+                    print(f"\nLoaded CSV file: {file_path}\n")
 
                 else:
                     # Handle unsupported file types
-                    print(f"Unsupported file type: {file_path}")
+                    print(f"\nUnsupported file type: {file_path}\n")
             except Exception as e:
                 # Handle errors during loading
-                print(f"Error loading {file_path}: {e}")
+                print(f"\nError loading {file_path}: {e}\n")
         else:
             # Handle case where file doesn't exist
-            print(f"File not found: {file_path}")
+            print(f"\nFile not found: {file_path}\n")
     
     # Return the list of loaded documents
     return new_loaded_docs
@@ -153,6 +160,4 @@ def delete_milvus_db(db_path: str):
     # Check if the database exists and remove it
     if os.path.exists(db_path):
         os.remove(db_path)
-        print("-" * 80)
-        print("delete_milvus_db: PASSED")
         time.sleep(2)
