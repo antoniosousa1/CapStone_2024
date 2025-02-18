@@ -1,8 +1,22 @@
 from deepeval.synthesizer import Synthesizer
 from deepeval.synthesizer.config import ContextConstructionConfig
 from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langchain.vectorstores.base import VectorStoreRetriever
 
 from deepeval.models import DeepEvalBaseLLM, DeepEvalBaseEmbeddingModel
+from deepeval.dataset import EvaluationDataset
+from deepeval.metrics import AnswerRelevancyMetric
+from deepeval.test_case import LLMTestCase
+
+##To Add##################################################
+
+#implemnt pydantic libraray to enforece json output
+
+#try larger sample data set
+
+#fix inputs and maybe gives users chance to pick vaible inputs
+
+#
 
 ##########################################################
 class LlamaLLM(DeepEvalBaseLLM):
@@ -55,15 +69,48 @@ class LlamaLLMEmbeddings(DeepEvalBaseEmbeddingModel):
 
 ##########################################################
 
-
+#llama model and embeddings
 llama_llm = LlamaLLM()
 llama_embeddings = LlamaLLMEmbeddings()
 
-synthesizer = Synthesizer(model=llama_llm)
-synthesizer.generate_goldens_from_docs(document_paths=["./data/dog.txt"], context_construction_config=ContextConstructionConfig(embedder=llama_embeddings, chunk_size=50, critic_model=llama_llm))
-for i in range(len(synthesizer.synthetic_goldens)):
+#initalize dataset and deepeval metrics
+dataset = EvaluationDataset()
+ccc = ContextConstructionConfig(embedder=llama_embeddings, chunk_size=75, critic_model=llama_llm)
+answer_relevancy_metric = AnswerRelevancyMetric(threshold=0.7, model=llama_llm)
+
+
+#initliize sythesizer and generate goldens from docs and place them into dataset
+llama_synthesizer = Synthesizer(model=llama_llm)
+dataset.generate_goldens_from_docs(
+    synthesizer=llama_synthesizer, 
+    document_paths=["./data/dog.txt", "./data/cowboy.txt"], 
+    context_construction_config=ccc
+)
+
+#creating test cases so that  metics can be applied to dataset
+for golden in dataset.goldens:
     print("#" * 40)
-    print(f"Golden: {i}")
-    for x in synthesizer.synthetic_goldens[i]:
+    print("Golden: ")
+    for x in golden:
         print(x)
-    print("#" * 40)
+    # Compute actual output
+    actual_output = llama_llm.generate(golden.input)  
+
+    #add test cases with the goldens data and the acual output to run 
+    dataset.add_test_case(
+        LLMTestCase(
+            input=golden.input,
+            actual_output=actual_output,
+            expected_output=golden.expected_output,
+            context=golden.context
+        )
+    )
+
+
+
+
+
+#print metics data
+print("#" * 40)
+print("metric:")
+print(dataset.evaluate([answer_relevancy_metric]))

@@ -19,9 +19,6 @@ from langchain.schema import Document
 from langchain_milvus import Milvus # type: ignore
 from langchain.vectorstores.base import VectorStoreRetriever
 
-from ragas.llms import LangchainLLMWrapper
-from ragas.testset import TestsetGenerator
-
 import os, time
 
 # Timer to check for the runtime of our code (Used for testing purposes)
@@ -150,20 +147,6 @@ def save_answer_to_file(output_file: str, answer: str):
 
     print(f"Your answer has been saved to {output_file}")
 
-# Function to evaluate the LLM
-def eval(llm: OllamaLLM, llama_embeddings: OllamaEmbeddings, docs:list[Document]):
-
-    #Generate Dataset using LLM
-    gen_llm = LangchainLLMWrapper(llm)
-
-    generator = TestsetGenerator(llm=gen_llm, embedding_model=llama_embeddings)
-    dataset=generator.generate_with_langchain_docs(docs, testset_size=10)
-
-    dataset.to_csv("./tests/test_result")
-    # Get a data set this must be of type list[dict]
-
-    # use the evualator proivded by ragas on data set 
-    return
 
 # Main function
 def main():
