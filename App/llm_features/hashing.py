@@ -1,5 +1,5 @@
 '''
-File: gile_naming_utils.py
+File: hashing.py
 Authors: Antonio Sousa Jr(Team Lead), Matthew Greeson, Goncalo Felix, Antonio Morais, Dylan Ricci, Ryan Medeiros
 Affiliation: University of Massachusetts Dartmouth
 Course: CIS 498 & 499 (Senior Capstone Project)
@@ -7,7 +7,7 @@ Ownership: Rite-Solutions, Inc.
 Client/Stakeholder: Brandon Carvhalo  
 Date: 2025-4-25
         
-file_naming_utils.py description and purpose: 
+hashing.py description and purpose: 
     - This code will generate a hash set that will give unique ids to each file name and its content, currently getting worked on
 
 '''
@@ -75,6 +75,10 @@ def compare_hash_values(hash_set):
                 print(f" - {file}")
             
             print("\n"+"-" * 100)  # Separator for readability
+            print(f"\nThe duplicate file: {file} was deleted! (Not actully deleted) \n")
+            print("-"*100)
+
+            
 
 
 # Function to compute and store new hash values for newly added files
