@@ -2,6 +2,9 @@
 settings.json
 data/
 User_Answer.txt
-App/Milvus_Lite.db
-App/.Milvus_Lite.db.lock
+App/mil_db/Milvus_Lite.db
+App/mil_db/.Milvus_Lite.db.lock
 App/tests/.vector_db
+__pycache__
+App/tests/.deepeval-cache.json
+App/tests/.deepeval_telemetry.txt

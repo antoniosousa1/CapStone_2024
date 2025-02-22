@@ -1,12 +1,13 @@
 from deepeval.synthesizer import Synthesizer
 from deepeval.synthesizer.config import ContextConstructionConfig
 from langchain_ollama import ChatOllama, OllamaEmbeddings
-from langchain.vectorstores.base import VectorStoreRetriever
 
 from deepeval.models import DeepEvalBaseLLM, DeepEvalBaseEmbeddingModel
 from deepeval.dataset import EvaluationDataset
 from deepeval.metrics import AnswerRelevancyMetric
 from deepeval.test_case import LLMTestCase
+
+from App.mod import RAG
 
 ##To Add##################################################
 
@@ -33,10 +34,12 @@ class LlamaLLM(DeepEvalBaseLLM):
     
     def generate(self, prompt: str) -> str:
         chat_model = self.load_model()
-        return chat_model.invoke(prompt).content
+        response = chat_model.invoke(prompt).content
+
+        return response
         
     async def a_generate(self, prompt: str) -> str:
-        return self.generate(prompt)
+        return self.generate(prompt=prompt)
     
 ##########################################################
 class LlamaLLMEmbeddings(DeepEvalBaseEmbeddingModel):
@@ -72,10 +75,16 @@ class LlamaLLMEmbeddings(DeepEvalBaseEmbeddingModel):
 #llama model and embeddings
 llama_llm = LlamaLLM()
 llama_embeddings = LlamaLLMEmbeddings()
+rag = RAG()
 
 #initalize dataset and deepeval metrics
 dataset = EvaluationDataset()
-ccc = ContextConstructionConfig(embedder=llama_embeddings, chunk_size=75, critic_model=llama_llm)
+ccc = ContextConstructionConfig(embedder=llama_embeddings, 
+                                chunk_size=75, 
+                                critic_model=llama_llm,
+                                max_contexts_per_document=2
+                                )
+
 answer_relevancy_metric = AnswerRelevancyMetric(threshold=0.7, model=llama_llm)
 
 
@@ -83,9 +92,11 @@ answer_relevancy_metric = AnswerRelevancyMetric(threshold=0.7, model=llama_llm)
 llama_synthesizer = Synthesizer(model=llama_llm)
 dataset.generate_goldens_from_docs(
     synthesizer=llama_synthesizer, 
-    document_paths=["./data/dog.txt", "./data/cowboy.txt"], 
-    context_construction_config=ccc
+    document_paths=["../data/dog.txt", "../data/cowboy.txt", "../data/shark.txt"], 
+    context_construction_config=ccc,
+    max_goldens_per_context=1
 )
+
 
 #creating test cases so that  metics can be applied to dataset
 for golden in dataset.goldens:
@@ -94,7 +105,7 @@ for golden in dataset.goldens:
     for x in golden:
         print(x)
     # Compute actual output
-    actual_output = llama_llm.generate(golden.input)  
+    actual_output = llama_llm.generate(prompt=golden.input)  
 
     #add test cases with the goldens data and the acual output to run 
     dataset.add_test_case(
