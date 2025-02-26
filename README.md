@@ -19,3 +19,7 @@ https://python.langchain.com/docs/tutorials/rag/
 in the container to make your work flow easier run "docker run -v .:/app -it ollama-app" 
 in the "App" local directory
 7. If you have any docker quesetions view the docs here https://docs.docker.com/
+
+# RAGAS Evaluation Documentation
+1. Home Docs -> https://docs.ragas.io/en/latest/
+2. Metric Docs -> https://docs.ragas.io/en/latest/concepts/metrics/available_metrics/?h=metrics

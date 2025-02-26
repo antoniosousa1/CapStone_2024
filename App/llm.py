@@ -19,6 +19,11 @@ from langchain.schema import Document
 from langchain_milvus import Milvus # type: ignore
 from langchain.vectorstores.base import VectorStoreRetriever
 
+from ragas import EvaluationDataset, evaluate, SingleTurnSample
+from ragas.metrics import LLMContextPrecisionWithoutReference, Faithfulness, ResponseRelevancy
+from ragas.llms import LangchainLLMWrapper
+from ragas.embeddings import LangchainEmbeddingsWrapper
+
 import os, time
 
 # Timer to check for the runtime of our code (Used for testing purposes)
@@ -42,7 +47,7 @@ def load_docs(data_path: str) -> list[Document]:
 # splits docs into chunks
 def split_text(docs: list[Document]) -> list[Document]:
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=750, chunk_overlap=90, add_start_index=True
+        chunk_size=512, chunk_overlap=90, add_start_index=True
     )
     splits = text_splitter.split_documents(docs)
     return splits
@@ -78,14 +83,14 @@ def load_milvus_db(llama_embeddings: OllamaEmbeddings, db_path: str) -> Milvus:
 
 # creates retriever
 def create_retriever(vector_store: Milvus) -> VectorStoreRetriever:
-    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 15})
+    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3})
     return retriever
 
 # Retrieves the chunks relevant to the question using a retriever
 def retrieve_docs(retriever: VectorStoreRetriever, question: str) -> list[Document]:
 
     # Use the retriever to search the vector database directly with the raw question text
-    search_results = retriever.invoke(question, k=15)
+    search_results = retriever.invoke(question)
 
     # Uncomment this code to check the returned docs by the line of code above
     # Check if no results were returned
@@ -147,6 +152,30 @@ def save_answer_to_file(output_file: str, answer: str):
 
     print(f"Your answer has been saved to {output_file}")
 
+def eval(question: str, retrived_docs: list[Document], answer: str, llm: OllamaLLM, llm_embeddings: OllamaEmbeddings) -> EvaluationDataset:
+
+    evaluator_llm = LangchainLLMWrapper(llm)
+    gen_embeddings = LangchainEmbeddingsWrapper(llm_embeddings)
+
+    sample = SingleTurnSample(
+        user_input=question,
+        response=answer,
+        retrieved_contexts=[doc.page_content for doc in retrived_docs]
+    )
+
+    dataset = EvaluationDataset(samples=[sample])
+
+    #Context Precision is a metric that measures the proportion of relevant chunks in the retrieved_contexts
+    #The Faithfulness metric measures how factually consistent a response is with the retrieved context
+    #The ResponseRelevancy metric measures how relevant a response is to the user input
+
+    result = evaluate(dataset=dataset,
+                      metrics=[LLMContextPrecisionWithoutReference(), Faithfulness(), ResponseRelevancy()],
+                      llm=evaluator_llm,
+                      embeddings=gen_embeddings
+                      )
+    
+    return result
 
 # Main function
 def main():
@@ -154,12 +183,12 @@ def main():
     data_path = "./data"
 
     # Sets the location where the db will be created and stored (Inside the App directory)
-    db_path = "./Milvus_Lite.db"
+    db_path = "./mil_db/Milvus_Lite.db"
 
     # Save the answer to a text file
     output_file = "User_Answer.txt"
     ollama_server_url = os.getenv("OLLAMA_SERVER_URL")
-    llama_model = "llama3.1"
+    llama_model = "llama3.1:latest"
 
     print(f"Using Ollama server at: {ollama_server_url}")
     print("-"*40)
@@ -233,7 +262,7 @@ def main():
         answer = get_answer(llm, prompt)
         print(answer)
         print("get_answer: PASSED")
-        eval = eval(llm, llama_embeddings, docs)
+        print(eval(question=question, retrived_docs=retrieved_docs, answer=answer, llm=llm, llm_embeddings=llama_embeddings))
 
         print("-"*40)
         
