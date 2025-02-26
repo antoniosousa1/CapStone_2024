@@ -8,7 +8,7 @@ from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 
-data_path = "./data"
+data_path = "../App/data"
 
 # Function to load and apply the CSS file
 def load_css(file_name):
