@@ -8,4 +8,4 @@ langchain-milvus==0.1.7
 watchdog==6.0.0
 pymilvus==2.4.9
 unstructured
-unstructured[pdf, docx, pptx]
+unstructured[pdf, docx, pptx, csv]

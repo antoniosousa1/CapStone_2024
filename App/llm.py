@@ -12,163 +12,106 @@ Project Description: This code utilizes Ollama as our LLM and a Retrieval-Augmen
 
 '''
 
-# Import the threading module to handle multi-threading
-import threading
-# Import os and time modules for file handling and timing
-import os, time
-# Import hashing functionality from llm_features module
-from llm_features import hashing
-# Import vector database functionality from llm_features module
-from llm_features import vector_db
-# Import the Observer class from watchdog for file system monitoring
+# Import necessary libraries for multi-threading, file handling, and LangChain functionality
+import os, time, threading
+import llm_package.watchdog_observer as watchdog_observer
 from watchdog.observers import Observer # type: ignore
-# Import FileSystemEventHandler class from watchdog for handling file system events
 from watchdog.events import FileSystemEventHandler # type: ignore
-# Import necessary classes for using the Ollama language model and embeddings
-from langchain_ollama import OllamaLLM, OllamaEmbeddings
-# Import document loader classes from langchain_community for various document formats
-from langchain_community.document_loaders import DirectoryLoader, TextLoader, CSVLoader, UnstructuredPDFLoader, UnstructuredWordDocumentLoader, UnstructuredPowerPointLoader
-# Import text splitter to split documents into smaller chunks
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-# Import Document schema class from langchain
-from langchain.schema import Document
-# Import Milvus from langchain_milvus for managing vector databases
-from langchain_milvus import Milvus # type: ignore
-# Import VectorStoreRetriever from langchain.vectorstores to query the vector store
-from langchain.vectorstores.base import VectorStoreRetriever
+from llm_package import hashing, vector_db, text_splitter  # Import hashing and vector database functions from the llm_features module
+from langchain_ollama import OllamaLLM, OllamaEmbeddings  # For using the Ollama language model
+from langchain_community.document_loaders import (
+    DirectoryLoader, TextLoader, CSVLoader, 
+    UnstructuredPDFLoader, UnstructuredWordDocumentLoader, UnstructuredPowerPointLoader
+)  # For loading documents of different formats
+from langchain_text_splitters import RecursiveCharacterTextSplitter  # For splitting documents into chunks
+from langchain.schema import Document  # Document schema class
+from langchain_milvus import Milvus # type: ignore  # For managing vector databases
+from langchain.vectorstores.base import VectorStoreRetriever  # For querying vector stores
 
-# Start a timer to track the total execution time of the code
+# Start a timer to track total execution time of the code
 start = time.time()
-lock = threading.Lock()
 
-# Function to split documents into smaller chunks
-def split_text(docs: list[Document]) -> list[Document]:
-    # Initialize the RecursiveCharacterTextSplitter with parameters for chunk size and overlap
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=600, chunk_overlap=200, add_start_index=True
-    )
-    # Split the documents into chunks
-    splits = text_splitter.split_documents(docs)
-    return splits
-
-# Function to create a retriever from a vector store
+# Function to create a retriever for querying the vector store
 def create_retriever(vector_store: Milvus) -> VectorStoreRetriever:
-    # Create and return the retriever for querying the vector store
     retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 15})
     return retriever
 
-# Function to retrieve relevant documents using the retriever
+# Function to retrieve relevant documents based on a user's query
 def retrieve_docs(retriever: VectorStoreRetriever, question: str) -> list[Document]:
-    # Retrieve and return the top 15 documents relevant to the user's question
-    search_results = retriever.invoke(question, k=15)
+    search_results = retriever.invoke(question, k=15)  # Retrieve top 15 relevant documents
     return search_results
 
-# Function to check if any new files have been added to the directory
-def check_dir():
-    # Return nothing for now, it's a placeholder function
-    return 
 
 # Function to prompt the user for a question
 def get_user_question() -> str:
-    # Print options for the user to interact with the program
     print("\nPlease Enter A Question Below, Or One Of The Commands Listed: \n")
     print("-"*100)
     print("1.) Type 'EXIT' to exit the program!")
     print("2.) Type 'DELETE' to delete the database!")
     print("3.) Type 'CLEAR' to clear the document directory!")
     print("4.) Type 'INFO' to get information regarding the program!")
+    print("5.) Type 'DELETEDATA' to delete vector embeddings!")
     print("\n"+ "-"*100)
-    # Get the user's input and return it
-    question = input(f"What would you like to ask? \n")
+    question = input(f"What would you like to ask? \n")  # Prompt for user input
     print("\n"+"-"*100)
     return question
 
-# Create a prompt
-def create_prompt(retrieved_docs: list[Document], question: str, prevAnswer: str, prevQuestion) -> str:
+# Function to create a detailed prompt with context for the LLM
+def create_prompt(retrieved_docs: list[Document], question: str, prevAnswer: str, prevQuestion: str) -> str:
     prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. Use five sentences maximum and keep the answer concise. Use the previous question and answer if requested by the user.  \n"
     
+    # Format the question, context, and previous interactions
     Question = "Question: " + question + "\n"
-
     Context_str = "Context: \n\n"
-
     prevQuestion = "Previous Question asked of you: " + prevQuestion + "\n"
     prevAnswer = "Previous Answer you provided the user: " + prevAnswer + "\n"
 
-
+    # Add the context from the retrieved documents to the prompt
     for i in retrieved_docs:
         Context_str += i.page_content + "\n\n"
 
-    #Comment out when done
-    #print("***THIS IS THE CONTEXT***")
-    #print(Context_str)
-    #print("***THIS IS THE CONTEXT***")
-
     Answer = "Answer: "
-
     final_prompt = prompt + Question + Context_str + prevQuestion + prevAnswer + Answer
 
     return final_prompt
 
-# Create a prompt
+# Alternative prompt creation function with an additional LLM context
 def create_prompt2(retrieved_docs: list[Document], llm1_context: str, question: str, prevAnswer: str, prevQuestion: str) -> str:
     prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. Use five sentences maximum and keep the answer concise. Use the previous question and answer if requested by the user. \n"    
     Question = "Question: " + question + "\n"
-
     Context_str = "Context: \n\n"
 
-
+    # Add the context from the retrieved documents to the prompt
     for i in retrieved_docs:
         Context_str += i.page_content + "\n\n"
 
-    #Comment out when done
-    #print("***THIS IS THE CONTEXT***")
-    #print(Context_str)
-    #print("***THIS IS THE CONTEXT***")
-
+    # Add the additional LLM context
     llm1_context = "This is an answer generated by another LLM, try to use this to make a better and more insightful response: " + llm1_context + "\n"
    
-    #Comment out when done
-    #print("***THIS IS THE 1st LLM***")
-    #print(llma1_context)
-    #print("***THIS IS THE 1st LLM***")
     prevQuestion = "If needed, this is the previous question asked of you: " + prevQuestion + "\n"
     prevAnswer = "If needed, this is the previous answer you provided the user: " + prevAnswer + "\n"
     
-    #Comment out when done
-    #print("***")
-    #print("Previous question" + prevQuestion)
-    #print("previous answer" + prevAnswer)
-    #print("***")
-    
-
     Answer = "Answer: "
-
     final_prompt = prompt + Question + Context_str + llm1_context + prevQuestion + prevAnswer + Answer
-
-    #Comment out when done
-    #print("***THIS IS THE 1st LLM***")
-    #print("What the Final LLM should see \n" + final_prompt)
-    #print("***THIS IS THE 1st LLM***")
 
     return final_prompt
 
-# Function to query the LLM with the created prompt and return the answer
+# Function to query the LLM with the generated prompt and return the answer
 def get_answer(llm: OllamaLLM, prompt: str) -> str:
-    # Get the answer from the LLM
-    answer = llm.invoke(prompt)
+    answer = llm.invoke(prompt)  # Get the answer from the LLM
     return answer
 
 # Function to save the generated answer to a file
 def save_answer_to_file(output_file2: str, answer: str):
-    # Open the file for writing
+    """
+    Saves the answer to a file, splitting it into sentences and cleaning each one before writing.
+    """
     with open(output_file2, "w") as file:
-        # Split the answer into sentences and clean each one before writing
-        sentences = answer.strip().split(".")
+        sentences = answer.strip().split(".")  # Split answer into sentences
         for sentence in sentences:
             cleaned_sentence = sentence.strip()
-            if cleaned_sentence:
-                file.write(cleaned_sentence + ".\n")
-
+            if cleaned_sentence:  # Ensure the sentence is not empty
+                file.write(cleaned_sentence + ".\n")  # Write each sentence to the file
 
 # Function to get the current files in the specified directory
 def get_files_in_directory(document_path: set) -> set:
@@ -183,80 +126,31 @@ def clear_directory(directory_path):
         if os.path.isfile(file_path):
             os.remove(file_path)
 
-# Function to start the file observer to detect new files in the directory
-def start_observer(document_path, new_files, hash_set, vector_store, hash_values):
-    # Create a file system event handler
-    event_handler = FileSystemEventHandler()
-    # Assign the on_created function to handle new file creation events
-    event_handler.on_created = lambda event: on_created(event, new_files, document_path, hash_set, vector_store, hash_values)
-    # Initialize the observer to watch the directory for changes
+    print("\nGenerating new embeddings, this may take a while!\n")
+    print("-" * 100)
+
+# Function to set up and run Watchdog
+# Watchdog function to run in a background thread
+def run_watchdog(path, file_added_event, new_files, document_path, hash_set, hash_values, vector_store):
+    event_handler = watchdog_observer.MyHandler(file_added_event, new_files, document_path, hash_set, hash_values, vector_store)
     observer = Observer()
-    # Schedule the event handler to monitor the directory
-    observer.schedule(event_handler, document_path, recursive=False)
+    observer.schedule(event_handler, path, recursive=True)
     observer.start()
+    
     try:
-        observer.join()
+        while True:
+            time.sleep(1)
     except KeyboardInterrupt:
-        # Stop the observer if interrupted
         observer.stop()
-        observer.join()
+        print("\nWatchdog stopped.")
+    observer.join()
 
-# Function to start the observer in a separate thread to monitor file creation
-def start_observer_thread(document_path, new_files, hash_set, vector_store, hash_values):
-    # Start the observer in a new thread
-    observer_thread = threading.Thread(target=start_observer, args=(document_path, new_files, hash_set, vector_store, hash_values), daemon=True)
-    observer_thread.start()
-
-# Function to handle the creation of new files in the directory
-def on_created(event, new_files, document_path, hash_set, vector_store, hash_values):
-    # Check if the event is not a directory creation
-    if not event.is_directory:
-        with lock:
-            # Get the file name from the event
-            filename = os.path.basename(event.src_path)
-            # Proceed only if this file is new
-            if filename not in new_files:
-                new_timer = time.time()
-                print("\n" + "-" * 100)
-                print(f"\nNew file detected: {filename}\n")
-                print("-" * 100)
-                new_files.add(filename)
-                # Compute the file hash and compare it
-                file_hash = hashing.compute_file_hash_value(filename, document_path)
-                if file_hash and filename not in hash_set:
-                    hash_set[filename] = file_hash
-                    with open(hash_values, 'a') as f:
-                        f.write(f"File: {filename}\nHash: {file_hash}\n")
-                        f.write("-" * 100 + "\n")
-                    hashing.compare_hash_values(hash_set)
-                    # Load the new document and split it into chunks
-                    new_docs = vector_db.load_new_docs([filename], document_path)
-                    new_splits = split_text(new_docs)
-                    print("-" * 100)
-                    print("\nGenerating new embeddings, this may take a while!\n")
-                    print("-" * 100)
-                    # Add the new embeddings to the vector store
-                    vector_db.add_to_milvus_db(new_splits, vector_store)
-                    new_end = time.time()
-                    elapsed_time = new_end - new_timer
-                    print(f"\nTime taken: {elapsed_time:.2f} seconds\n")
-                    print("-" * 80)
-                    print("\nPlease Enter A Question Below, Or One Of The Commands Listed: \n")
-                    print("-"*100)
-                    print("1.) Type 'EXIT' to exit the program!")
-                    print("2.) Type 'DELETE' to delete the database!")
-                    print("3.) Type 'CLEAR' to clear the document directory!")
-                    print("4.) Type 'INFO' to get information regarding the program!")
-                    print("\n"+ "-"*100)
-                    print("What would you like to ask?")
 
 # Main function to run the program
 def main():  
-    # Start a timer to track the execution time
-    start = time.time()
 
-    
     # Define paths for documents, database, and result files
+    directory_to_watch = "documents"  # Replace with the directory you want to monitor
     document_path = "./documents"
     db_path = "./database/Milvus_Lite.db"
     output_file = "./results/LLM1_response_debugging.txt"
@@ -264,6 +158,7 @@ def main():
     previousAnswer = ""
     previousQuestion = ""
     hash_values = "./results/hash_values.txt"
+
 
     # Create or clear the hash values file
     with open(hash_values, "w") as f:
@@ -275,15 +170,12 @@ def main():
     deepseek_model = "deepseek-r1:70b"
 
     # Print the Ollama server URL being used
-    print(f"\nUsing Ollama server at: {ollama_server_url}")
+    print(f"\nUsing Ollama server at: {ollama_server_url}\n")
     print("-" * 100)
 
     # Initialize the Ollama LLM and DeepSeek LLM and embeddings
-
     llm2 = OllamaLLM(model=llama_model, base_url=ollama_server_url)
     llama_embeddings2 = OllamaEmbeddings(model=llama_model, base_url=ollama_server_url)
-
-    #**** Testing ****
     llm1 = OllamaLLM(model=deepseek_model, base_url=ollama_server_url)
     llama_embeddings = OllamaEmbeddings(model=deepseek_model, base_url=ollama_server_url)
 
@@ -297,7 +189,7 @@ def main():
     # If there are existing files, generate hash values for them
     if new_files:
         print("\nGenerating hash values for existing files!\n")
-        print("-" * 100)
+        print("-"*100)
         with open(hash_values, 'w') as f:
             for file_path in new_files:
                 file_hash = hashing.compute_file_hash_value(file_path, document_path)
@@ -305,7 +197,7 @@ def main():
                     hash_set[file_path] = file_hash
                     f.write(f"File: {file_path}\nHash: {file_hash}\n")
                     f.write("-" * 100 + "\n")
-        hashing.compare_hash_values(hash_set)
+        hashing.compare_hash_values(hash_set, document_path, hash_values)
     else:
         print("\nNo new documents to generate hash values for!\n")
         print("-" * 100)
@@ -313,32 +205,41 @@ def main():
     # Check if the database exists
     if os.path.exists(db_path):
         print(f"\nThe path {db_path} exists!\n")
-        print("-" * 100)
+        # Check if any new files exist
     else:
         print(f"\nThe path {db_path} does not exist, creating Milvus Lite database now!!\n")
         print("-" * 100)
+        start = time.time()
         # Load documents and create the vector store if the database does not exist
         docs = vector_db.load_docs(document_path)
-        splits = split_text(docs)
+        splits = text_splitter.split_text(docs)
+        # Start a timer to track the execution time
+       
         print("\nGenerating embeddings, this may take a while!\n")
         print("-" * 100)
         vector_db.create_milvus_db(splits, llama_embeddings, db_path)
+        # Track the elapsed time for the setup
+        end = time.time()
+        elapsed_time = end - start
+        print(f"\nTime taken to generate embeddings: {elapsed_time:.2f} seconds\n")
 
-    # Track the elapsed time for the setup
-    end = time.time()
-    elapsed_time = end - start
-    print(f"\nTime taken: {elapsed_time:.2f} seconds\n")
     print("-" * 100)
 
     # Load the vector store and initialize the retriever
     vector_store = vector_db.load_milvus_db(llama_embeddings, db_path)
     retriever = create_retriever(vector_store)
 
-    # Start the file observer thread
-    start_observer_thread(document_path, new_files, hash_set, vector_store, hash_values)
+     # Create an Event object for synchronization
+    file_added_event = threading.Event()
+
+    # Start the watchdog in a separate thread to monitor file changes
+    watchdog_thread = threading.Thread(target=run_watchdog, args=(directory_to_watch, file_added_event, new_files, document_path, hash_set, hash_values, vector_store))
+    watchdog_thread.daemon = True  # Ensure the thread stops when the main program exits
+    watchdog_thread.start()
 
     # Enter a loop to allow the user to ask questions
     while True:
+
         # Get a question from the user
         question = get_user_question()
         if previousAnswer == None:
@@ -380,6 +281,9 @@ def main():
             print("\nNo info yet sorry!\n")
             print("-"*100)
             continue
+        elif question.upper() == "DELETEDATA":
+            vector_db.milvus_delete_entry(llama_embeddings, db_path)
+            continue
 
         # Retrieve documents and generate the answer
         retrieved_docs = retrieve_docs(retriever, question)
@@ -388,27 +292,25 @@ def main():
         prompt = create_prompt(retrieved_docs, question, previousAnswer, previousQuestion)
         answer = get_answer(llm1, prompt)
 
-        # Save the answer to a file (DeepSeeks response) 
+        # Save the answer to a file (DeepSeek's response) 
         save_answer_to_file(output_file, answer)
-        # Print a message confirming that the answer has been saved
-        print(f"\nDeepSeeks response has been saved to {output_file}\n")
+        print(f"\nDeepSeek's response has been saved to {output_file}\n")
         print("-"*100)
-        # LlaMa Model prompt and answer generation
-        prompt2 = create_prompt2(retrieved_docs,answer,question,previousAnswer, previousQuestion)
+
+        # Llama Model prompt and answer generation
+        prompt2 = create_prompt2(retrieved_docs, answer, question, previousAnswer, previousQuestion)
         answer2 = get_answer(llm2, prompt2)
 
-        # store answer to save
+        # Store the answer for future reference
         previousAnswer = answer2
         previousQuestion = question
         
         # Final answer
         save_answer_to_file(output_file_2, answer2)
 
-         # Print a message confirming that the answer has been saved
+        # Confirm the final answer has been saved
         print(f"\nFinal answer has been saved to {output_file_2}\n")
         print("-"*100)
-
-       
 
 # Run the main function to start the program
 main()
