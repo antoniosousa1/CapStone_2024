@@ -15,8 +15,8 @@ Project Description: This code utilizes Ollama as our LLM and a Retrieval-Augmen
 # Import necessary libraries for multi-threading, file handling, and LangChain functionality
 import os, time, threading
 import llm_package.watchdog_observer as watchdog_observer
-from watchdog.observers import Observer # type: ignore
-from watchdog.events import FileSystemEventHandler # type: ignore
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler 
 from llm_package import hashing, vector_db, text_splitter  # Import hashing and vector database functions from the llm_features module
 from langchain_ollama import OllamaLLM, OllamaEmbeddings  # For using the Ollama language model
 from langchain_community.document_loaders import (
@@ -25,15 +25,19 @@ from langchain_community.document_loaders import (
 )  # For loading documents of different formats
 from langchain_text_splitters import RecursiveCharacterTextSplitter  # For splitting documents into chunks
 from langchain.schema import Document  # Document schema class
-from langchain_milvus import Milvus # type: ignore  # For managing vector databases
+from langchain_milvus import Milvus # For managing vector databases
 from langchain.vectorstores.base import VectorStoreRetriever  # For querying vector stores
+from ragas import EvaluationDataset, evaluate, SingleTurnSample
+from ragas.metrics import LLMContextPrecisionWithoutReference, Faithfulness, ResponseRelevancy
+from ragas.llms import LangchainLLMWrapper
+from ragas.embeddings import LangchainEmbeddingsWrapper
 
 # Start a timer to track total execution time of the code
 start = time.time()
 
 # Function to create a retriever for querying the vector store
 def create_retriever(vector_store: Milvus) -> VectorStoreRetriever:
-    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 15})
+    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3})
     return retriever
 
 # Function to retrieve relevant documents based on a user's query
@@ -144,6 +148,31 @@ def run_watchdog(path, file_added_event, new_files, document_path, hash_set, has
         observer.stop()
         print("\nWatchdog stopped.")
     observer.join()
+
+def eval(question: str, retrived_docs: list[Document], answer: str, llm: OllamaLLM, llm_embeddings: OllamaEmbeddings) -> EvaluationDataset:
+
+    evaluator_llm = LangchainLLMWrapper(llm)
+    gen_embeddings = LangchainEmbeddingsWrapper(llm_embeddings)
+
+    sample = SingleTurnSample(
+        user_input=question,
+        response=answer,
+        retrieved_contexts=[doc.page_content for doc in retrived_docs]
+    )
+
+    dataset = EvaluationDataset(samples=[sample])
+
+    #Context Precision is a metric that measures the proportion of relevant chunks in the retrieved_contexts
+    #The Faithfulness metric measures how factually consistent a response is with the retrieved context
+    #The ResponseRelevancy metric measures how relevant a response is to the user input
+
+    result = evaluate(dataset=dataset,
+                      metrics=[LLMContextPrecisionWithoutReference(), Faithfulness(), ResponseRelevancy()],
+                      llm=evaluator_llm,
+                      embeddings=gen_embeddings
+                      )
+    
+    return result
 
 
 # Main function to run the program
@@ -311,6 +340,7 @@ def main():
         # Confirm the final answer has been saved
         print(f"\nFinal answer has been saved to {output_file_2}\n")
         print("-"*100)
+        print(eval(question=question, retrived_docs=retrieved_docs, answer=answer, llm=llm2, llm_embeddings=llama_embeddings))
 
 # Run the main function to start the program
 main()

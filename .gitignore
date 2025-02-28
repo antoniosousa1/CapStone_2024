@@ -1,8 +1,9 @@
 .DS_Store
 settings.json
+database/
+App/tests/.deepeval-cache.json
+App/tests/.deepeval_telemetry.txt
 documents/
 test_documents/
 database/
-App/Milvus_Lite.db
-App/.Milvus_Lite.db.lock
 __pycache__/
