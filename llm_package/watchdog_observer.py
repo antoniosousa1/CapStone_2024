@@ -1,10 +1,10 @@
-from watchdog.observers import Observer # type: ignore
 from watchdog.events import FileSystemEventHandler # type: ignore
 from llm_package import hashing, vector_db, text_splitter
 import time, os
 
 # Define the watchdog handler class
 class MyHandler(FileSystemEventHandler):
+    
     def __init__(self, file_added_event, new_files, document_path, hash_set, hash_values, vector_store):
         self.file_added_event = file_added_event  # Event to signal new file addition
         self.new_files = new_files
