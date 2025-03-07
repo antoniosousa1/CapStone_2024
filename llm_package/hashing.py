@@ -88,7 +88,7 @@ class Hashing():
                             print(f"\nThe duplicate file '{file_name}' was deleted!\n")
 
                             # Remove the hash entry for the deleted file from the hash results
-                            remove_hash_entry(hash_values, file_name)
+                            self.remove_hash_entry(hash_values, file_name)
 
                             # Remove the file from the list of duplicates
                             files.remove(file_name)

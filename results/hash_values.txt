@@ -1,29 +1,5 @@
-File: spec tool characterizing errors in tool-use LLMs.pdf
-Hash: ce6abf9f4e977de10205420fc5c1cc3da91df76206340d5acb0b1f5fc17e48db
-----------------------------------------------------------------------------------------------------
-File: adopting RAG for LLM aided future vehicle design.pdf
-Hash: 25ddeee914663f13e94d6b3701d39b3336e282b2a2c3b18d3d18178d7fd1b7d7
-----------------------------------------------------------------------------------------------------
 File: Copy of Role_of_DevOps.pdf
 Hash: d0b3f66b71158d70ba335d56cd106791b9680ba20b9d8bccdbb1bae61286aaa5
-----------------------------------------------------------------------------------------------------
-File: Role_of_DevOps.docx
-Hash: ee97aa85002010589ac97ed71ebfe647cb4639d1d1ccb1e01777f82ca0f1b410
-----------------------------------------------------------------------------------------------------
-File: Block_Chain_Docx.docx
-Hash: b2bf1f0eefdb9f65f5ecdb69044b7f2cb43d42657ad685941a8b9c815d46eeed
-----------------------------------------------------------------------------------------------------
-File: log-based Anomalu Detection Using LLM.pdf
-Hash: c7a9617f5c0b483c2e756bc1e0235fde3b536e5ebd9163f1e89742704badb7f4
-----------------------------------------------------------------------------------------------------
-File: Review_Exam1.pdf
-Hash: 816f14225f56e00acee70ba8658b5993f8ed7504c1d9ca2d0130e497592095b0
-----------------------------------------------------------------------------------------------------
-File: using multiple llms for information retrieval.pdf
-Hash: 0012965c17bcc7607f05dc00ee73bce58fb648f2900786276a28aee47680fd69
-----------------------------------------------------------------------------------------------------
-File: Detecting_LLM-Generated_Text_in_Computing_Education_Comparative_Study_for_ChatGPT_Cases.pdf
-Hash: c57a2c619c22d903a84a2f9f0db35a029bd4726fd2d7e6a59b5ffb00b5603df6
 ----------------------------------------------------------------------------------------------------
 File: use_cases.docx
 Hash: e66fae14b1525ba1bcb69d155a7a2f478689f2ffc2de7b50b122e60bc3d5438e
@@ -31,30 +7,54 @@ Hash: e66fae14b1525ba1bcb69d155a7a2f478689f2ffc2de7b50b122e60bc3d5438e
 File: empirical study on LLM agents for bug fixinig.pdf
 Hash: 633354495cb4b0dc3da772784354c4c5c95ee4c51f19738b734fd1767f2ef8b0
 ----------------------------------------------------------------------------------------------------
-File: llm hallucination reasoning with zero shot knowledge test.pdf
-Hash: 0ab31447c26d4cad878ac5ddec3cb327454bf1311a70958d1e7018e5deaf6f22
+File: CIS 481 cheat sheet.docx
+Hash: 133afa546ffcea2ea7166e71a1a63334139c49d71924351f4b66a4d3af8690df
+----------------------------------------------------------------------------------------------------
+File: adopting RAG for LLM aided future vehicle design.pdf
+Hash: 25ddeee914663f13e94d6b3701d39b3336e282b2a2c3b18d3d18178d7fd1b7d7
 ----------------------------------------------------------------------------------------------------
 File: How_to_distinguis_LLM_vs_human_code.pdf
 Hash: 5969bee342bfd3fca19ea1c15bdf12a5df10767134171863eaa49ec95ec64039
 ----------------------------------------------------------------------------------------------------
+File: Block_Chain_Docx.docx
+Hash: b2bf1f0eefdb9f65f5ecdb69044b7f2cb43d42657ad685941a8b9c815d46eeed
+----------------------------------------------------------------------------------------------------
 File: Aj_Resume_8_19_2024.pdf
 Hash: ae85c2e153c0a59bd9c903dae9e9833d00175191d559e4154ff825c5705db672
 ----------------------------------------------------------------------------------------------------
-File: fortifying cde LLMs with Proactive security alignment.pdf
-Hash: 396bec1ad061a7eb484bb22c80a949fbffa6f8f29d40f265819d2f47929be463
-----------------------------------------------------------------------------------------------------
-File: Feature_Importance_in_the_context_of_Traditional_JIT_Software.pdf
-Hash: d02de496d789b12d366d5001033eec0458347d7a8386e54721eb2a60cebda16a
-----------------------------------------------------------------------------------------------------
-File: conversational programming with LLM powered support.pdf
-Hash: 7526d4628d4ab0420eab74f54554a4be4774a1d7736037e7c63a57c44c5a5625
-----------------------------------------------------------------------------------------------------
-File: Homework2(complete).pdf
-Hash: 52b2fe5e0d6a0ffc300b33f73ae61df27fd3e599bf0e77f3f5ad4d2972613a2e
+File: spec tool characterizing errors in tool-use LLMs.pdf
+Hash: ce6abf9f4e977de10205420fc5c1cc3da91df76206340d5acb0b1f5fc17e48db
 ----------------------------------------------------------------------------------------------------
 File: llms continuous learners.pdf
 Hash: 3aa9912a9aa94c7550980ffa8a07293fc006c95044c7992f351b691efa121c15
 ----------------------------------------------------------------------------------------------------
-File: CIS 481 cheat sheet.docx
-Hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+File: Detecting_LLM-Generated_Text_in_Computing_Education_Comparative_Study_for_ChatGPT_Cases.pdf
+Hash: c57a2c619c22d903a84a2f9f0db35a029bd4726fd2d7e6a59b5ffb00b5603df6
+----------------------------------------------------------------------------------------------------
+File: Review_Exam1.pdf
+Hash: 816f14225f56e00acee70ba8658b5993f8ed7504c1d9ca2d0130e497592095b0
+----------------------------------------------------------------------------------------------------
+File: log-based Anomalu Detection Using LLM.pdf
+Hash: c7a9617f5c0b483c2e756bc1e0235fde3b536e5ebd9163f1e89742704badb7f4
+----------------------------------------------------------------------------------------------------
+File: Homework2(complete).pdf
+Hash: 52b2fe5e0d6a0ffc300b33f73ae61df27fd3e599bf0e77f3f5ad4d2972613a2e
+----------------------------------------------------------------------------------------------------
+File: llm hallucination reasoning with zero shot knowledge test.pdf
+Hash: 0ab31447c26d4cad878ac5ddec3cb327454bf1311a70958d1e7018e5deaf6f22
+----------------------------------------------------------------------------------------------------
+File: conversational programming with LLM powered support.pdf
+Hash: 7526d4628d4ab0420eab74f54554a4be4774a1d7736037e7c63a57c44c5a5625
+----------------------------------------------------------------------------------------------------
+File: Role_of_DevOps.docx
+Hash: ee97aa85002010589ac97ed71ebfe647cb4639d1d1ccb1e01777f82ca0f1b410
+----------------------------------------------------------------------------------------------------
+File: Feature_Importance_in_the_context_of_Traditional_JIT_Software.pdf
+Hash: d02de496d789b12d366d5001033eec0458347d7a8386e54721eb2a60cebda16a
+----------------------------------------------------------------------------------------------------
+File: fortifying cde LLMs with Proactive security alignment.pdf
+Hash: 396bec1ad061a7eb484bb22c80a949fbffa6f8f29d40f265819d2f47929be463
+----------------------------------------------------------------------------------------------------
+File: using multiple llms for information retrieval.pdf
+Hash: 0012965c17bcc7607f05dc00ee73bce58fb648f2900786276a28aee47680fd69
 ----------------------------------------------------------------------------------------------------
