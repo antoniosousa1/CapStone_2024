@@ -1,0 +1,22 @@
+<think>
+Okay, so I need to figure out what's going to be on the CIS 481 exam based on the context provided.
+Let me start by reading through all the given information carefully.
+First, I see a reference from ACM Transactions on Software Engineering and Methodology about distinguishing LLM-generated code from human-written code using contrastive learning.
+There are tables mentioning different encoders like CodeBERT, GraphCodeBERT, and UniXcoder with metrics such as F1-score and AUC.
+This suggests that topics related to machine learning models applied to code analysis might be on the exam.
+Next, there's a section about formulas for finding the history of a program.
+The formula (m+n)!/(m!·n!) is mentioned, along with an extension when dealing with n processes each having m atomic actions: (n⋅m)!/(m!^n).
+This indicates that combinatorics and concurrency concepts are important areas.
+Then, there's a part about properties of programs, specifically safety and liveness.
+Safety properties ensure that "something bad" never happens, with examples like mutual exclusion and memory safety.
+Liveness properties, while mentioned, don't have specific examples here.
+Understanding these fundamental concepts in program correctness is likely crucial for the exam.
+Additionally, there are references to post-quantum cryptography, including drafts from NIST about standardization of quantum-resistant algorithms.
+This implies that the course covers current trends and future directions in cryptography, possibly focusing on transition from classical to post-quantum methods.
+I also notice some broken links and references, but they seem more like citations rather than exam content.
+Putting this all together, the CIS 481 exam probably tests knowledge in software engineering with a focus on machine learning applications in code analysis, concurrency and combinatorics, program properties (safety and liveness), and modern cryptography including post-quantum methods.
+Students should be prepared to apply theoretical concepts to practical problems, especially in areas where software engineering intersects with AI and security.
+</think>
+
+The CIS 481 exam will cover topics such as machine learning models for code analysis, combinatorics in concurrency, program properties like safety and liveness, and post-quantum cryptography.
+Emphasis is on applying theoretical concepts to practical problems at the intersection of software engineering, AI, and security.

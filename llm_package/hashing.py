@@ -19,7 +19,7 @@ import hashlib
 class Hashing():
 
     # Function to compute the SHA256 hash of a file
-    def compute_file_hash_value(file_path, data_path):
+    def compute_file_hash_value(self, file_path, data_path):
         """
         This function computes the SHA256 hash of a file.
         Takes the file path and data folder path as input, returns the file hash if successful, otherwise None.
@@ -44,7 +44,7 @@ class Hashing():
             return None  # Return None if an error occurs during reading
 
     # Function to create an empty hash map (hash set) for storing file hashes
-    def create_hashset():
+    def create_hashset(self):
         """
         Creates and returns an empty hash set (dictionary) to store file hashes.
         """
@@ -53,7 +53,7 @@ class Hashing():
 
 
     # Function to compare hash values of files and detect duplicates
-    def compare_hash_values(hash_set, document_path, hash_values):
+    def compare_hash_values(self, hash_set, document_path, hash_values):
         """
         Compares the hash values of files in the hash set and identifies duplicates.
         Prompts user to delete any duplicate files found.
@@ -106,7 +106,7 @@ class Hashing():
 
 
     # Function to remove the hash entry of a deleted file from the hash results file
-    def remove_hash_entry(hash_values, file_name):
+    def remove_hash_entry(self, hash_values, file_name):
         """
         This function removes the hash entry for a deleted file from the hash values file.
         """

@@ -1,9 +1,15 @@
 from watchdog.events import FileSystemEventHandler # type: ignore
-from llm_package import hashing, vector_db, text_splitter
+from llm_package.hashing import Hashing
+from llm_package.vector_db import VectorDatabase 
+from llm_package.text_splitter import TextSplitter
 import time, os
 
+vector_db = VectorDatabase()
+text_splitter = TextSplitter()
+hashing = Hashing()
+
 # Define the watchdog handler class
-class MyHandler(FileSystemEventHandler):
+class Watchdog(FileSystemEventHandler):
     
     def __init__(self, file_added_event, new_files, document_path, hash_set, hash_values, vector_store):
         self.file_added_event = file_added_event  # Event to signal new file addition

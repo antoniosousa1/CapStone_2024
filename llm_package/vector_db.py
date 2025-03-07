@@ -28,7 +28,7 @@ from langchain.vectorstores.base import VectorStoreRetriever
 class VectorDatabase():
     
     # Function to create a Milvus vector database with Llama embeddings
-    def create_milvus_db(splits: list[Document], llama_embeddings: OllamaEmbeddings, db_path: str) -> Milvus:
+    def create_milvus_db(self, splits: list[Document], llama_embeddings: OllamaEmbeddings, db_path: str) -> Milvus:
 
         # If no documents are provided, return the database without adding any texts
         if not splits:
@@ -63,6 +63,7 @@ class VectorDatabase():
         #print(metadata)
         
         vector_db.add_texts(
+            self,
             texts=text_splits, 
             metadatas=metadatas,
             ids=ids,
@@ -71,7 +72,7 @@ class VectorDatabase():
         # Return the initialized vector database
         return vector_db
 
-    def add_to_milvus_db(splits: list[Document], vector_db) -> Milvus:
+    def add_to_milvus_db(self, splits: list[Document], vector_db) -> Milvus:
         
         # Extract page content from documents for embedding
         text_splits = [doc.page_content for doc in splits]
@@ -96,7 +97,7 @@ class VectorDatabase():
         return vector_db
 
     # Function to load an existing Milvus database
-    def load_milvus_db(llama_embeddings: OllamaEmbeddings, db_path: str) -> Milvus:
+    def load_milvus_db(self, llama_embeddings: OllamaEmbeddings, db_path: str) -> Milvus:
         """
         Loads an existing Milvus vector database from the specified path.
         """
@@ -111,7 +112,7 @@ class VectorDatabase():
         return vector_store_loaded
 
     # Function to load new documents from the specified directory and return them as a list
-    def load_new_docs(new_files: set, data_path: str) -> list[Document]:
+    def load_new_docs(self, new_files: set, data_path: str) -> list[Document]:
         """
         Loads new documents from a specified directory based on a set of file names.
         Supports multiple file types such as TXT, DOCX, PDF, PPTX, and CSV.
@@ -172,7 +173,7 @@ class VectorDatabase():
         return new_loaded_docs
 
     # Function to load all documents from a given directory path
-    def load_docs(data_path: str) -> list[Document]:
+    def load_docs(self, data_path: str) -> list[Document]:
         """
         Loads all documents from the specified directory.
         """
@@ -184,7 +185,7 @@ class VectorDatabase():
         return docs
 
     # Function to check if a Milvus database exists at a given path and delete it
-    def delete_milvus_db(db_path: str):
+    def delete_milvus_db(self, db_path: str):
         """
         Deletes a Milvus database if it exists at the specified path.
         """
@@ -194,7 +195,7 @@ class VectorDatabase():
             time.sleep(2)
 
     # Function to delete vectors from the Milvus database using keyword search
-    def milvus_delete_entry(llama_embeddings: OllamaEmbeddings, db_path: str):
+    def milvus_delete_entry(self, llama_embeddings: OllamaEmbeddings, db_path: str):
         """
         Deletes a selected entry from a Milvus database based on a similarity search and user input.
         """
@@ -257,7 +258,7 @@ class VectorDatabase():
         except Exception as e:
             print(f"Error during deletion: {e}")
 
-    def update_list(vector_store):
+    def update_list(self, vector_store):
         """
         Updates the list of filenames in the vector database by performing a similarity search and fetching the filenames.
         """

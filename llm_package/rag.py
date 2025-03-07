@@ -130,7 +130,7 @@ class Rag():
     # Function to set up and run Watchdog
     # Watchdog function to run in a background thread
     def run_watchdog(self, path, file_added_event, new_files, document_path, hash_set, hash_values, vector_store):
-        event_handler = watchdog_observer.MyHandler(file_added_event, new_files, document_path, hash_set, hash_values, vector_store)
+        event_handler = watchdog_observer.Watchdog(file_added_event, new_files, document_path, hash_set, hash_values, vector_store)
         observer = Observer()
         observer.schedule(event_handler, path, recursive=True)
         observer.start()

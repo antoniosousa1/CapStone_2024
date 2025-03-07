@@ -4,7 +4,7 @@ from langchain.schema import Document  # Document schema class
 # Function to split documents into smaller chunks for processing
 class TextSplitter():
     
-    def split_text(docs: list[Document]) -> list[Document]:
+    def split_text(self, docs: list[Document]) -> list[Document]:
 
         # Initialize the RecursiveCharacterTextSplitter with parameters for chunk size and overlap
         text_splitter = RecursiveCharacterTextSplitter(
