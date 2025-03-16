@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Flask, request, jsonify
 from llm_package.rag import Rag
 from langchain_ollama import OllamaLLM
 
@@ -7,11 +7,11 @@ deepseek_model = "llama3.1:70b"
 llm1 = OllamaLLM(model=deepseek_model)
 rag = Rag()
 
-# Create a Blueprint for the API
-api = Blueprint('api', __name__)
+# intinaiate flask app
+app = Flask(__name__)
 
-# API endpoint to double the given number
-@api.route('/query', methods=['POST'])
+# API endpoint to return llm response before rag
+@app.route('/query', methods=['POST'])
 def llm_response():
     data = request.json
     query = data.get("query")
@@ -19,3 +19,6 @@ def llm_response():
     response = rag.get_llm_response(llm=llm1, prompt=query)
     
     return jsonify({"llm_response": response})
+
+#run app
+app.run(host="0.0.0.0", port=5001)
