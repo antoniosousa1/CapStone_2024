@@ -1,63 +1,64 @@
-'''
+"""
 File: llm.py
 Authors: Antonio Sousa Jr(Team Lead), Matthew Greeson, Goncalo Felix, Antonio Morais, Dylan Ricci, Ryan Medeiros
 Affiliation: University of Massachusetts Dartmouth
 Course: CIS 498 & 499 (Senior Capstone Project)
-Ownership: Rite-Solutions, Inc. 
-Client/Stakeholder: Brandon Carvhalo  
+Ownership: Rite-Solutions, Inc.
+Client/Stakeholder: Brandon Carvhalo
 Date: 2025-4-25
 Project Description: This code utilizes Ollama as our LLM and a Retrieval-Augmented Generation (RAG) approach to take documents from a specifc directory, load them and then
              split the documents into texts and store it into a local database using Milvus Lite. Once stored the user then asks a questions which retrieves the most
-             relevant documents and the LLM generates a response as best as it can.  
+             relevant documents and the LLM generates a response as best as it can.
 
-'''
+"""
 
-# Import necessary libraries for multi-threading, file handling, and LangChain functionality
-import os, time
-import llm_package.watchdog_observer as watchdog_observer
-from watchdog.observers import Observer
-from llm_package import hashing, vector_db, text_splitter  # Import hashing and vector database functions from the llm_features module
-from langchain_ollama import OllamaLLM, OllamaEmbeddings  # For using the Ollama language model
+# For using the Ollama language model
+from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain.schema import Document  # Document schema class
-from langchain_milvus import Milvus # For managing vector databases
-from langchain.vectorstores.base import VectorStoreRetriever  # For querying vector stores
+from langchain_milvus import Milvus  # For managing vector databases
+from langchain.vectorstores.base import VectorStoreRetriever
+
 from ragas import EvaluationDataset, evaluate, SingleTurnSample
-from ragas.metrics import LLMContextPrecisionWithoutReference, Faithfulness, ResponseRelevancy
+from ragas.metrics import (
+    LLMContextPrecisionWithoutReference,
+    Faithfulness,
+    ResponseRelevancy,
+)
 from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 
-# Start a timer to track total execution time of the code
-class Rag():
+
+class Rag:
 
     # Function to create a retriever for querying the vector store
     def create_retriever(self, vector_store: Milvus) -> VectorStoreRetriever:
-        retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+        retriever = vector_store.as_retriever(
+            search_type="similarity", search_kwargs={"k": 3}
+        )
         return retriever
 
     # Function to retrieve relevant documents based on a user's query
-    def retrieve_docs(self, retriever: VectorStoreRetriever, question: str) -> list[Document]:
-        search_results = retriever.invoke(question, k=15)  # Retrieve top 15 relevant documents
+    def retrieve_docs(
+        self, retriever: VectorStoreRetriever, question: str
+    ) -> list[Document]:
+        # Retrieve top 15 relevant documents
+        search_results = retriever.invoke(question)
         return search_results
 
-
     # Function to prompt the user for a question
-    def get_user_question(self, ) -> str:
-        print("\nPlease Enter A Question Below, Or One Of The Commands Listed: \n")
-        print("-"*100)
-        print("1.) Type 'EXIT' to exit the program!")
-        print("2.) Type 'DELETE' to delete the database!")
-        print("3.) Type 'CLEAR' to clear the document directory!")
-        print("4.) Type 'INFO' to get information regarding the program!")
-        print("5.) Type 'DELETEDATA' to delete vector embeddings!")
-        print("\n"+ "-"*100)
-        question = input(f"What would you like to ask? \n")  # Prompt for user input
-        print("\n"+"-"*100)
-        return question
+    def get_query(self) -> str:
+        # Prompt for user input
+        query = input(f"What would you like to ask? \n")
+        return query
 
     # Function to create a detailed prompt with context for the LLM
     def create_prompt(self, retrieved_docs: list[Document], question: str, prevAnswer: str, prevQuestion: str) -> str:
-        prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. Use five sentences maximum and keep the answer concise. Use the previous question and answer if requested by the user.  \n"
-        
+        prompt = (
+            "You are an assistant for question-answering tasks. Use the following pieces "
+            "of retrieved context to answer the question. Use five sentences maximum and keep the answer "
+            "concise. Use the previous question and answer if requested by the user.  \n"
+        )
+
         # Format the question, context, and previous interactions
         Question = "Question: " + question + "\n"
         Context_str = "Context: \n\n"
@@ -69,13 +70,27 @@ class Rag():
             Context_str += i.page_content + "\n\n"
 
         Answer = "Answer: "
-        final_prompt = prompt + Question + Context_str + prevQuestion + prevAnswer + Answer
+        final_prompt = (
+            prompt + Question + Context_str + prevQuestion + prevAnswer + Answer
+        )
 
         return final_prompt
 
     # Alternative prompt creation function with an additional LLM context
-    def create_prompt2(self, retrieved_docs: list[Document], llm1_context: str, question: str, prevAnswer: str, prevQuestion: str) -> str:
-        prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. Use five sentences maximum and keep the answer concise. Use the previous question and answer if requested by the user. \n"    
+    def create_prompt2(
+        self,
+        retrieved_docs: list[Document],
+        llm1_context: str,
+        question: str,
+        prevAnswer: str,
+        prevQuestion: str,
+    ) -> str:
+
+        prompt = (
+            "You are an assistant for question-answering tasks. Use the following pieces "
+            "of retrieved context to answer the question. Use five sentences maximum and keep the answer "
+            "concise. Use the previous question and answer if requested by the user. \n"
+        )
         Question = "Question: " + question + "\n"
         Context_str = "Context: \n\n"
 
@@ -84,20 +99,76 @@ class Rag():
             Context_str += i.page_content + "\n\n"
 
         # Add the additional LLM context
-        llm1_context = "This is an answer generated by another LLM, try to use this to make a better and more insightful response: " + llm1_context + "\n"
-    
-        prevQuestion = "If needed, this is the previous question asked of you: " + prevQuestion + "\n"
-        prevAnswer = "If needed, this is the previous answer you provided the user: " + prevAnswer + "\n"
-        
+        llm1_context = (
+            "This is an answer generated by another LLM, try to use this to make a better and more "
+            "insightful response: " + llm1_context + "\n"
+        )
+
+        prevQuestion = (
+            "If needed, this is the previous question asked of you: "
+            + prevQuestion
+            + "\n"
+        )
+        prevAnswer = (
+            "If needed, this is the previous answer you provided the user: "
+            + prevAnswer
+            + "\n"
+        )
+
         Answer = "Answer: "
-        final_prompt = prompt + Question + Context_str + llm1_context + prevQuestion + prevAnswer + Answer
+        final_prompt = (
+            prompt
+            + Question
+            + Context_str
+            + llm1_context
+            + prevQuestion
+            + prevAnswer
+            + Answer
+        )
 
         return final_prompt
 
     # Function to query the LLM with the generated prompt and return the answer
-    def get_answer(self, llm: OllamaLLM, prompt: str) -> str:
-        answer = llm.invoke(prompt)  # Get the answer from the LLM
-        return answer
+    def get_llm_response(self, llm: OllamaLLM, prompt: str) -> str:
+        response = llm.invoke(prompt)  # Get the answer from the LLM
+        return response
+
+    def eval_llm_response(
+        self,
+        question: str,
+        retrived_docs: list[Document],
+        answer: str,
+        llm: OllamaLLM,
+        llm_embeddings: OllamaEmbeddings,
+    ) -> EvaluationDataset:
+
+        evaluator_llm = LangchainLLMWrapper(llm)
+        gen_embeddings = LangchainEmbeddingsWrapper(llm_embeddings)
+
+        sample = SingleTurnSample(
+            user_input=question,
+            response=answer,
+            retrieved_contexts=[doc.page_content for doc in retrived_docs],
+        )
+
+        dataset = EvaluationDataset(samples=[sample])
+
+        # Context Precision is a metric that measures the proportion of relevant chunks in the retrieved_contexts
+        # The Faithfulness metric measures how factually consistent a response is with the retrieved context
+        # The ResponseRelevancy metric measures how relevant a response is to the user input
+
+        evaluation = evaluate(
+            dataset=dataset,
+            metrics=[
+                LLMContextPrecisionWithoutReference(),
+                Faithfulness(),
+                ResponseRelevancy(),
+            ],
+            llm=evaluator_llm,
+            embeddings=gen_embeddings,
+        )
+
+        return evaluation
 
     # Function to save the generated answer to a file
     def save_answer_to_file(self, output_file2: str, answer: str):
@@ -109,61 +180,5 @@ class Rag():
             for sentence in sentences:
                 cleaned_sentence = sentence.strip()
                 if cleaned_sentence:  # Ensure the sentence is not empty
-                    file.write(cleaned_sentence + ".\n")  # Write each sentence to the file
-
-    # Function to get the current files in the specified directory
-    def get_files_in_directory(self, document_path: set) -> set:
-        # Return a set of files in the given directory
-        return set(os.listdir(document_path))
-
-    # Function to clear all files in the specified directory
-    def clear_directory(self, directory_path):
-        # Iterate over all files in the directory and remove them
-        for filename in os.listdir(directory_path):
-            file_path = os.path.join(directory_path, filename)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-
-        print("\nGenerating new embeddings, this may take a while!\n")
-        print("-" * 100)
-
-    # Function to set up and run Watchdog
-    # Watchdog function to run in a background thread
-    def run_watchdog(self, path, file_added_event, new_files, document_path, hash_set, hash_values, vector_store):
-        event_handler = watchdog_observer.Watchdog(file_added_event, new_files, document_path, hash_set, hash_values, vector_store)
-        observer = Observer()
-        observer.schedule(event_handler, path, recursive=True)
-        observer.start()
-        
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            observer.stop()
-            print("\nWatchdog stopped.")
-        observer.join()
-
-    def eval(self, question: str, retrived_docs: list[Document], answer: str, llm: OllamaLLM, llm_embeddings: OllamaEmbeddings) -> EvaluationDataset:
-
-        evaluator_llm = LangchainLLMWrapper(llm)
-        gen_embeddings = LangchainEmbeddingsWrapper(llm_embeddings)
-
-        sample = SingleTurnSample(
-            user_input=question,
-            response=answer,
-            retrieved_contexts=[doc.page_content for doc in retrived_docs]
-        )
-
-        dataset = EvaluationDataset(samples=[sample])
-
-        #Context Precision is a metric that measures the proportion of relevant chunks in the retrieved_contexts
-        #The Faithfulness metric measures how factually consistent a response is with the retrieved context
-        #The ResponseRelevancy metric measures how relevant a response is to the user input
-
-        result = evaluate(dataset=dataset,
-                        metrics=[LLMContextPrecisionWithoutReference(), Faithfulness(), ResponseRelevancy()],
-                        llm=evaluator_llm,
-                        embeddings=gen_embeddings
-                        )
-        
-        return result
+                    # Write each sentence to the file
+                    file.write(cleaned_sentence + ".\n")
