@@ -3,12 +3,14 @@ import streamlit as st
 import random
 import os
 import time
+import requests
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 
-data_path = "../App/data"
+data_path = "../data/documents"
+css_path = "./frontend/styles.css"
 
 # Function to load and apply the CSS file
 def load_css(file_name):
@@ -17,7 +19,7 @@ def load_css(file_name):
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 # Apply the external CSS
-load_css("styles.css")
+load_css(css_path)
 
 # Response emulator
 def response_generator():
@@ -73,9 +75,15 @@ if prompt := st.chat_input("Message Rite Content Creator"):
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    response = requests.post("http://127.0.0.1:5001/query", json={"query": prompt})
+    if response.status_code == 200:
+        llm_response = response.json()["llm_response"]
+    else:
+        st.write("Error:", response.json()['error'])
+
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
-        response = st.write_stream(response_generator())
+        response = st.markdown(llm_response)
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
 
