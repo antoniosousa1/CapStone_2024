@@ -9,6 +9,7 @@ from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 
+
 data_path = "../data/documents"
 css_path = "./frontend/styles.css"
 
@@ -41,15 +42,15 @@ st.title("Rite Solutions Inc. Content Creator")
 # Side bar
 st.sidebar.header("Upload Documents")
 
-uploaded_files = st.sidebar.file_uploader("",accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx"])
-
+uploaded_files = st.sidebar.file_uploader("files",accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx"])
 if st.sidebar.button("Process Documents"):
     if uploaded_files:
-        os.makedirs(data_path, exist_ok=True)
         for file in uploaded_files:
-            with open(os.path.join(data_path, file.name), "wb") as f:
-                f.write(file.read())
-        st.sidebar.success("Documents uploaded and stored!")
+            response = requests.post("http://127.0.0.1:5005/add", files={"file": file})
+            if response.status_code == 200:
+                st.sidebar.success(f"Uploaded: {file.name}")
+            else:
+                st.sidebar.error(f"Failed to upload: {file.name} ({response.status_code})")
 
       
         st.sidebar.success("Database created successfully!")
@@ -75,7 +76,7 @@ if prompt := st.chat_input("Message Rite Content Creator"):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    response = requests.post("http://127.0.0.1:5001/query", json={"query": prompt})
+    response = requests.post("http://127.0.0.1:5005/query", json={"query": prompt})
     if response.status_code == 200:
         llm_response = response.json()["llm_response"]
     else:
