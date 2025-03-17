@@ -27,3 +27,22 @@ in the "App" local directory
 # RAGAS Evaluation Documentation
 1. Home Docs -> https://docs.ragas.io/en/latest/
 2. Metric Docs -> https://docs.ragas.io/en/latest/concepts/metrics/available_metrics/?h=metrics
+
+# Running Program Concurrently
+1. Use the run_script.sh script to run the front and backends at the same time  
+note this runs the backend script in hte background, on close the port will not die  
+if anyone makes changes to the backend you must restart the port for them to show up
+also when you are done working please kill the port or change hte run port. If everyoens program  
+is running on port 5001 it will make it hard to work
+
+# Running Frontend and Backend serperatly
+1. Split terminal to get two bash terminals
+2. from the ~/CapStone directory run the following command for the frontend terminal
+    - streamlit run frontend/streamlit_gui.py 
+3. from the ~/Capstone directory run the following command for the backend terminal
+    - python3 api/routes.py
+4. Go to http://localhost:8501 this will be the frontend of the application
+
+# Flask
+1. ~/Capstone/api/routes.py will be our backend code file, this is where the api end points will be
+2. This flask app will be listening to requests from the frontend to run the given api endpoint
