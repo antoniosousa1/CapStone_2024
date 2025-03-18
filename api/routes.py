@@ -5,9 +5,14 @@ from llm_package.milvus_db import VectorDatabase
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_milvus import Milvus
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-
+from dotenv import load_dotenv
 
 import os
+
+load_dotenv()
+
+PORT = os.getenv("PORT")
+
 
 # intinaiate flask app
 app = Flask(__name__)
@@ -60,4 +65,4 @@ def upload_file():
 
 
 # run app
-app.run(host="0.0.0.0", port=5005)
+app.run(host="0.0.0.0", port=PORT)

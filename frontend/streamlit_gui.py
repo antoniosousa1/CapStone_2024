@@ -8,10 +8,12 @@ from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema import Document
+from dotenv import load_dotenv
 
+load_dotenv()
 
-data_path = "../data/documents"
-css_path = "./frontend/styles.css"
+BACKEND_URL = os.getenv("BACKEND_URL")
+CSS_PATH = os.getenv("CSS_PATH")
 
 # Function to load and apply the CSS file
 def load_css(file_name):
@@ -20,7 +22,7 @@ def load_css(file_name):
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 # Apply the external CSS
-load_css(css_path)
+load_css(CSS_PATH)
 
 # Response emulator
 def response_generator():
@@ -46,7 +48,7 @@ uploaded_files = st.sidebar.file_uploader("files",accept_multiple_files=True, ty
 if st.sidebar.button("Process Documents"):
     if uploaded_files:
         for file in uploaded_files:
-            response = requests.post("http://127.0.0.1:5005/add", files={"file": file})
+            response = requests.post(f"{BACKEND_URL}/add", files={"file": file})
             if response.status_code == 200:
                 st.sidebar.success(f"Uploaded: {file.name}")
             else:
@@ -76,7 +78,7 @@ if prompt := st.chat_input("Message Rite Content Creator"):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    response = requests.post("http://127.0.0.1:5005/query", json={"query": prompt})
+    response = requests.post(f"{BACKEND_URL}/query", json={"query": prompt})
     if response.status_code == 200:
         llm_response = response.json()["llm_response"]
     else:
