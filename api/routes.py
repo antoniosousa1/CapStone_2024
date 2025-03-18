@@ -12,6 +12,11 @@ import os
 load_dotenv()
 
 PORT = os.getenv("PORT")
+DB_PATH = os.getenv("DB_PATH")
+
+llama_model = "llama3.1:70b"
+llm1 = OllamaLLM(model=llama_model)
+llm1_embeddings = OllamaEmbeddings(model=llama_model)
 
 
 # intinaiate flask app
@@ -20,20 +25,14 @@ app = Flask(__name__)
 # Initialize the Ollama LLM and DeepSeek LLM and embeddings
 
 rag = Rag()
-vector_db = VectorDatabase()
+milvus_db = VectorDatabase(llm_embeddings=llm1_embeddings, db_path=DB_PATH)
 doc_manager = DocumentManagement()
 
-llama_model = "llama3.1:70b"
-llm1 = OllamaLLM(model=llama_model)
-llm1_embeddings = OllamaEmbeddings(model=llama_model)
-db_path = "./data/database/Milvus_Lite.db"
 
-if os.path.exists(db_path):
+if os.path.exists(DB_PATH):
     print("db exists")
 else:
     print("db does nto exist")
-
-milvus_db = vector_db.create_db(llm_embeddings=llm1_embeddings, db_path=db_path)
 
 
 # API endpoint to return llm response before rag
@@ -42,7 +41,14 @@ def llm_response():
     data = request.json
     query = data.get("query")
 
-    response = rag.get_llm_response(llm=llm1, prompt=query)
+    # creates retriver for context
+    retriever = rag.create_retriever(milvus_db.vector_db)
+    # retrive docs
+    retrieved_docs = rag.retrieve_docs(retriever, query)
+    # create prompt
+    prompt = rag.create_prompt(retrieved_docs=retrieved_docs, query=query)
+
+    response = rag.get_llm_response(llm=llm1, prompt=prompt)
 
     return jsonify({"llm_response": response})
 
@@ -58,7 +64,7 @@ def upload_file():
 
     loaded_doc = doc_manager.load_doc(file_path=file_path)
     splits = doc_manager.split_docs(loaded_doc)
-    vector_db.update_db(splits=splits, vector_db=milvus_db)
+    milvus_db.update_db(splits=splits)
 
     return {"message": f"File {file.filename} uploaded successfully!"}, 200
 
