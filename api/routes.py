@@ -19,7 +19,7 @@ llm1 = OllamaLLM(model=llama_model)
 llm1_embeddings = OllamaEmbeddings(model=llama_model)
 
 
-# initiate flask app
+# intinaiate flask app
 app = Flask(__name__)
 
 # Initialize the Ollama LLM and DeepSeek LLM and embeddings
