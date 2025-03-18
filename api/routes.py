@@ -35,8 +35,9 @@ else:
 
 milvus_db = vector_db.create_db(llm_embeddings=llm1_embeddings, db_path=db_path)
 
+
 # API endpoint to return llm response before rag
-@app.route('/query', methods=['POST'])
+@app.route("/query", methods=["POST"])
 def llm_response():
     data = request.json
     query = data.get("query")
@@ -50,7 +51,7 @@ def llm_response():
 def upload_file():
     if "file" not in request.files:
         return {"error": "No file part"}, 400
-    
+
     file = request.files["file"]  # This retrieves the uploaded file
     file_path = f"./data/documents/{file.filename}"
     file.save(file_path)  # Save it to disk
@@ -58,10 +59,14 @@ def upload_file():
     loaded_doc = doc_manager.load_doc(file_path=file_path)
     splits = doc_manager.split_docs(loaded_doc)
     vector_db.update_db(splits=splits, vector_db=milvus_db)
-    
-
 
     return {"message": f"File {file.filename} uploaded successfully!"}, 200
+
+
+@app.route("/list-files", methods=["GET"])
+def list_files():
+    files = os.listdir("./data/documents")
+    return jsonify({"files": files})
 
 
 # run app

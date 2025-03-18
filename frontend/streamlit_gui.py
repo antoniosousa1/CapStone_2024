@@ -1,4 +1,3 @@
-
 import streamlit as st
 import random
 import os
@@ -15,14 +14,17 @@ load_dotenv()
 BACKEND_URL = os.getenv("BACKEND_URL")
 CSS_PATH = os.getenv("CSS_PATH")
 
+
 # Function to load and apply the CSS file
 def load_css(file_name):
     with open(file_name, "r") as f:
         css = f.read()
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
+
 # Apply the external CSS
 load_css(CSS_PATH)
+
 
 # Response emulator
 def response_generator():
@@ -44,7 +46,9 @@ st.title("Rite Solutions Inc. Content Creator")
 # Side bar
 st.sidebar.header("Upload Documents")
 
-uploaded_files = st.sidebar.file_uploader("files",accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx"])
+uploaded_files = st.sidebar.file_uploader(
+    "files", accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx"]
+)
 if st.sidebar.button("Process Documents"):
     if uploaded_files:
         for file in uploaded_files:
@@ -52,11 +56,27 @@ if st.sidebar.button("Process Documents"):
             if response.status_code == 200:
                 st.sidebar.success(f"Uploaded: {file.name}")
             else:
-                st.sidebar.error(f"Failed to upload: {file.name} ({response.status_code})")
+                st.sidebar.error(
+                    f"Failed to upload: {file.name} ({response.status_code})"
+                )
 
-      
         st.sidebar.success("Database created successfully!")
 
+view_files = st.sidebar.button("View Files")
+if view_files:
+    response = requests.get(f"{BACKEND_URL}/list-files")
+    if response.status_code == 200:
+        files = response.json()
+        if isinstance(files, dict):
+            files = files.get("files", [])
+        if files:
+            st.write("### List of Uploaded Files:")
+            for file in files:
+                st.write(f"- {file}")
+        else:
+            st.write("No files uploaded.")
+    else:
+        st.error("Failed to retrieve files.")
 
 if st.sidebar.button("Help?", use_container_width=False):
     st.sidebar.markdown("This is a help button.")
@@ -82,12 +102,10 @@ if prompt := st.chat_input("Message Rite Content Creator"):
     if response.status_code == 200:
         llm_response = response.json()["llm_response"]
     else:
-        st.write("Error:", response.json()['error'])
+        st.write("Error:", response.json()["error"])
 
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
         response = st.markdown(llm_response)
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
-
-  
