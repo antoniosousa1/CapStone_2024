@@ -26,6 +26,7 @@ from langchain_community.document_loaders import (
 )
 from langchain_milvus import Milvus
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from llm_package import utils
 
 
 class DocumentManagement:
@@ -40,6 +41,34 @@ class DocumentManagement:
 
         # Return the loaded documents
         return docs
+    
+    def load_doc(self, file_path) -> list[Document]: 
+
+        file_extension = utils.get_file_extension(file_path)
+
+        match file_extension:
+            case "pdf":
+                loader = UnstructuredPDFLoader(file_path)
+                docs = loader.load()
+                return docs
+            case "docx":
+                loader = UnstructuredWordDocumentLoader(file_path)
+                docs = loader.load()
+                return docs
+            case "txt":
+                loader = TextLoader(file_path, encoding="utf-8")
+                docs = loader.load()
+                return docs
+            case "pptx":
+                loader = UnstructuredPowerPointLoader(file_path=file_path)
+                docs = loader.load()
+                return docs
+            case "csv":
+                loader = CSVLoader(file_path=file_path)
+                docs = loader.load()
+                return docs
+            case _:
+                print("error incorrect file type")
 
     def add_new_doc(self, new_files: set, data_path: str) -> list[Document]:
         """
