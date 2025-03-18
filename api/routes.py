@@ -3,8 +3,6 @@ from llm_package.rag import Rag
 from llm_package.document_management import DocumentManagement
 from llm_package.milvus_db import VectorDatabase
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
-from langchain_milvus import Milvus
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
 
 import os
@@ -19,7 +17,7 @@ llm1 = OllamaLLM(model=llama_model)
 llm1_embeddings = OllamaEmbeddings(model=llama_model)
 
 
-# initiate flask app
+# intinaiate flask app
 app = Flask(__name__)
 
 # Initialize the Ollama LLM and DeepSeek LLM and embeddings
@@ -47,8 +45,12 @@ def llm_response():
     retrieved_docs = rag.retrieve_docs(retriever, query)
     # create prompt
     prompt = rag.create_prompt(retrieved_docs=retrieved_docs, query=query)
-
+    # gets response
     response = rag.get_llm_response(llm=llm1, prompt=prompt)
+
+    # saves previous answers
+    rag.previous_questions.append(query)
+    rag.previous_answers.append(response)
 
     return jsonify({"llm_response": response})
 

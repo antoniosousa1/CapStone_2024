@@ -3,6 +3,10 @@ import random
 import os
 import time
 import requests
+from langchain_ollama import OllamaLLM, OllamaEmbeddings
+from langchain_community.document_loaders import DirectoryLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.schema import Document
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,9 +20,6 @@ st.set_page_config(
     page_icon="https://rite-solutions.com/wpç-content/uploads/2023/08/cropped-single-rower_0097d7-1-192x192.png",
 )
 
-data_path = "../data/documents"
-css_path = "./frontend/styles.css"
-
 # Function to load and apply the CSS file
 def load_css(file_name):
     with open(file_name, "r") as f:
@@ -28,6 +29,20 @@ def load_css(file_name):
 
 # Apply the external CSS
 load_css(CSS_PATH)
+
+
+# Response emulator
+def response_generator():
+    response = random.choice(
+        [
+            "Hello there! How can I assist you today?",
+            "Hi! Is there anything I can help you with?",
+            "Do you need help?",
+        ]
+    )
+    for word in response.split():
+        yield word + " "
+        time.sleep(0.05)
 
 
 # Title
@@ -51,9 +66,6 @@ if st.sidebar.button("Process Documents"):
                     f"Failed to upload: {file.name} ({response.status_code})"
                 )
 
-            with open(os.path.join(data_path, file.name), "wb") as f:
-                f.write(file.read())
-        st.sidebar.success("Documents uploaded and stored!")
         st.sidebar.success("Database created successfully!")
 
 view_files = st.sidebar.button("View Files")
@@ -79,26 +91,16 @@ if st.sidebar.button("Help?", use_container_width=False):
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Initialize loading state
-if "loading" not in st.session_state:
-    st.session_state.loading = False
-
 # Display chat messages from history on app rerun
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Accept user input (Disabled while loading)
-prompt = st.chat_input("Message Rite Content Creator", disabled=st.session_state.loading)
-
-if prompt:
-    # Disable input and store the prompt
-    st.session_state.loading = True
+# Accept user input
+if prompt := st.chat_input("Message Rite Content Creator"):
+    # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
-    
-# Processing response
-if st.session_state.loading:
-    # Display user message
+    # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(st.session_state.messages[-1]["content"])
 
