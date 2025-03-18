@@ -29,23 +29,23 @@ milvus_db = VectorDatabase(llm_embeddings=llm1_embeddings, db_path=DB_PATH)
 doc_manager = DocumentManagement()
 
 
-
 if os.path.exists(DB_PATH):
     print("db exists")
 else:
     print("db does nto exist")
 
+
 # API endpoint to return llm response before rag
-@app.route('/query', methods=['POST'])
+@app.route("/query", methods=["POST"])
 def llm_response():
     data = request.json
     query = data.get("query")
 
-    #creates retriver for context
+    # creates retriver for context
     retriever = rag.create_retriever(milvus_db.vector_db)
-    #retrive docs
+    # retrive docs
     retrieved_docs = rag.retrieve_docs(retriever, query)
-    #create prompt
+    # create prompt
     prompt = rag.create_prompt(retrieved_docs=retrieved_docs, query=query)
 
     response = rag.get_llm_response(llm=llm1, prompt=prompt)
@@ -57,7 +57,7 @@ def llm_response():
 def upload_file():
     if "file" not in request.files:
         return {"error": "No file part"}, 400
-    
+
     file = request.files["file"]  # This retrieves the uploaded file
     file_path = f"./data/documents/{file.filename}"
     file.save(file_path)  # Save it to disk
@@ -65,10 +65,14 @@ def upload_file():
     loaded_doc = doc_manager.load_doc(file_path=file_path)
     splits = doc_manager.split_docs(loaded_doc)
     milvus_db.update_db(splits=splits)
-    
-
 
     return {"message": f"File {file.filename} uploaded successfully!"}, 200
+
+
+@app.route("/list-files", methods=["GET"])
+def list_files():
+    files = os.listdir("./data/documents")
+    return jsonify({"files": files})
 
 
 # run app
