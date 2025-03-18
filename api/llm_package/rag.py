@@ -27,6 +27,7 @@ from ragas.metrics import (
 from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 
+from llm_package.milvus_db import VectorDatabase
 
 class Rag:
 
@@ -52,7 +53,7 @@ class Rag:
         return query
 
     # Function to create a detailed prompt with context for the LLM
-    def create_prompt(self, retrieved_docs: list[Document], question: str, prevAnswer: str, prevQuestion: str) -> str:
+    def create_prompt(self, retrieved_docs: list[Document], query: str) -> str:
         prompt = (
             "You are an assistant for question-answering tasks. Use the following pieces "
             "of retrieved context to answer the question. Use five sentences maximum and keep the answer "
@@ -60,10 +61,10 @@ class Rag:
         )
 
         # Format the question, context, and previous interactions
-        Question = "Question: " + question + "\n"
+        Question = "Question: " + query + "\n"
         Context_str = "Context: \n\n"
-        prevQuestion = "Previous Question asked of you: " + prevQuestion + "\n"
-        prevAnswer = "Previous Answer you provided the user: " + prevAnswer + "\n"
+        #prevQuestion = "Previous Question asked of you: " + prevQuestion + "\n"
+       # prevAnswer = "Previous Answer you provided the user: " + prevAnswer + "\n"
 
         # Add the context from the retrieved documents to the prompt
         for i in retrieved_docs:
@@ -71,7 +72,7 @@ class Rag:
 
         Answer = "Answer: "
         final_prompt = (
-            prompt + Question + Context_str + prevQuestion + prevAnswer + Answer
+            prompt + Question + Context_str + Answer
         )
 
         return final_prompt
@@ -132,8 +133,9 @@ class Rag:
     def get_llm_response(self, llm: OllamaLLM, prompt: str) -> str:
         response = llm.invoke(prompt)  # Get the answer from the LLM
         return response
+    
 
-    def eval_llm_response(
+    def eval_rag_response(
         self,
         question: str,
         retrived_docs: list[Document],
