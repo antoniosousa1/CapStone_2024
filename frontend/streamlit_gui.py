@@ -14,6 +14,11 @@ load_dotenv()
 BACKEND_URL = os.getenv("BACKEND_URL")
 CSS_PATH = os.getenv("CSS_PATH")
 
+# Sets tab title and icon 
+st.set_page_config(
+    page_title="RiteGen",
+    page_icon="https://rite-solutions.com/wpç-content/uploads/2023/08/cropped-single-rower_0097d7-1-192x192.png",
+)
 
 # Function to load and apply the CSS file
 def load_css(file_name):
@@ -49,6 +54,7 @@ st.sidebar.header("Upload Documents")
 uploaded_files = st.sidebar.file_uploader(
     "files", accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx"]
 )
+
 if st.sidebar.button("Process Documents"):
     if uploaded_files:
         for file in uploaded_files:
@@ -96,16 +102,35 @@ if prompt := st.chat_input("Message Rite Content Creator"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     # Display user message in chat message container
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(st.session_state.messages[-1]["content"])
 
-    response = requests.post(f"{BACKEND_URL}/query", json={"query": prompt})
-    if response.status_code == 200:
-        llm_response = response.json()["llm_response"]
-    else:
-        st.write("Error:", response.json()["error"])
-
-    # Display assistant response in chat message container
+    # Show a loading spinner instead of a progress bar
     with st.chat_message("assistant"):
-        response = st.markdown(llm_response)
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        
+        try:
+            with st.spinner("Thinking..."):
+                response = requests.post(
+                    f"{BACKEND_URL}/query", json={"query": prompt}
+                )
+                if response.status_code == 200:
+                    llm_response = response.json()["llm_response"]
+                else:
+                    st.error(f"Error: {response.json().get('error', 'Unknown error')}")
+                    llm_response = "An error occurred."
+
+            # Display assistant's response progressively
+            response_container = st.empty()
+            full_response = ""
+            words = llm_response.split()
+            for word in words:
+                full_response += word + " "
+                response_container.markdown(full_response)
+                time.sleep(0.05)
+
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+        except Exception as e:
+            st.error(f"An unexpected error occurred: {e}")
+
+        # Reset loading state
+        st.session_state.loading = False
+        st.rerun()
