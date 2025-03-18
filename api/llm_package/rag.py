@@ -27,9 +27,10 @@ from ragas.metrics import (
 from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 
-from llm_package.milvus_db import VectorDatabase
-
 class Rag:
+
+    previous_questions = []
+    previous_answers = []
 
     # Function to create a retriever for querying the vector store
     def create_retriever(self, vector_store: Milvus) -> VectorStoreRetriever:
@@ -57,24 +58,31 @@ class Rag:
         prompt = (
             "You are an assistant for question-answering tasks. Use the following pieces "
             "of retrieved context to answer the question. Use five sentences maximum and keep the answer "
-            "concise. Use the previous question and answer if requested by the user.  \n"
+            "concise. Use the previous questions and answers to be conversational if need be.  \n"
         )
 
         # Format the question, context, and previous interactions
         Question = "Question: " + query + "\n"
         Context_str = "Context: \n\n"
-        #prevQuestion = "Previous Question asked of you: " + prevQuestion + "\n"
-       # prevAnswer = "Previous Answer you provided the user: " + prevAnswer + "\n"
 
         # Add the context from the retrieved documents to the prompt
         for i in retrieved_docs:
             Context_str += i.page_content + "\n\n"
 
         Answer = "Answer: "
-        final_prompt = (
-            prompt + Question + Context_str + Answer
-        )
 
+        previous_questions_str = "previous questions: \n\n"
+        for i in range(len(self.previous_questions)):
+            previous_questions_str += f"Q{i+1}: {self.previous_questions[i]}\n\n"
+
+        previous_answers_str = "previous answers: \n\n"
+        for i in range(len(self.previous_answers)):
+            previous_answers_str += f"A{i+1}: {self.previous_answers[i]}\n\n"
+
+        final_prompt = (
+            prompt + Question + Context_str +
+            previous_questions_str + previous_answers_str + Answer
+        )
         return final_prompt
 
     # Alternative prompt creation function with an additional LLM context
@@ -133,7 +141,6 @@ class Rag:
     def get_llm_response(self, llm: OllamaLLM, prompt: str) -> str:
         response = llm.invoke(prompt)  # Get the answer from the LLM
         return response
-    
 
     def eval_rag_response(
         self,
