@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import random
 import os
 import time
@@ -89,6 +90,8 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+        
+
 
 # Accept user input
 if prompt := st.chat_input("Message Rite Content Creator"):
@@ -109,3 +112,18 @@ if prompt := st.chat_input("Message Rite Content Creator"):
         response = st.markdown(llm_response)
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
+
+    #eval data entries (testing)
+    #imported pandas -> might need to add to reqs
+    
+    col1, col2, col3 = st.columns(3)
+
+    # Place metrics in the columns with the function
+    with col1:
+        st.metric(label="Context", value=0.9999)
+
+    with col2:
+        st.metric(label="Faithfulness", value=1.0000)
+
+    with col3:
+        st.metric(label="Relevancy", value=0.5690)
