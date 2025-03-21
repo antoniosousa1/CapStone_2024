@@ -96,37 +96,72 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-        
+
 # Accept user input
 if prompt := st.chat_input("Message Rite Content Creator"):
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
     # Display user message in chat message container
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(st.session_state.messages[-1]["content"])
 
-    response = requests.post(f"{BACKEND_URL}/query", json={"query": prompt})
-    if response.status_code == 200:
-        llm_response = response.json()["llm_response"]
-    else:
-        st.write("Error:", response.json()["error"])
-
-    # Display assistant response in chat message container
+    # Show a loading spinner instead of a progress bar
     with st.chat_message("assistant"):
-        response = st.markdown(llm_response)
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        
+        try:
+            with st.spinner("Thinking..."):
+                response = requests.post(
+                    f"{BACKEND_URL}/query", json={"query": prompt}
+                )
+                if response.status_code == 200:
+                    llm_response = response.json()["llm_response"]
+                else:
+                    st.error(f"Error: {response.json().get('error', 'Unknown error')}")
+                    llm_response = "An error occurred."
 
+            # Display assistant's response progressively
+            response_container = st.empty()
+            full_response = ""
+            words = llm_response.split()
+            for word in words:
+                full_response += word + " "
+                response_container.markdown(full_response)
+                time.sleep(0.05)
+
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+        except Exception as e:
+            st.error(f"An unexpected error occurred: {e}")
+
+        
 
     col1, col2, col3 = st.columns(3)
-
+    #place metrics in the "Value sections"
     with col1:
         st.metric(label="Context", value=0.9999)
-    
+                    
     with col2:
         st.metric(label="Faithfulness", value=1.000)
-    
+                    
     with col3:
         st.metric(label="Relevancey", value=.5690)
+
+
+        
+
+
+        
+
+
+
+
+
+
+
+    
+
+    
+
+
+    
 
 
