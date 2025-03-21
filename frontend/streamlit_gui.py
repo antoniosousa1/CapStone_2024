@@ -116,3 +116,17 @@ if prompt := st.chat_input("Message Rite Content Creator"):
         response = st.markdown(llm_response)
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
+
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(label="Context", value=0.9999)
+    
+    with col2:
+        st.metric(label="Faithfulness", value=1.000)
+    
+    with col3:
+        st.metric(label="Relevancey", value=.5690)
+
+
