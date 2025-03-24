@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import random
 import os
 import time
@@ -131,6 +132,36 @@ if prompt := st.chat_input("Message Rite Content Creator"):
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
 
-        # Reset loading state
-        st.session_state.loading = False
-        st.rerun()
+        
+
+    col1, col2, col3 = st.columns(3)
+    #place metrics in the "Value sections"
+    with col1:
+        st.metric(label="Context", value=0.9999)
+                    
+    with col2:
+        st.metric(label="Faithfulness", value=1.000)
+                    
+    with col3:
+        st.metric(label="Relevancey", value=.5690)
+
+
+        
+
+
+        
+
+
+
+
+
+
+
+    
+
+    
+
+
+    
+
+
