@@ -86,13 +86,11 @@ class Rag:
         return final_prompt
 
     # Alternative prompt creation function with an additional LLM context
-    def create_prompt2(
+    def refine_prompt(
         self,
         retrieved_docs: list[Document],
         llm1_context: str,
         question: str,
-        prevAnswer: str,
-        prevQuestion: str,
     ) -> str:
 
         prompt = (
@@ -102,6 +100,7 @@ class Rag:
         )
         Question = "Question: " + question + "\n"
         Context_str = "Context: \n\n"
+        Answer = "Answer: "
 
         # Add the context from the retrieved documents to the prompt
         for i in retrieved_docs:
@@ -113,25 +112,12 @@ class Rag:
             "insightful response: " + llm1_context + "\n"
         )
 
-        prevQuestion = (
-            "If needed, this is the previous question asked of you: "
-            + prevQuestion
-            + "\n"
-        )
-        prevAnswer = (
-            "If needed, this is the previous answer you provided the user: "
-            + prevAnswer
-            + "\n"
-        )
-
         Answer = "Answer: "
         final_prompt = (
             prompt
             + Question
             + Context_str
             + llm1_context
-            + prevQuestion
-            + prevAnswer
             + Answer
         )
 
