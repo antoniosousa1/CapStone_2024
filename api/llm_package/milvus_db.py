@@ -42,8 +42,11 @@ class VectorDatabase:
         # Generate unique IDs for each document
         ids = [str(uuid4()) for _ in range(len(text_splits))]
         # Add the new texts (documents) to the Milvus database
+        # Add the new texts (documents) to the Milvus database
         self.vector_db.add_texts(
-            texts=text_splits, metadatas=metadatas, ids=ids  # Include metadata
+            texts=text_splits,
+            metadatas=[{**metadata, "page_content": text} for metadata, text in zip(metadatas, text_splits)], # modified this line.
+            ids=ids,
         )
     
         return ids
@@ -108,6 +111,7 @@ class VectorDatabase:
             fields = [
                 FieldSchema(name="pk", dtype=DataType.VARCHAR, is_primary=True, max_length=36),  # Primary key field
                 FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=embedding_dim),  # Vector field with embedding dimension
+                FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=65535), # added the text field.
             ]
             
             # Create the schema for the collection with dynamic fields enabled

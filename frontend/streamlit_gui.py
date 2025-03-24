@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import random
 import os
 import time
@@ -15,10 +16,10 @@ load_dotenv()
 BACKEND_URL = os.getenv("BACKEND_URL")
 CSS_PATH = os.getenv("CSS_PATH")
 
-# Set tab title and icon
+# Sets tab title and icon 
 st.set_page_config(
     page_title="RiteGen",
-    page_icon="http://rite-solutions.com/wp-content/uploads/2023/08/cropped-single-rower_0097d7-1-192x192.png",
+    page_icon="https://rite-solutions.com/wp-content/uploads/2023/08/cropped-single-rower_0097d7-1-192x192.png",
 )
 
 # Function to load and apply the CSS file
@@ -62,6 +63,7 @@ st.sidebar.header("Upload Documents")
 uploaded_files = st.sidebar.file_uploader(
     "files", accept_multiple_files=True, type=["pdf", "docx", "txt", "pptx", "csv"]
 )
+
 
 if st.sidebar.button("Process Documents"):
     if uploaded_files:
@@ -162,3 +164,37 @@ if prompt := st.chat_input("Message Rite Content Creator"):
             st.session_state.messages.append({"role": "assistant", "content": full_response})
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
+
+        
+
+    col1, col2, col3 = st.columns(3)
+    #place metrics in the "Value sections"
+    with col1:
+        st.metric(label="Context", value=0.9999)
+                    
+    with col2:
+        st.metric(label="Faithfulness", value=1.000)
+                    
+    with col3:
+        st.metric(label="Relevancey", value=.5690)
+
+
+        
+
+
+        
+
+
+
+
+
+
+
+    
+
+    
+
+
+    
+
+
