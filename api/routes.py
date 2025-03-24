@@ -13,8 +13,13 @@ PORT = os.getenv("PORT")
 DB_PATH = os.getenv("DB_PATH")
 
 llama_model = "llama3.1:70b"
-llm1 = OllamaLLM(model=llama_model)
-llm1_embeddings = OllamaEmbeddings(model=llama_model)
+deepseek_model = "deepseek-r1:70b"
+
+llm1 = OllamaLLM(model=deepseek_model)
+
+llm2 = OllamaLLM(model=llama_model)
+
+embeddings = OllamaEmbeddings(model=llama_model)
 
 
 # intinaiate flask app
@@ -23,7 +28,7 @@ app = Flask(__name__)
 # Initialize the Ollama LLM and DeepSeek LLM and embeddings
 
 rag = Rag()
-milvus_db = VectorDatabase(llm_embeddings=llm1_embeddings, db_path=DB_PATH)
+milvus_db = VectorDatabase(llm_embeddings=embeddings, db_path=DB_PATH)
 doc_manager = DocumentManagement()
 
 
@@ -47,12 +52,16 @@ def llm_response():
     prompt = rag.create_prompt(retrieved_docs=retrieved_docs, query=query)
     # gets response
     response = rag.get_llm_response(llm=llm1, prompt=prompt)
+    print(f"Reponse: {response}")
 
+    refined_prompt = rag.refine_prompt(retrieved_docs=retrieved_docs, llm1_context=response, question=query)
+    refined_response = rag.get_llm_response(llm=llm2, prompt=refined_prompt)
+    print(f"Refined Reponse: {refined_response}")
     # saves previous answers
     rag.previous_questions.append(query)
-    rag.previous_answers.append(response)
+    rag.previous_answers.append(refined_response)
 
-    return jsonify({"llm_response": response})
+    return jsonify({"llm_response": refined_response})
 
 
 @app.route("/add", methods=["POST"])
