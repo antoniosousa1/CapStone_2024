@@ -34,7 +34,7 @@ app = Flask(__name__)
 # Initialize the Ollama LLM and DeepSeek LLM and embeddings
 
 rag = Rag()
-milvus_db = VectorDatabase(llm_embeddings=embeddings, db_path=DB_PATH, collection_name=USER_ID)
+milvus_db = VectorDatabase(llm_embeddings=embeddings, db_path=DB_PATH, collection_name=f"USER_ID_{USER_ID}")
 doc_manager = DocumentManagement()
 
 
@@ -116,7 +116,7 @@ def check_collection():
     """Check if the collection exists and has data."""
 
     connections.connect(alias="default", uri=os.getenv("DB_PATH"))
-    collection_name = USER_ID
+    collection_name = f"USER_ID_{USER_ID}"
 
     if not utility.has_collection(collection_name):
         return jsonify({"exists": False, "has_data": False})
