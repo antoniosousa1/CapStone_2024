@@ -16,6 +16,7 @@ load_dotenv()
 
 PORT = os.getenv("PORT")
 DB_PATH = os.getenv("DB_PATH")
+USER_ID = os.getenv("USER_ID")
 
 llama_model = "llama3.1:70b"
 deepseek_model = "deepseek-r1:70b"
@@ -33,7 +34,7 @@ app = Flask(__name__)
 # Initialize the Ollama LLM and DeepSeek LLM and embeddings
 
 rag = Rag()
-milvus_db = VectorDatabase(llm_embeddings=embeddings, db_path=DB_PATH)
+milvus_db = VectorDatabase(llm_embeddings=embeddings, db_path=DB_PATH, collection_name=USER_ID)
 doc_manager = DocumentManagement()
 
 
@@ -115,7 +116,7 @@ def check_collection():
     """Check if the collection exists and has data."""
 
     connections.connect(alias="default", uri=os.getenv("DB_PATH"))
-    collection_name = "DataCollection"
+    collection_name = USER_ID
 
     if not utility.has_collection(collection_name):
         return jsonify({"exists": False, "has_data": False})
