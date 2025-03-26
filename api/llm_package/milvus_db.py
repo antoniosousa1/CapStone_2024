@@ -10,7 +10,7 @@ from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, connec
 
 class VectorDatabase:
 
-    def __init__(self, llm_embeddings: OllamaEmbeddings, db_path: str, collection_name: str = "DataCollection"):
+    def __init__(self, llm_embeddings: OllamaEmbeddings, db_path: str, collection_name: str):
         """
         Initializes the vector database and creates a Milvus instance.
         """
