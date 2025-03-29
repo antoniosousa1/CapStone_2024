@@ -19,7 +19,7 @@ embeddings = OllamaEmbeddings(model="llama3.1:latest")
 doc_manager = DocumentManagement()
 
 # Gets or creates the collection
-def get_or_create_collection():
+def get_or_create_collection() -> Milvus:
 
     # Only creates collection after insertion of embeddings
     collection = Milvus(
@@ -34,7 +34,7 @@ def get_or_create_collection():
 
 # Adds docs to collection
 # NOTE: Schema for collection is defined automatticaly from first docuemnts metadata
-def add_docs_to_collection(collection: Milvus, splits: list[Document]):
+def add_docs_to_collection(collection: Milvus, splits: list[Document]) -> None:
 
     # Extract page content and metadata from documents
     text_splits = [doc.page_content for doc in splits]
@@ -52,7 +52,7 @@ def add_docs_to_collection(collection: Milvus, splits: list[Document]):
     )
 
 # Removes docs from collection passed on a list of doc names to remove
-def remove_docs_from_collection(collection: Milvus, collection_name: str, docs_to_remove: list[str],):
+def remove_docs_from_collection(collection: Milvus, collection_name: str, docs_to_remove: list[str]) -> None:
 
     collection.client.delete(
         collection_name=collection_name,
@@ -60,7 +60,7 @@ def remove_docs_from_collection(collection: Milvus, collection_name: str, docs_t
     )
 
 # Creates a list of the document names in the collection
-def view_docs_in_collection(collection: Milvus, collection_name: str):
+def view_docs_in_collection(collection: Milvus, collection_name: str) -> list:
 
     # Queries collection to get source doc names, page_numbers, and PKs
     data = collection.client.query(
@@ -81,7 +81,7 @@ def view_docs_in_collection(collection: Milvus, collection_name: str):
     return docs
 
 # Drops the collection
-def drop_collection(collection: Milvus, collection_name: str):
+def drop_collection(collection: Milvus, collection_name: str) -> None:
 
     collection.client.drop_collection(
         collection_name=collection_name
