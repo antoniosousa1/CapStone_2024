@@ -60,7 +60,7 @@ def remove_docs_from_collection(collection: Milvus, collection_name: str, docs_t
     )
 
 # Creates a list of the document names in the collection
-def view_docs_in_collection(collection: Milvus, collection_name: str) -> list:
+def get_doc_names_in_collection(collection: Milvus, collection_name: str) -> list:
 
     # Queries collection to get source doc names, page_numbers, and PKs
     data = collection.client.query(
@@ -107,11 +107,5 @@ mock_splits = [
 ##############################################################
 
 collection = get_or_create_collection()
-
-#print(f"Documents before delete {view_docs_in_collection(collection=collection, collection_name=collection_name)}")
-#remove_docs_from_collection(collection=collection, collection_name=collection_name, docs_to_remove=view_docs_in_collection(collection=collection, collection_name=collection_name))
-#print(f"Documents after delete {view_docs_in_collection(collection=collection, collection_name=collection_name)}")
-#add_docs_to_collection(collection=collection, splits=mock_splits)
-#drop_collection(collection=collection, collection_name=collection_name)
 
 collection.client.close()
