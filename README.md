@@ -54,3 +54,7 @@ https://python.langchain.com/docs/tutorials/rag/
 
 1. ~/Capstone/api/routes.py will be our backend code file, this is where the api end points will be
 2. This flask app will be listening to requests from the frontend to run the given api endpoint
+
+# Milvus Server set up
+
+https://milvus.io/docs/install_standalone-docker.md
