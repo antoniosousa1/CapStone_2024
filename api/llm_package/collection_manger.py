@@ -2,8 +2,6 @@ from langchain_milvus import Milvus
 from langchain_ollama import OllamaEmbeddings
 from langchain.schema import Document
 
-from pymilvus import MilvusClient
-
 from api.llm_package.document_management import DocumentManagement
 
 from collections import namedtuple
@@ -19,12 +17,6 @@ MILVUS_SERVER_URL = os.getenv("MILVUS_SERVER_URL")
 collection_name = f"user_{USER_ID}_collection"
 embeddings = OllamaEmbeddings(model="llama3.1:latest")
 doc_manager = DocumentManagement()
-
-# Create milvus client to interact with pymilvus functions
-client = MilvusClient(
-    uri=MILVUS_SERVER_URL,
-    user=USER_ID
-)
 
 # Gets or creates the collection
 def get_or_create_collection():
@@ -60,18 +52,18 @@ def add_docs_to_collection(collection: Milvus, splits: list[Document]):
     )
 
 # Removes docs from collection passed on a list of doc names to remove
-def remove_docs_from_collection(client: MilvusClient, collection_name: str, docs_to_remove: list[str],):
+def remove_docs_from_collection(collection: Milvus, collection_name: str, docs_to_remove: list[str],):
 
-    client.delete(
+    collection.client.delete(
         collection_name=collection_name,
         filter=f"source in {docs_to_remove}"
     )
 
 # Creates a list of the document names in the collection
-def view_docs_in_collection(client: MilvusClient, collection_name: str):
+def view_docs_in_collection(collection: Milvus, collection_name: str):
 
     # Queries collection to get source doc names, page_numbers, and PKs
-    data = client.query(
+    data = collection.client.query(
         collection_name=collection_name,
         output_fields=["source", "page_number", "pk"],
         filter="",
@@ -89,9 +81,9 @@ def view_docs_in_collection(client: MilvusClient, collection_name: str):
     return docs
 
 # Drops the collection
-def drop_collection(client: MilvusClient, collection_name: str):
+def drop_collection(collection: Milvus, collection_name: str):
 
-    client.drop_collection(
+    collection.client.drop_collection(
         collection_name=collection_name
     )
     print("collection dropped")
@@ -116,10 +108,10 @@ mock_splits = [
 
 collection = get_or_create_collection()
 
-#print(f"Documents before delete {view_docs_in_collection(client=client, collection_name=collection_name)}")
-#remove_docs_from_collection(client=client, collection_name=collection_name, docs_to_remove=view_docs_in_collection(client=client, collection_name=collection_name))
-#print(f"Documents after delete {view_docs_in_collection(client=client, collection_name=collection_name)}")
+#print(f"Documents before delete {view_docs_in_collection(collection=collection, collection_name=collection_name)}")
+#remove_docs_from_collection(collection=collection, collection_name=collection_name, docs_to_remove=view_docs_in_collection(collection=collection, collection_name=collection_name))
+#print(f"Documents after delete {view_docs_in_collection(collection=collection, collection_name=collection_name)}")
 #add_docs_to_collection(collection=collection, splits=mock_splits)
-#drop_collection(client=client, collection_name=collection_name)
+#drop_collection(collection=collection, collection_name=collection_name)
 
-client.close()
+collection.client.close()
