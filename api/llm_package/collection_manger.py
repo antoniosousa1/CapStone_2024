@@ -1,10 +1,11 @@
 # add docs to collection
 # remove docs
 
-from pymilvus import Collection, connections
+from pymilvus import Collection, connections, MilvusClient
 from dotenv import load_dotenv
 from langchain_milvus import Milvus
 from langchain_ollama import OllamaEmbeddings
+from api.llm_package.document_management import DocumentManagement
 
 import os
 from uuid import uuid4
@@ -18,6 +19,13 @@ MILVUS_PORT = os.getenv("MILVUS_PORT")
 
 collection_name = f"user_{USER_ID}_collection"
 embeddings = OllamaEmbeddings(model="llama3.1:latest")
+doc_manager = DocumentManagement()
+
+client = MilvusClient(
+    uri="http://localhost:19530",
+    token="root:Milvus"
+)
+
 
 def create_connection():
     # Create a connection to the Milvus server
@@ -37,12 +45,13 @@ def get_or_create_collection():
     collection = Milvus(
         collection_name=collection_name,
         embedding_function=embeddings,
-        connection_args={"uri": MILVUS_SERVER_URL}
+        connection_args={"uri": MILVUS_SERVER_URL},
+        auto_id=True
     )
     print('collection made')
     return collection
 
-
+# schema is defined automatticaly from first docuemnts metadata
 def add_docs_to_collection(collection: Milvus, splits):
         """
         Updates the Milvus database by adding new document splits.
@@ -52,26 +61,44 @@ def add_docs_to_collection(collection: Milvus, splits):
         metadatas = [doc.metadata for doc in splits]
 
         if not text_splits:
-            print("\nWarning: No valid content found in the documents!\n")
+            print("\nWarning: No valid content found in the documencts!\n")
             return
 
-        # Generate unique IDs for each document
-        ids = [str(uuid4()) for _ in range(len(text_splits))]
-        # Add the new texts (documents) to the Milvus database
         # Add the new texts (documents) to the Milvus database
         collection.add_texts(
             texts=text_splits,
-            metadatas=[{**metadata, "page_content": text} for metadata, text in zip(metadatas, text_splits)], # modified this line.
-            ids=ids,
+            metadatas=metadatas
         )
     
-        return ids
 
-def remove_docs_from_collection():
-    col.delete
+def remove_docs_from_collection(client: MilvusClient, docs_to_remove: list[str]):
 
-def view_docs_in_collection(col: Milvus):
-     pass
+    client.delete(
+            collection_name=collection_name,
+            filter=f"source in {docs_to_remove}"
+                )
+
+def view_docs_in_collection(collection_name: str):
+
+    # creates collection object from collection name
+    collection = Collection(collection_name)
+
+    # queries collection to get source doc names, page_numbers, and PKs
+    data = collection.query(
+          expr="",
+          output_fields=["source", "page_number", "pk"],
+          limit="1000"
+     )
+    
+    # set of document names
+    doc_set = set()
+    for x in data:
+        print(x)
+        doc_set.add(x["source"])
+
+    docs = list(doc_set)
+    
+    return docs
 
 def drop_collection(collection_name: str):
     collection = Collection(collection_name)
@@ -92,13 +119,14 @@ mock_splits = [
 ]
 
 create_connection()
-# Test adding the mock splits to the collection
+#Test adding the mock splits to the collection
 col = get_or_create_collection()
-added_ids = add_docs_to_collection(col, mock_splits)
-print(view_docs_in_collection(col))
+add_docs_to_collection(col, mock_splits)
 
-print(f"Active connections before: {connections.list_connections()}")
+docs = view_docs_in_collection(collection_name=collection_name)
+print(f"view docs before deleetion: {docs}")
 
+remove_docs_from_collection(client=client, docs_to_remove=docs)
+
+print(f"View docs after dleeteation {view_docs_in_collection(collection_name=collection_name)}")
 connections.disconnect("default")
-
-print(f"Active connectiosn after: {connections.list_connections()}")

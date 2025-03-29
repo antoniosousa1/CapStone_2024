@@ -47,12 +47,6 @@ class Rag:
         search_results = retriever.invoke(question)
         return search_results
 
-    # Function to prompt the user for a question
-    def get_query(self) -> str:
-        # Prompt for user input
-        query = input(f"What would you like to ask? \n")
-        return query
-
     # Function to create a detailed prompt with context for the LLM
     def create_prompt(self, retrieved_docs: list[Document], query: str) -> str:
         prompt = (
@@ -164,16 +158,3 @@ class Rag:
         )
 
         return evaluation
-
-    # Function to save the generated answer to a file
-    def save_answer_to_file(self, output_file2: str, answer: str):
-        """
-        Saves the answer to a file, splitting it into sentences and cleaning each one before writing.
-        """
-        with open(output_file2, "w") as file:
-            sentences = answer.strip().split(".")  # Split answer into sentences
-            for sentence in sentences:
-                cleaned_sentence = sentence.strip()
-                if cleaned_sentence:  # Ensure the sentence is not empty
-                    # Write each sentence to the file
-                    file.write(cleaned_sentence + ".\n")
