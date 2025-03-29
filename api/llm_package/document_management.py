@@ -29,6 +29,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 
 class DocumentManagement:
+
+    def get_file_extension(file_path: str) -> str:
+
+        return file_path.rsplit('.', 1)[-1].lower() #gets file extension
     
     def load_doc(self, file_path) -> list[Document]: 
 
