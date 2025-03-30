@@ -17,26 +17,26 @@ import os
 import hashlib
 from langchain.schema import Document
 from langchain_community.document_loaders import (
-    DirectoryLoader,
     TextLoader,
     CSVLoader,
     UnstructuredPDFLoader,
     UnstructuredWordDocumentLoader,
     UnstructuredPowerPointLoader,
 )
-from langchain_milvus import Milvus
+
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 
 class DocumentManagement:
 
-    def get_file_extension(file_path: str) -> str:
+    def get_file_extension(self, file_path: str) -> str:
 
         return file_path.rsplit('.', 1)[-1].lower() #gets file extension
     
-    def load_doc(self, file_path) -> list[Document]: 
+    def load_doc(self, file_path: str) -> list[Document]: 
 
         file_extension = self.get_file_extension(file_path)
+        print(f"file extension: {file_extension}")
 
         match file_extension:
             case "pdf":
@@ -52,11 +52,11 @@ class DocumentManagement:
                 docs = loader.load()
                 return docs
             case "pptx":
-                loader = UnstructuredPowerPointLoader(file_path=file_path)
+                loader = UnstructuredPowerPointLoader(file_path)
                 docs = loader.load()
                 return docs
             case "csv":
-                loader = CSVLoader(file_path=file_path)
+                loader = CSVLoader(file_path)
                 docs = loader.load()
                 return docs
             case _:

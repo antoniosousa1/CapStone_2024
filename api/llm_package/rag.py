@@ -16,7 +16,6 @@ Project Description: This code utilizes Ollama as our LLM and a Retrieval-Augmen
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain.schema import Document  # Document schema class
 from langchain_milvus import Milvus  # For managing vector databases
-from langchain.vectorstores.base import VectorStoreRetriever
 
 from ragas import EvaluationDataset, evaluate, SingleTurnSample
 from ragas.metrics import (
@@ -32,19 +31,15 @@ class Rag:
     previous_questions = []
     previous_answers = []
 
-    # Function to create a retriever for querying the vector store
-    def create_retriever(self, vector_store: Milvus) -> VectorStoreRetriever:
-        retriever = vector_store.as_retriever(
-            search_type="similarity", search_kwargs={"k": 3}
-        )
-        return retriever
-
     # Function to retrieve relevant documents based on a user's query
     def retrieve_docs(
-        self, retriever: VectorStoreRetriever, question: str
+        self, query: str, vector_store: Milvus
     ) -> list[Document]:
-        # Retrieve top 15 relevant documents
-        search_results = retriever.invoke(question)
+        
+        search_results = vector_store.similarity_search(
+            query=query, k=3
+            )
+        
         return search_results
 
     # Function to create a detailed prompt with context for the LLM
