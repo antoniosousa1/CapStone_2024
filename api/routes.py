@@ -5,7 +5,6 @@ from llm_package import collection_manger
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 
 from flask import Flask, request, jsonify
-from tempfile import NamedTemporaryFile
 
 from dotenv import load_dotenv
 import os
@@ -38,7 +37,7 @@ def llm_response():
     query = data.get("query")
 
     # retrive docs
-    retrieved_docs = rag.retrieve_docs(query=query, vector_store=collection_manger.collection)
+    retrieved_docs = rag.retrieve_docs(query=query, vector_store=collection_manger.get_milvus_connection())
     # create prompt
     prompt = rag.create_prompt(retrieved_docs=retrieved_docs, query=query)
     # gets response
@@ -62,15 +61,13 @@ def upload_file():
 
     file = request.files["file"]  # This retrieves the uploaded file
 
-    if file and file.filename != '': 
-        with NamedTemporaryFile() as temp:
-            file.save(temp)
-            temp.seek(0)
-            print(f"temp.name: {temp.name}")
-            loaded_doc = doc_manager.load_doc(temp.name)
-            print(f"loaded_doc {loaded_doc}")
+    loaded_doc = doc_manager.load_doc(file)
 
-    splits = doc_manager.split_docs(loaded_doc)
+    print("#" * 40 + "\n")
+    print(loaded_doc)
+    print("#" * 40 + "\n")
+
+    splits = doc_manager.split_doc(loaded_doc)
     
     collection_manger.add_docs_to_collection(splits=splits)
 
