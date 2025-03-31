@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, TextField, Typography, CircularProgress, Paper, Grid, styled, useTheme, IconButton } from '@mui/material';
+import { Box, TextField, Typography, CircularProgress, Paper, Grid, styled, useTheme, IconButton, Button } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
+import SendIcon from '@mui/icons-material/Send';
 
 // Styled Components for Custom Styling
 const MessageContainer = styled(Paper)(({ theme, sender }) => ({
@@ -70,14 +71,17 @@ const ChatBox = ({ onSendMessage }) => {
         flexDirection: 'column',
       }}
     >
-      <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
+      {/* Chat Header with Clear Button */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <Typography variant="h4" sx={{ textAlign: 'center', flexGrow: 1, fontWeight: 'bold' }}>
-          Rite Solutions Content Creator
+          RiteGen
         </Typography>
         <IconButton onClick={handleClearChat} aria-label="clear chat">
           <ClearIcon />
         </IconButton>
       </Box>
+
+      {/* Chat Messages Container */}
       <Box
         sx={{
           flexGrow: 1,
@@ -120,11 +124,13 @@ const ChatBox = ({ onSendMessage }) => {
         <div ref={messagesEndRef} />
         {isLoading && <CircularProgress size={24} sx={{ alignSelf: 'center', mt: 2 }} />}
       </Box>
+
+      {/* Chat Input with Send Button */}
       <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
         <TextField
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          label="Message Rite Content Creator"
+          label="Message RiteGen"
           variant="outlined"
           fullWidth
           sx={{ marginRight: '16px' }}
@@ -132,6 +138,14 @@ const ChatBox = ({ onSendMessage }) => {
             if (e.key === 'Enter') handleSendMessage();
           }}
         />
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSendMessage}
+          sx={{ height: '56px', minWidth: '64px' }} // Ensures button height matches input
+        >
+          <SendIcon /> {/* Arrow icon inside the button */}
+        </Button>
       </Box>
     </Box>
   );

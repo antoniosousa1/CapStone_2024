@@ -6,6 +6,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { Alert, AlertTitle } from '@mui/material';
 import { Snackbar } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
+import { PDFDocument } from 'pdf-lib'; // To extract page count from PDFs
 
 // Define the columns for the documents table
 const columns = [
@@ -19,35 +21,7 @@ const columns = [
 ];
 
 const DocumentsPage = () => {
-  const [rows, setRows] = useState([
-    { id: 1, documentName: 'Document 1', fileType: 'PDF', fileSize: 2048, uploadDate: new Date('2024-03-01'), lastModified: new Date('2024-03-02'), pageCount: 10 },
-    { id: 2, documentName: 'Document 2', fileType: 'DOCX', fileSize: 1536, uploadDate: new Date('2024-03-05'), lastModified: new Date('2024-03-06'), pageCount: 5 },
-    { id: 3, documentName: 'Document 3', fileType: 'TXT', fileSize: 1024, uploadDate: new Date('2024-03-10'), lastModified: new Date('2024-03-11'), pageCount: 1 },
-    { id: 4, documentName: 'Document 4', fileType: 'PDF', fileSize: 3072, uploadDate: new Date('2024-03-15'), lastModified: new Date('2024-03-16'), pageCount: 15 },
-    { id: 5, documentName: 'Document 5', fileType: 'CSV', fileSize: 512, uploadDate: new Date('2024-03-20'), lastModified: new Date('2024-03-21'), pageCount: 2 },
-    { id: 6, documentName: 'Document 1', fileType: 'PDF', fileSize: 2048, uploadDate: new Date('2024-03-01'), lastModified: new Date('2024-03-02'), pageCount: 10 },
-    { id: 7, documentName: 'Document 2', fileType: 'DOCX', fileSize: 1536, uploadDate: new Date('2024-03-05'), lastModified: new Date('2024-03-06'), pageCount: 5 },
-    { id: 8, documentName: 'Document 3', fileType: 'TXT', fileSize: 1024, uploadDate: new Date('2024-03-10'), lastModified: new Date('2024-03-11'), pageCount: 1 },
-    { id: 9, documentName: 'Document 4', fileType: 'PDF', fileSize: 3072, uploadDate: new Date('2024-03-15'), lastModified: new Date('2024-03-16'), pageCount: 15 },
-    { id: 10, documentName: 'Document 5', fileType: 'CSV', fileSize: 512, uploadDate: new Date('2024-03-20'), lastModified: new Date('2024-03-21'), pageCount: 2 },
-    { id: 11, documentName: 'Document 1', fileType: 'PDF', fileSize: 2048, uploadDate: new Date('2024-03-01'), lastModified: new Date('2024-03-02'), pageCount: 10 },
-    { id: 12, documentName: 'Document 2', fileType: 'DOCX', fileSize: 1536, uploadDate: new Date('2024-03-05'), lastModified: new Date('2024-03-06'), pageCount: 5 },
-    { id: 13, documentName: 'Document 3', fileType: 'TXT', fileSize: 1024, uploadDate: new Date('2024-03-10'), lastModified: new Date('2024-03-11'), pageCount: 1 },
-    { id: 14, documentName: 'Document 4', fileType: 'PDF', fileSize: 3072, uploadDate: new Date('2024-03-15'), lastModified: new Date('2024-03-16'), pageCount: 15 },
-    { id: 15, documentName: 'Document 5', fileType: 'CSV', fileSize: 512, uploadDate: new Date('2024-03-20'), lastModified: new Date('2024-03-21'), pageCount: 2 },
-    { id: 16, documentName: 'Document 1', fileType: 'PDF', fileSize: 2048, uploadDate: new Date('2024-03-01'), lastModified: new Date('2024-03-02'), pageCount: 10 },
-    { id: 17, documentName: 'Document 2', fileType: 'DOCX', fileSize: 1536, uploadDate: new Date('2024-03-05'), lastModified: new Date('2024-03-06'), pageCount: 5 },
-    { id: 18, documentName: 'Document 3', fileType: 'TXT', fileSize: 1024, uploadDate: new Date('2024-03-10'), lastModified: new Date('2024-03-11'), pageCount: 1 },
-    { id: 19, documentName: 'Document 4', fileType: 'PDF', fileSize: 3072, uploadDate: new Date('2024-03-15'), lastModified: new Date('2024-03-16'), pageCount: 15 },
-    { id: 20, documentName: 'Document 5', fileType: 'CSV', fileSize: 512, uploadDate: new Date('2024-03-20'), lastModified: new Date('2024-03-21'), pageCount: 2 },
-    { id: 21, documentName: 'Document 1', fileType: 'PDF', fileSize: 2048, uploadDate: new Date('2024-03-01'), lastModified: new Date('2024-03-02'), pageCount: 10 },
-    { id: 22, documentName: 'Document 2', fileType: 'DOCX', fileSize: 1536, uploadDate: new Date('2024-03-05'), lastModified: new Date('2024-03-06'), pageCount: 5 },
-    { id: 23, documentName: 'Document 3', fileType: 'TXT', fileSize: 1024, uploadDate: new Date('2024-03-10'), lastModified: new Date('2024-03-11'), pageCount: 1 },
-    { id: 24, documentName: 'Document 4', fileType: 'PDF', fileSize: 3072, uploadDate: new Date('2024-03-15'), lastModified: new Date('2024-03-16'), pageCount: 15 },
-    { id: 25, documentName: 'Document 5', fileType: 'CSV', fileSize: 512, uploadDate: new Date('2024-03-20'), lastModified: new Date('2024-03-21'), pageCount: 2 },
-
-  ]);
-
+  const [rows, setRows] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [isDeleteButtonVisible, setIsDeleteButtonVisible] = useState(false);
   const [open, setOpen] = React.useState(false);
@@ -58,6 +32,70 @@ const DocumentsPage = () => {
   });
   const [deleteButtonText, setDeleteButtonText] = useState("Delete Selected Files");
   const theme = useTheme();
+
+  // Helper function to get file type display
+  const getFileType = (fileType) => {
+    if (fileType.includes('pdf')) return 'PDF';
+    if (fileType.includes('word')) return 'DOCX';
+    if (fileType.includes('msword')) return 'DOC';
+    if (fileType.includes('presentation')) return 'PPTX';
+    if (fileType.includes('plain')) return 'TXT';
+    return 'Unknown';
+  };
+
+  // Handle file upload
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const fileType = getFileType(file.type);
+      const newDocument = {
+        id: rows.length + 1, // Assign an ID based on current number of rows
+        documentName: file.name,
+        fileType: fileType,
+        fileSize: file.size,
+        uploadDate: new Date(),
+        lastModified: new Date(),
+        pageCount: 0, // Set pageCount to 0 initially
+      };
+
+      // Read PDF files for page count
+      if (fileType === 'PDF') {
+        const reader = new FileReader();
+        reader.onload = async function (e) {
+          const arrayBuffer = e.target.result;
+          const pdfDoc = await PDFDocument.load(arrayBuffer);
+          const pageCount = pdfDoc.getPages().length; // Accurate page count from the PDF
+          newDocument.pageCount = pageCount;
+          setRows((prevRows) => [...prevRows, newDocument]);
+        };
+        reader.readAsArrayBuffer(file);
+      } 
+      // Handle other file types like TXT, DOCX, and PPTX
+      else if (fileType === 'TXT') {
+        // Read TXT files
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const text = e.target.result;
+          const pageCount = text.split("\n").length; // Simple page count logic for TXT files (lines as pages)
+          newDocument.pageCount = pageCount;
+          setRows((prevRows) => [...prevRows, newDocument]);
+        };
+        reader.readAsText(file);
+      } 
+      else {
+        // For DOCX, DOC, and PPTX, we can assume 1 page for simplicity (or improve with parsing libraries)
+        newDocument.pageCount = 1; // You could add libraries to count pages for DOCX/PPTX here if needed
+        setRows((prevRows) => [...prevRows, newDocument]);
+      }
+
+      setAlertInfo({
+        title: "Success",
+        message: `File "${file.name}" uploaded successfully!`,
+        severity: "success",
+      });
+      setOpen(true);
+    }
+  };
 
   const handleDeleteRow = (id) => {
     setRows((prevRows) => prevRows.filter((row) => row.id !== id));
@@ -102,6 +140,22 @@ const DocumentsPage = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, width: '99%' }}>
+      <Box sx={{ marginBottom: '16px' }}>
+        <Button
+          variant="contained"
+          component="label"
+          startIcon={<FileUploadIcon />}
+          sx={{ backgroundColor: '#1976d2', color: '#fff', '&:hover': { backgroundColor: '#1565c0' } }}
+        >
+          Upload Document
+          <input
+            type="file"
+            hidden
+            onChange={handleFileUpload}
+          />
+        </Button>
+      </Box>
+
       <DataGrid
         rows={rows}
         columns={columns}
@@ -119,6 +173,7 @@ const DocumentsPage = () => {
         autoHeight
         sx={{ flexGrow: 1 }}
       />
+      
       {isDeleteButtonVisible && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
           <Button
@@ -131,6 +186,7 @@ const DocumentsPage = () => {
           </Button>
         </Box>
       )}
+
       <Snackbar
         open={open}
         autoHideDuration={5000} // Set the duration to 5 seconds (5000ms)
