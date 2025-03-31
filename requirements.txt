@@ -5,7 +5,7 @@ langchain-core==0.3.12
 langchain-ollama==0.2.0
 langchain-text-splitters==0.3.0
 langchain-milvus==0.1.7
-pymilvus==2.4.9
+pymilvus==2.5.6
 unstructured==0.16.2
 unstructured[pdf, docx, pptx]==0.16.2
 ragas==0.2.13
