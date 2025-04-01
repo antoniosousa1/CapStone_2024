@@ -5,13 +5,11 @@ import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Alert, AlertTitle } from '@mui/material';
 import { Snackbar } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { PDFDocument } from 'pdf-lib';
 import mammoth from 'mammoth'; 
 import JSZip from 'jszip'; // Import JSZip to process PPTX files
 
-// Allowed file types
 const allowedFileTypes = {
   "application/pdf": "PDF",
   "application/msword": "DOC",
@@ -94,6 +92,7 @@ const DocumentsPage = () => {
         const pdfDoc = await PDFDocument.load(arrayBuffer);
         newDocument.pageCount = pdfDoc.getPages().length;
         setRows((prevRows) => [...prevRows, newDocument]);
+        localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument])); // Save to localStorage
       };
       reader.readAsArrayBuffer(file);
     } 
@@ -104,6 +103,7 @@ const DocumentsPage = () => {
         const text = e.target.result;
         newDocument.pageCount = Math.ceil(text.length / 2000) || 1;
         setRows((prevRows) => [...prevRows, newDocument]);
+        localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument])); // Save to localStorage
       };
       reader.readAsText(file);
     } 
@@ -115,6 +115,7 @@ const DocumentsPage = () => {
         const extractedText = await mammoth.extractRawText({ arrayBuffer });
         newDocument.pageCount = Math.ceil(extractedText.value.length / 2000) || 1;
         setRows((prevRows) => [...prevRows, newDocument]);
+        localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument])); // Save to localStorage
       };
       reader.readAsArrayBuffer(file);
     } 
@@ -126,15 +127,15 @@ const DocumentsPage = () => {
         const slideCount = await getPptxSlideCount(arrayBuffer);
         newDocument.pageCount = slideCount;
         setRows((prevRows) => [...prevRows, newDocument]);
+        localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument])); // Save to localStorage
       };
       reader.readAsArrayBuffer(file);
     } 
     else {
       setRows((prevRows) => [...prevRows, newDocument]);
+      localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument])); // Save to localStorage
     }
 
-    // Store updated document list in localStorage
-    localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument]));
     setAlertInfo({ title: "Success", message: `File "${file.name}" uploaded successfully!`, severity: "success" });
     setOpen(true);
   };
@@ -142,7 +143,13 @@ const DocumentsPage = () => {
   // Handle delete action
   const handleDeleteSelectedRows = () => {
     if (selectedRows.length > 0) {
-      setRows(prevRows => prevRows.filter(row => !selectedRows.includes(row.id)));
+      // Filter out the selected rows to delete
+      const newRows = rows.filter(row => !selectedRows.includes(row.id));
+      
+      // Update state and localStorage after deletion
+      setRows(newRows);
+      localStorage.setItem('documentFiles', JSON.stringify(newRows)); // Save the updated list to localStorage
+
       setSelectedRows([]);
       setIsDeleteButtonVisible(false);
       setAlertInfo({ title: "Success", message: "Files deleted successfully", severity: "success" });
