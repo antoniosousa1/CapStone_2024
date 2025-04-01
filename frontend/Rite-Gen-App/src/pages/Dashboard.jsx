@@ -25,7 +25,6 @@ const NAVIGATION = [
   { segment: 'documents', title: 'Documents', icon: <FolderIcon /> },
   { kind: 'divider' },
   { kind: 'header', title: 'Database Management' },
-  { segment: 'ProcessDocuments', title: 'Process Documents', icon: <DirectionsRunIcon /> },
   { segment: 'purgedatabase', title: 'Purge Database', icon: <DeleteIcon /> },
   { kind: 'divider' },
   { kind: 'header', title: 'Statistics' },
