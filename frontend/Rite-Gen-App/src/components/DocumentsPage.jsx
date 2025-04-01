@@ -9,6 +9,11 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { PDFDocument } from 'pdf-lib';
 import mammoth from 'mammoth'; 
 import JSZip from 'jszip'; // Import JSZip to process PPTX files
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContentText from '@mui/material/DialogContentText';
 
 const allowedFileTypes = {
   "application/pdf": "PDF",
@@ -48,18 +53,23 @@ const columns = [
 ];
 
 const DocumentsPage = () => {
-  // State to manage documents
   const [rows, setRows] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [isDeleteButtonVisible, setIsDeleteButtonVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ title: "", message: "", severity: "success" });
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false); 
 
   // Load documents metadata from localStorage on component mount
   useEffect(() => {
     const savedFiles = JSON.parse(localStorage.getItem('documentFiles') || '[]');
     setRows(savedFiles);
   }, []);
+
+  // Generate a new unique ID based on the rows length or reset if there are no files
+  const generateFileId = () => {
+    return rows.length === 0 ? 1 : Math.max(...rows.map(file => file.id)) + 1;
+  };
 
   // Handle file upload
   const handleFileUpload = (event) => {
@@ -73,9 +83,10 @@ const DocumentsPage = () => {
       return;
     }
 
-    // Metadata for the new document
+    const newFileId = generateFileId(); // Ensure unique ID, or reset to 1 if no files
+
     const newDocument = {
-      id: rows.length + 1,
+      id: newFileId,
       documentName: file.name,
       fileType,
       fileSize: formatFileSize(file.size),
@@ -91,8 +102,11 @@ const DocumentsPage = () => {
         const arrayBuffer = e.target.result;
         const pdfDoc = await PDFDocument.load(arrayBuffer);
         newDocument.pageCount = pdfDoc.getPages().length;
-        setRows((prevRows) => [...prevRows, newDocument]);
-        localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument])); // Save to localStorage
+        setRows((prevRows) => {
+          const updatedRows = [...prevRows, newDocument];
+          localStorage.setItem('documentFiles', JSON.stringify(updatedRows)); // Save to localStorage
+          return updatedRows;
+        });
       };
       reader.readAsArrayBuffer(file);
     } 
@@ -102,8 +116,11 @@ const DocumentsPage = () => {
       reader.onload = (e) => {
         const text = e.target.result;
         newDocument.pageCount = Math.ceil(text.length / 2000) || 1;
-        setRows((prevRows) => [...prevRows, newDocument]);
-        localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument])); // Save to localStorage
+        setRows((prevRows) => {
+          const updatedRows = [...prevRows, newDocument];
+          localStorage.setItem('documentFiles', JSON.stringify(updatedRows)); // Save to localStorage
+          return updatedRows;
+        });
       };
       reader.readAsText(file);
     } 
@@ -114,8 +131,11 @@ const DocumentsPage = () => {
         const arrayBuffer = e.target.result;
         const extractedText = await mammoth.extractRawText({ arrayBuffer });
         newDocument.pageCount = Math.ceil(extractedText.value.length / 2000) || 1;
-        setRows((prevRows) => [...prevRows, newDocument]);
-        localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument])); // Save to localStorage
+        setRows((prevRows) => {
+          const updatedRows = [...prevRows, newDocument];
+          localStorage.setItem('documentFiles', JSON.stringify(updatedRows)); // Save to localStorage
+          return updatedRows;
+        });
       };
       reader.readAsArrayBuffer(file);
     } 
@@ -126,14 +146,13 @@ const DocumentsPage = () => {
         const arrayBuffer = e.target.result;
         const slideCount = await getPptxSlideCount(arrayBuffer);
         newDocument.pageCount = slideCount;
-        setRows((prevRows) => [...prevRows, newDocument]);
-        localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument])); // Save to localStorage
+        setRows((prevRows) => {
+          const updatedRows = [...prevRows, newDocument];
+          localStorage.setItem('documentFiles', JSON.stringify(updatedRows)); // Save to localStorage
+          return updatedRows;
+        });
       };
       reader.readAsArrayBuffer(file);
-    } 
-    else {
-      setRows((prevRows) => [...prevRows, newDocument]);
-      localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument])); // Save to localStorage
     }
 
     setAlertInfo({ title: "Success", message: `File "${file.name}" uploaded successfully!`, severity: "success" });
@@ -143,18 +162,27 @@ const DocumentsPage = () => {
   // Handle delete action
   const handleDeleteSelectedRows = () => {
     if (selectedRows.length > 0) {
-      // Filter out the selected rows to delete
       const newRows = rows.filter(row => !selectedRows.includes(row.id));
-      
-      // Update state and localStorage after deletion
       setRows(newRows);
-      localStorage.setItem('documentFiles', JSON.stringify(newRows)); // Save the updated list to localStorage
+
+      // If all files are deleted, reset ID to 1
+      if (newRows.length === 0) {
+        localStorage.setItem('documentFiles', JSON.stringify([])); // Clear localStorage
+      } else {
+        localStorage.setItem('documentFiles', JSON.stringify(newRows)); // Save updated list to localStorage
+      }
 
       setSelectedRows([]);
       setIsDeleteButtonVisible(false);
       setAlertInfo({ title: "Success", message: "Files deleted successfully", severity: "success" });
       setOpen(true);
+      setOpenDeleteDialog(false); // Close dialog after deletion
     }
+  };
+
+  // Open the delete confirmation dialog
+  const handleDeleteClick = () => {
+    setOpenDeleteDialog(true);
   };
 
   // Handle row selection changes
@@ -174,26 +202,44 @@ const DocumentsPage = () => {
         </Button>
       </Box>
 
-      {/* DataGrid displaying the documents */}
+      {/* DataGrid displaying the uploaded documents */}
       <DataGrid rows={rows} columns={columns} checkboxSelection onRowSelectionModelChange={handleRowSelectionModelChange}
         rowSelectionModel={selectedRows} disableRowSelectionOnClick autoHeight sx={{ flexGrow: 1 }} />
 
       {/* Delete button for selected rows */}
       {isDeleteButtonVisible && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-          <Button variant="contained" onClick={handleDeleteSelectedRows} startIcon={<DeleteIcon />}
-            sx={{ backgroundColor: '#d32f2f', color: '#fff', '&:hover': { backgroundColor: '#b22a2a' } }}>
+          <Button variant="contained" onClick={handleDeleteClick} startIcon={<DeleteIcon />}>
             Delete Selected Files
           </Button>
         </Box>
       )}
 
-      {/* Snackbar for showing alerts */}
-      <Snackbar open={open} autoHideDuration={5000} onClose={() => setOpen(false)}>
-        <Alert onClose={() => setOpen(false)} severity={alertInfo.severity} sx={{ width: '100%' }}>
-          <AlertTitle>{alertInfo.title}</AlertTitle>{alertInfo.message}
+      {/* Snackbar for alerts */}
+      <Snackbar open={open} autoHideDuration={6000} onClose={() => setOpen(false)}>
+        <Alert onClose={() => setOpen(false)} severity={alertInfo.severity}>
+          <AlertTitle>{alertInfo.title}</AlertTitle>
+          {alertInfo.message}
         </Alert>
       </Snackbar>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the selected file(s)?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteSelectedRows} color="primary">
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
