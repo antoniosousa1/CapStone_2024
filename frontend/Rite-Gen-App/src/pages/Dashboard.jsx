@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Box from '@mui/material/Box';
+import { Box, Tooltip, Typography, Button, Stack } from "@mui/material";
+
 import { AppProvider } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { useDemoRouter } from '@toolpad/core/internal';
@@ -13,6 +14,7 @@ import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import ChatIcon from '@mui/icons-material/Chat';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ChatBox from '../components/ChatBox';
 import DocumentsPage from '../components/DocumentsPage';
 import TooltipBox from '../components/ToolTipBox';
@@ -40,7 +42,7 @@ const NAVIGATION = [
   },
   { kind: 'divider' },
   { kind: 'header', title: 'Support' },
-  { segment: 'tooltips', title: 'Tooltips', icon: <TooltipBox/> },
+  { segment: 'tooltips', title: 'Tooltips', icon: <HelpOutlineIcon /> },
 ];
 
 const theme = createTheme({
@@ -50,10 +52,31 @@ const theme = createTheme({
 });
 
 const HelpPage = () => (
-  <Box sx={{ p: 4, textAlign: 'center' }}>
-    <h2>Need Assistance?</h2>
-    <p>Here you can find guidance on using RiteGen.</p>
-    <TooltipBox title="More details coming soon!" placement="top" />
+  <Box sx={{ p: 4, textAlign: "center", maxWidth: 600, mx: "auto" }}>
+    <Typography variant="h4" gutterBottom>
+      Need Assistance?
+    </Typography>
+    <Typography variant="body1" paragraph>
+      Get guidance on using RiteGen for documentation, content creation, and performance evaluation.
+    </Typography>
+
+    <Stack spacing={2} alignItems="center">
+      <Tooltip title="Chat with the LLM to generate content." placement="top">
+        <Button variant="outlined">Chat Assistance</Button>
+      </Tooltip>
+
+      <Tooltip title="Upload, edit, or delete documents from the sidebar." placement="top">
+        <Button variant="outlined">Managing Documents</Button>
+      </Tooltip>
+
+      <Tooltip title="Evaluate responses based on precision, faithfulness, and relevancy." placement="top">
+        <Button variant="outlined">Evaluating AI Performance</Button>
+      </Tooltip>
+
+      <Tooltip title="More details coming soon!" placement="top">
+        <Button variant="text">More Help</Button>
+      </Tooltip>
+    </Stack>
   </Box>
 );
 
