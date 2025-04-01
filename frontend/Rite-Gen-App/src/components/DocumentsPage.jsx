@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import { DataGrid } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
@@ -11,6 +11,7 @@ import { PDFDocument } from 'pdf-lib';
 import mammoth from 'mammoth'; 
 import JSZip from 'jszip'; // Import JSZip to process PPTX files
 
+// Allowed file types
 const allowedFileTypes = {
   "application/pdf": "PDF",
   "application/msword": "DOC",
@@ -20,6 +21,7 @@ const allowedFileTypes = {
   "text/plain": "TXT"
 };
 
+// Format file size (KB/MB)
 const formatFileSize = (sizeInBytes) => {
   if (!sizeInBytes || isNaN(sizeInBytes)) return "Unknown Size";
   if (sizeInBytes < 1024 * 1024) {
@@ -36,6 +38,7 @@ const getPptxSlideCount = async (file) => {
   return slidesFolder.length;
 };
 
+// Columns for DataGrid (displaying file info)
 const columns = [
   { field: 'id', headerName: 'ID', flex: 1 },
   { field: 'documentName', headerName: 'Document Name', flex: 2 },
@@ -47,12 +50,20 @@ const columns = [
 ];
 
 const DocumentsPage = () => {
+  // State to manage documents
   const [rows, setRows] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [isDeleteButtonVisible, setIsDeleteButtonVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ title: "", message: "", severity: "success" });
 
+  // Load documents metadata from localStorage on component mount
+  useEffect(() => {
+    const savedFiles = JSON.parse(localStorage.getItem('documentFiles') || '[]');
+    setRows(savedFiles);
+  }, []);
+
+  // Handle file upload
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -64,6 +75,7 @@ const DocumentsPage = () => {
       return;
     }
 
+    // Metadata for the new document
     const newDocument = {
       id: rows.length + 1,
       documentName: file.name,
@@ -71,9 +83,10 @@ const DocumentsPage = () => {
       fileSize: formatFileSize(file.size),
       uploadDate: new Date().toLocaleDateString(),
       lastModified: new Date().toLocaleDateString(),
-      pageCount: 1, 
+      pageCount: 1, // Default to 1, will update based on file type
     };
 
+    // Process PDF
     if (fileType === "PDF") {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -84,6 +97,7 @@ const DocumentsPage = () => {
       };
       reader.readAsArrayBuffer(file);
     } 
+    // Process TXT
     else if (fileType === "TXT") {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -93,6 +107,7 @@ const DocumentsPage = () => {
       };
       reader.readAsText(file);
     } 
+    // Process DOCX
     else if (fileType === "DOCX") {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -103,6 +118,7 @@ const DocumentsPage = () => {
       };
       reader.readAsArrayBuffer(file);
     } 
+    // Process PPTX
     else if (fileType === "PPTX") {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -117,10 +133,13 @@ const DocumentsPage = () => {
       setRows((prevRows) => [...prevRows, newDocument]);
     }
 
+    // Store updated document list in localStorage
+    localStorage.setItem('documentFiles', JSON.stringify([...rows, newDocument]));
     setAlertInfo({ title: "Success", message: `File "${file.name}" uploaded successfully!`, severity: "success" });
     setOpen(true);
   };
 
+  // Handle delete action
   const handleDeleteSelectedRows = () => {
     if (selectedRows.length > 0) {
       setRows(prevRows => prevRows.filter(row => !selectedRows.includes(row.id)));
@@ -131,6 +150,7 @@ const DocumentsPage = () => {
     }
   };
 
+  // Handle row selection changes
   const handleRowSelectionModelChange = (newSelectedRows) => {
     setSelectedRows(newSelectedRows);
     setIsDeleteButtonVisible(newSelectedRows.length > 0);
@@ -138,6 +158,7 @@ const DocumentsPage = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, width: '99%' }}>
+      {/* File upload button */}
       <Box sx={{ marginBottom: '16px' }}>
         <Button variant="contained" component="label" startIcon={<FileUploadIcon />}
           sx={{ backgroundColor: '#1976d2', color: '#fff', '&:hover': { backgroundColor: '#1565c0' } }}>
@@ -146,9 +167,11 @@ const DocumentsPage = () => {
         </Button>
       </Box>
 
+      {/* DataGrid displaying the documents */}
       <DataGrid rows={rows} columns={columns} checkboxSelection onRowSelectionModelChange={handleRowSelectionModelChange}
         rowSelectionModel={selectedRows} disableRowSelectionOnClick autoHeight sx={{ flexGrow: 1 }} />
 
+      {/* Delete button for selected rows */}
       {isDeleteButtonVisible && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
           <Button variant="contained" onClick={handleDeleteSelectedRows} startIcon={<DeleteIcon />}
@@ -158,6 +181,7 @@ const DocumentsPage = () => {
         </Box>
       )}
 
+      {/* Snackbar for showing alerts */}
       <Snackbar open={open} autoHideDuration={5000} onClose={() => setOpen(false)}>
         <Alert onClose={() => setOpen(false)} severity={alertInfo.severity} sx={{ width: '100%' }}>
           <AlertTitle>{alertInfo.title}</AlertTitle>{alertInfo.message}
