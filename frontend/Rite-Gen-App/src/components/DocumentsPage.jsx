@@ -12,6 +12,7 @@ import { PDFDocument } from 'pdf-lib';
 import mammoth from 'mammoth';
 import JSZip from 'jszip';
 
+// Define allowed file types and their corresponding names.
 const allowedFileTypes = {
   "application/pdf": "PDF",
   "application/msword": "DOC",
@@ -22,18 +23,21 @@ const allowedFileTypes = {
   "text/csv": "CSV"
 };
 
+// Function to format file size from bytes to KB or MB.
 const formatFileSize = (sizeInBytes) => {
   return sizeInBytes < 1024 * 1024
     ? `${(sizeInBytes / 1024).toFixed(2)} KB`
     : `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
 };
 
+// Asynchronous function to get the number of slides in a PPTX file.
 const getPptxSlideCount = async (file) => {
   const zip = new JSZip();
   const content = await zip.loadAsync(file);
   return Object.keys(content.files).filter(name => name.startsWith("ppt/slides/") && name.endsWith(".xml")).length;
 };
 
+// Define columns for the DataGrid.
 const columns = [
   { field: 'id', headerName: 'ID', flex: 1 },
   { field: 'documentName', headerName: 'Document Name', flex: 2 },
@@ -45,6 +49,7 @@ const columns = [
 ];
 
 const DocumentsPage = () => {
+  // State variables.
   const [rows, setRows] = useState([]);
   const [filteredRows, setFilteredRows] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
@@ -53,14 +58,17 @@ const DocumentsPage = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openPurgeDialog, setOpenPurgeDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);  // New state to track loading status
+  const [loading, setLoading] = useState(false);
 
+  // useEffect to load saved files from local storage on component mount.
   useEffect(() => {
     const savedFiles = JSON.parse(localStorage.getItem('documentFiles') || '[]');
     setRows(savedFiles);
     setFilteredRows(savedFiles);
+    // API Call Needed Here to get data from backend instead of local storage
   }, []);
 
+  // useEffect to filter rows based on search query.
   useEffect(() => {
     const filtered = rows.filter(row =>
       row.documentName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -68,11 +76,12 @@ const DocumentsPage = () => {
     setFilteredRows(filtered);
   }, [searchQuery, rows]);
 
+  // Asynchronous function to handle file upload.
   const handleFileUpload = async (event) => {
     const files = event.target.files;
     if (!files.length) return;
 
-    setLoading(true);  // Show the loading spinner when file upload starts
+    setLoading(true);
 
     const newDocuments = [];
     for (const file of files) {
@@ -85,7 +94,7 @@ const DocumentsPage = () => {
         fileType,
         fileSize: formatFileSize(file.size),
         uploadDate: new Date().toLocaleDateString(),
-        lastModified: new Date().toLocaleDateString(),
+        lastModified: new Date(file.lastModified).toLocaleDateString(), // Corrected line to get the last modified date from the file.
         pageCount: 1,
       };
 
@@ -111,38 +120,50 @@ const DocumentsPage = () => {
 
     setRows([...rows, ...newDocuments]);
     localStorage.setItem('documentFiles', JSON.stringify([...rows, ...newDocuments]));
-    setAlertInfo({ title: "Success", message: "Files uploaded successfully!", severity: "success" });
+    setAlertInfo({ title: "Success", message: `${files.length === 1 ? 'File' : 'Files'} uploaded successfully!`, severity: "success" });
     setOpen(true);
 
-    setLoading(false);  // Hide the loading spinner after upload is complete
+    setLoading(false);
+    // API Call needed here to send the new documents to the backend.
   };
 
+  // Function to open the purge database confirmation dialog.
   const handlePurgeDatabase = () => {
     setOpenPurgeDialog(true);
   };
 
+  // Function to confirm and purge the database.
   const confirmPurgeDatabase = () => {
     setRows([]);
     localStorage.setItem('documentFiles', JSON.stringify([]));
     setAlertInfo({ title: "Success", message: "Database Collection Purged Successfully!", severity: "success" });
     setOpen(true);
     setOpenPurgeDialog(false);
+    // API Call needed here to send a purge request to the backend.
   };
 
+  // Function to delete selected rows.
   const handleDeleteSelectedRows = () => {
     const newRows = rows.filter(row => !selectedRows.includes(row.id));
     setRows(newRows);
     localStorage.setItem('documentFiles', JSON.stringify(newRows));
     setSelectedRows([]);
     setOpenDeleteDialog(false);
-    setAlertInfo({ title: "Success", message: "Files deleted successfully", severity: "success" });
+    setAlertInfo({ title: "Success", message: `${selectedRows.length === 1 ? 'File' : 'Files'} deleted successfully`, severity: "success" });
     setOpen(true);
+    // API Call needed here to send the delete request to the backend.
   };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, width: '99%' }}>
       <Box sx={{ display: 'flex', gap: 2, marginBottom: '10px', marginTop: '0%', justifyContent: 'space-around' }}>
-        <Button variant="contained" component="label" startIcon={<FileUploadIcon />}>
+        <Button
+          variant="contained"
+          component="label"
+          startIcon={<FileUploadIcon />}
+          disabled={loading} // Disable the button while loading is true.
+          sx={{ backgroundColor: loading ? 'gray' : undefined }} // Set button background to gray while loading.
+        >
           Upload & Process Documents
           <input type="file" hidden accept={Object.keys(allowedFileTypes).join(",")} onChange={handleFileUpload} multiple />
         </Button>
@@ -168,13 +189,13 @@ const DocumentsPage = () => {
         </Button>
       </Box>
 
-      <DataGrid 
+      <DataGrid
         rows={filteredRows}
-        columns={columns} 
-        checkboxSelection 
+        columns={columns}
+        checkboxSelection
         onRowSelectionModelChange={(selection) => setSelectedRows(selection)}
-        autoHeight 
-        sx={{ flexGrow: 1 }} 
+        autoHeight
+        sx={{ flexGrow: 1 }}
       />
 
       {selectedRows.length > 0 && (
@@ -190,14 +211,14 @@ const DocumentsPage = () => {
               fontSize: '16px',
             }}
           >
-            Delete Selected Files
+            Delete Selected {selectedRows.length === 1 ? 'File' : 'Files'}
           </Button>
         </Box>
       )}
 
       <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
         <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>Are you sure you want to delete the selected file(s)?</DialogContent>
+        <DialogContent>Are you sure you want to delete the selected {selectedRows.length === 1 ? 'file' : 'files'}?</DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
           <Button onClick={handleDeleteSelectedRows} color="error">Delete</Button>
@@ -220,7 +241,6 @@ const DocumentsPage = () => {
         </Alert>
       </Snackbar>
 
-      {/* Loading Spinner at the bottom left */}
       {loading && (
         <Box
           sx={{
@@ -234,7 +254,7 @@ const DocumentsPage = () => {
           }}
         >
           <CircularProgress sx={{ marginRight: 2 }} />
-          <span>Uploading Files...</span>
+          <span>Uploading File(s)...</span>
         </Box>
       )}
     </Box>
