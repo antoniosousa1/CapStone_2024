@@ -15,9 +15,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import ChatIcon from '@mui/icons-material/Chat';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import ChatBox from '../components/ChatBox';
+import ChatBox from '../components/ChatBoxPage';
 import DocumentsPage from '../components/DocumentsPage';
-import TooltipBox from '../components/ToolTipBox';
+import TooltipBox from '../components/ToolTipsPage';
 
 const NAVIGATION = [
   { kind: 'header', title: 'Main Menu' },
