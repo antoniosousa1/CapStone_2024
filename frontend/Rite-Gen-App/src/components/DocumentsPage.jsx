@@ -7,7 +7,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import SearchIcon from '@mui/icons-material/Search';
 import TextField from '@mui/material/TextField';
-import { Alert, AlertTitle, Snackbar, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { Alert, AlertTitle, Snackbar, Dialog, DialogActions, DialogContent, DialogTitle, CircularProgress } from '@mui/material';
 import { PDFDocument } from 'pdf-lib';
 import mammoth from 'mammoth';
 import JSZip from 'jszip';
@@ -19,7 +19,7 @@ const allowedFileTypes = {
   "application/vnd.ms-powerpoint": "PPT",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation": "PPTX",
   "text/plain": "TXT",
-  "text/csv": "CSV" // Added CSV file type
+  "text/csv": "CSV"
 };
 
 const formatFileSize = (sizeInBytes) => {
@@ -53,6 +53,7 @@ const DocumentsPage = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openPurgeDialog, setOpenPurgeDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);  // New state to track loading status
 
   useEffect(() => {
     const savedFiles = JSON.parse(localStorage.getItem('documentFiles') || '[]');
@@ -70,6 +71,8 @@ const DocumentsPage = () => {
   const handleFileUpload = async (event) => {
     const files = event.target.files;
     if (!files.length) return;
+
+    setLoading(true);  // Show the loading spinner when file upload starts
 
     const newDocuments = [];
     for (const file of files) {
@@ -110,6 +113,8 @@ const DocumentsPage = () => {
     localStorage.setItem('documentFiles', JSON.stringify([...rows, ...newDocuments]));
     setAlertInfo({ title: "Success", message: "Files uploaded successfully!", severity: "success" });
     setOpen(true);
+
+    setLoading(false);  // Hide the loading spinner after upload is complete
   };
 
   const handlePurgeDatabase = () => {
@@ -214,6 +219,24 @@ const DocumentsPage = () => {
           {alertInfo.message}
         </Alert>
       </Snackbar>
+
+      {/* Loading Spinner at the bottom left */}
+      {loading && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 20,
+            left: 20,
+            zIndex: 9999,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <CircularProgress sx={{ marginRight: 2 }} />
+          <span>Uploading Files...</span>
+        </Box>
+      )}
     </Box>
   );
 };
