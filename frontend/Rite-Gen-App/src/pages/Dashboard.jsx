@@ -12,32 +12,19 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
 import ChatIcon from '@mui/icons-material/Chat';
 import ChatBox from '../components/ChatBox';
 import DocumentsPage from '../components/DocumentsPage';
-
+import TooltipBox from '../components/ToolTipBox';
 
 const NAVIGATION = [
   { kind: 'header', title: 'Main Menu' },
   { segment: 'chat', title: 'Chat', icon: <ChatIcon /> },
   { segment: 'documents', title: 'Documents', icon: <FolderIcon /> },
+
   { kind: 'divider' },
-  { kind: 'header', title: 'Database Management' },
-  { segment: 'ProcessDocuments', title: 'Process Documents', icon: <DirectionsRunIcon /> },
-  { segment: 'purgedatabase', title: 'Purge Database', icon: <DeleteIcon /> },
-  { kind: 'divider' },
-  { kind: 'header', title: 'Statistics' },
-  {
-    segment: 'llmevaluations',
-    title: 'LLM Evaluations',
-    icon: <BarChartIcon />,
-    children: [
-      { segment: 'contextprecision', title: 'Context Precision', icon: <SearchIcon /> },
-      { segment: 'faithfulness', title: 'Faithfulness', icon: <VerifiedIcon /> },
-      { segment: 'responserelevancy', title: 'Response Relevancy', icon: <QuestionAnswerIcon /> },
-    ],
-  },
+  { kind: 'header', title: 'Support' },
+  { segment: 'tooltips', title: 'Tooltips', icon: <TooltipBox/> },
 ];
 
 const theme = createTheme({
@@ -46,19 +33,29 @@ const theme = createTheme({
   breakpoints: { values: { xs: 0, sm: 600, md: 600, lg: 1200, xl: 1536 } },
 });
 
+const HelpPage = () => (
+  <Box sx={{ p: 4, textAlign: 'center' }}>
+    <h2>Need Assistance?</h2>
+    <p>Here you can find guidance on using RiteGen.</p>
+    <TooltipBox title="More details coming soon!" placement="top" />
+  </Box>
+);
+
 const DemoPageContent = ({ selectedSegment }) => {
   return (
     <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
       {selectedSegment === 'chat' && <ChatBox />}
       {selectedSegment === 'documents' && <DocumentsPage />}
+      {selectedSegment === 'tooltips' && <HelpPage />}
     </Box>
   );
 };
 
+
 DemoPageContent.propTypes = { selectedSegment: PropTypes.string.isRequired };
 
 const DashboardLayoutBasic = ({ window }) => {
-  const router = useDemoRouter('/dashboard');
+  const router = useDemoRouter('/dashboard/chat');
 
   // Log router.pathname to debug the extracted segment
   console.log('Current Path:', router.pathname);
