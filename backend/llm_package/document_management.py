@@ -16,141 +16,46 @@ hashing.py description and purpose:
 import os
 import hashlib
 from langchain.schema import Document
-from langchain_community.document_loaders import (
-    DirectoryLoader,
-    TextLoader,
-    CSVLoader,
-    UnstructuredPDFLoader,
-    UnstructuredWordDocumentLoader,
-    UnstructuredPowerPointLoader,
-)
-from langchain_milvus import Milvus
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from llm_package import utils
+from langchain_community.document_loaders import UnstructuredFileIOLoader
+from werkzeug.datastructures import FileStorage  # Import FileStorage
 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 class DocumentManagement:
-
-    def load_doc_dir(self, data_path: str) -> list[Document]:
-        """
-        Loads all documents from the specified directory.
-        """
-        # Initialize a loader for the directory and load documents
-        loader = DirectoryLoader(path=data_path)
-        docs = loader.load()
-
-        # Return the loaded documents
-        return docs
     
-    def load_doc(self, file_path) -> list[Document]: 
+    def load_doc(self, file: FileStorage) -> list[Document]: 
 
-        file_extension = utils.get_file_extension(file_path)
+        loader = UnstructuredFileIOLoader(
+            file=file, mode="single"
+            )
+        
+        docs = loader.load()
+        doc = docs[0]
 
-        match file_extension:
-            case "pdf":
-                loader = UnstructuredPDFLoader(file_path)
-                docs = loader.load()
-                return docs
-            case "docx":
-                loader = UnstructuredWordDocumentLoader(file_path)
-                docs = loader.load()
-                return docs
-            case "txt":
-                loader = TextLoader(file_path, encoding="utf-8")
-                docs = loader.load()
-                return docs
-            case "pptx":
-                loader = UnstructuredPowerPointLoader(file_path=file_path)
-                docs = loader.load()
-                return docs
-            case "csv":
-                loader = CSVLoader(file_path=file_path)
-                docs = loader.load()
-                return docs
-            case _:
-                print("error incorrect file type")
+        doc.metadata["filename"] = file.filename
+        doc.metadata["filetype"] = file.content_type or "Unavailable"
+        doc.metadata["filesize"] = file.content_length or "Unavailable"
 
-    def add_new_doc(self, new_files: set, data_path: str) -> list[Document]:
-        """
-        Loads new documents from a specified directory based on a set of file names.
-        Supports multiple file types such as TXT, DOCX, PDF, PPTX, and CSV.
-        """
-        # Initialize an empty list to store newly loaded documents
-        new_loaded_docs = []
 
-        # Iterate through the provided set of new files
-        for file_name in new_files:
-            # Build the full file path
-            file_path = os.path.join(data_path, file_name)
+        return doc
+ 
 
-            # Ensure the file exists
-            if os.path.isfile(file_path):
-                try:
-                    # Load documents based on file type (TXT, DOCX, PDF, PPTX, CSV)
-                    if file_path.endswith(".txt"):
-                        loader = TextLoader(file_path, encoding="utf-8")
-                        docs = loader.load()
-                        new_loaded_docs.extend(docs)
-                        print(f"\nLoaded TXT file: {file_path}\n")
-
-                    elif file_path.endswith(".docx"):
-                        loader = UnstructuredWordDocumentLoader(file_path)
-                        docs = loader.load()
-                        new_loaded_docs.extend(docs)
-                        print(f"\nLoaded DOCX file: {file_path}\n")
-
-                    elif file_path.endswith(".pdf"):
-                        loader = UnstructuredPDFLoader(file_path)
-                        docs = loader.load()
-                        new_loaded_docs.extend(docs)
-                        print(f"\nLoaded PDF file: {file_path}\n")
-
-                    elif file_path.endswith(".pptx"):
-                        loader = UnstructuredPowerPointLoader(file_path)
-                        docs = loader.load()
-                        new_loaded_docs.extend(docs)
-                        print(f"\nLoaded PPTX file: {file_path}\n")
-
-                    elif file_path.endswith(".csv"):
-                        loader = CSVLoader(file_path)
-                        docs = loader.load()
-                        new_loaded_docs.extend(docs)
-                        print(f"\nLoaded CSV file: {file_path}\n")
-
-                    else:
-                        # Handle unsupported file types
-                        print(f"\nUnsupported file type: {file_path}\n")
-                except Exception as e:
-                    # Handle errors during loading
-                    print(f"\nError loading {file_path}: {e}\n")
-            else:
-                # Handle case where file doesn't exist
-                print(f"\nFile not found: {file_path}\n")
-
-        # Return the list of loaded documents
-        return new_loaded_docs
-
-    def split_docs(self, docs: list[Document]) -> list[Document]:
+    def split_doc(self, doc: Document) -> list[Document]:
 
         # Initialize the RecursiveCharacterTextSplitter with parameters for chunk size and overlap
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=512, chunk_overlap=64, add_start_index=True
         )
 
-        for doc in docs:
-            # Add filename metadata for easy deletion later
-            doc.metadata["filename"] = doc.metadata.get("source", "unknown")
-
         # Split the documents into chunks and return the result
-        splits = text_splitter.split_documents(docs)
+        splits = text_splitter.split_documents([doc])
+
+        for split in splits:
+            split.metadata["filename"] = doc.metadata["filename"]
+            split.metadata["filetype"] = doc.metadata["filetype"]
+            split.metadata["filesize"] = doc.metadata["filesize"]
 
         return splits
-
-    def delete_doc(self):
-        pass
-
-    def purge_doc(self):
-        pass
 
     # Function to compute the SHA256 hash of a file
     def compute_file_hash_value(self, file_path, data_path):

@@ -16,7 +16,6 @@ Project Description: This code utilizes Ollama as our LLM and a Retrieval-Augmen
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain.schema import Document  # Document schema class
 from langchain_milvus import Milvus  # For managing vector databases
-from langchain.vectorstores.base import VectorStoreRetriever
 
 from ragas import EvaluationDataset, evaluate, SingleTurnSample
 from ragas.metrics import (
@@ -32,26 +31,16 @@ class Rag:
     previous_questions = []
     previous_answers = []
 
-    # Function to create a retriever for querying the vector store
-    def create_retriever(self, vector_store: Milvus) -> VectorStoreRetriever:
-        retriever = vector_store.as_retriever(
-            search_type="similarity", search_kwargs={"k": 3}
-        )
-        return retriever
-
     # Function to retrieve relevant documents based on a user's query
     def retrieve_docs(
-        self, retriever: VectorStoreRetriever, question: str
+        self, query: str, vector_store: Milvus
     ) -> list[Document]:
-        # Retrieve top 15 relevant documents
-        search_results = retriever.invoke(question)
+        
+        search_results = vector_store.similarity_search(
+            query=query, k=3
+            )
+        
         return search_results
-
-    # Function to prompt the user for a question
-    def get_query(self) -> str:
-        # Prompt for user input
-        query = input(f"What would you like to ask? \n")
-        return query
 
     # Function to create a detailed prompt with context for the LLM
     def create_prompt(self, retrieved_docs: list[Document], query: str) -> str:
@@ -164,16 +153,3 @@ class Rag:
         )
 
         return evaluation
-
-    # Function to save the generated answer to a file
-    def save_answer_to_file(self, output_file2: str, answer: str):
-        """
-        Saves the answer to a file, splitting it into sentences and cleaning each one before writing.
-        """
-        with open(output_file2, "w") as file:
-            sentences = answer.strip().split(".")  # Split answer into sentences
-            for sentence in sentences:
-                cleaned_sentence = sentence.strip()
-                if cleaned_sentence:  # Ensure the sentence is not empty
-                    # Write each sentence to the file
-                    file.write(cleaned_sentence + ".\n")

@@ -1,13 +1,8 @@
 import streamlit as st
-import pandas as pd
 import random
 import os
 import time
 import requests
-from langchain_ollama import OllamaLLM, OllamaEmbeddings
-from langchain_community.document_loaders import DirectoryLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.schema import Document
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -45,14 +40,6 @@ def response_generator():
         yield word + " "
         time.sleep(0.05)
 
-def collection_exists():
-    """Check if the collection exists and has data."""
-    try:
-        response = requests.get(f"{BACKEND_URL}/check_condition")
-        data = response.json()
-        return data.get("exists", False) and data.get("has_data", False)
-    except:
-        return False  # Assume collection is empty if the request fails
     
 # Title
 st.title("Rite Solutions Inc. Content Creator")
@@ -100,14 +87,13 @@ if "message" not in st.session_state:
     st.session_state.message = ""
 
 # Display delete button if collection exists
-if collection_exists():
-    if st.sidebar.button("Purge DB Collection"):
-        response = requests.delete(f"{BACKEND_URL}/clear-db-content")
-        if response.status_code == 200:
-            st.session_state.message = "Database collection has been purged!"
-            st.rerun()  # Refresh the app to re-check collection existence
-        else:
-            st.session_state.message = "Failed to clear the database."
+if st.sidebar.button("Purge DB Collection"):
+    response = requests.delete(f"{BACKEND_URL}/clear-db-content")
+    if response.status_code == 200:
+        st.session_state.message = "Database collection has been purged!"
+        st.rerun()  # Refresh the app to re-check collection existence
+    else:
+        st.session_state.message = "Failed to clear the database."
 
 if st.session_state.message:
     with st.expander("📢 Notification", expanded=True):
