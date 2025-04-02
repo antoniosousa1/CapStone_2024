@@ -8,9 +8,9 @@ import { createTheme } from '@mui/material/styles';
 import FolderIcon from '@mui/icons-material/Folder';
 import ChatIcon from '@mui/icons-material/Chat';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import ChatBox from '../components/ChatBox';
+import ChatBox from '../components/ChatBoxPage';
 import DocumentsPage from '../components/DocumentsPage';
-import TooltipBox from '../components/ToolTipBox'; // Keep original filename
+import TooltipBox from '../components/ToolTipsPage';
 
 const NAVIGATION = [
   { kind: 'header', title: 'Main Menu' },
