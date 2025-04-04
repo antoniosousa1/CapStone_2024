@@ -1,6 +1,6 @@
 // src/App.jsx
 import React from 'react';
-import Dashboard from './pages/Dashboard.jsx';
+import Dashboard from './pages/DashboardPage.jsx';
 function App() {
   return (
     <div>
