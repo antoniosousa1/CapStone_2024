@@ -4,38 +4,10 @@ import { DataGrid } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
 import SearchIcon from '@mui/icons-material/Search';
 import TextField from '@mui/material/TextField';
 import { Alert, AlertTitle, Snackbar, Dialog, DialogActions, DialogContent, DialogTitle, CircularProgress } from '@mui/material';
-import { PDFDocument } from 'pdf-lib';
-import mammoth from 'mammoth';
-import JSZip from 'jszip';
-
-// Define allowed file types and their corresponding names.
-const allowedFileTypes = {
-  "application/pdf": "PDF",
-  "application/msword": "DOC",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "DOCX",
-  "application/vnd.ms-powerpoint": "PPT",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "PPTX",
-  "text/plain": "TXT",
-  "text/csv": "CSV"
-};
-
-// Function to format file size from bytes to KB or MB.
-const formatFileSize = (sizeInBytes) => {
-  return sizeInBytes < 1024 * 1024
-    ? `${(sizeInBytes / 1024).toFixed(2)} KB`
-    : `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
-};
-
-// Asynchronous function to get the number of slides in a PPTX file.
-const getPptxSlideCount = async (file) => {
-  const zip = new JSZip();
-  const content = await zip.loadAsync(file);
-  return Object.keys(content.files).filter(name => name.startsWith("ppt/slides/") && name.endsWith(".xml")).length;
-};
+import UploadDocsButton from './UploadDocsButton';
 
 // Define columns for the DataGrid.
 const columns = [
@@ -76,57 +48,6 @@ const DocumentsPage = () => {
     setFilteredRows(filtered);
   }, [searchQuery, rows]);
 
-  // Asynchronous function to handle file upload.
-  const handleFileUpload = async (event) => {
-    const files = event.target.files;
-    if (!files.length) return;
-
-    setLoading(true);
-
-    const newDocuments = [];
-    for (const file of files) {
-      const fileType = allowedFileTypes[file.type];
-      if (!fileType) continue;
-
-      const newDocument = {
-        id: rows.length + newDocuments.length + 1,
-        documentName: file.name,
-        fileType,
-        fileSize: formatFileSize(file.size),
-        uploadDate: new Date().toLocaleDateString(),
-        lastModified: new Date(file.lastModified).toLocaleDateString(), // Corrected line to get the last modified date from the file.
-        pageCount: 1,
-      };
-
-      try {
-        if (fileType === "PDF") {
-          const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
-          newDocument.pageCount = pdfDoc.getPages().length;
-        } else if (fileType === "TXT" || fileType === "CSV") {
-          newDocument.pageCount = (await file.text()).split('\n').length;
-        } else if (fileType === "DOCX" || fileType === "DOC") {
-          const extractedText = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
-          newDocument.pageCount = Math.ceil(extractedText.value.length / 2000) || 1;
-        } else if (fileType === "PPTX") {
-          newDocument.pageCount = await getPptxSlideCount(await file.arrayBuffer());
-        }
-      } catch (error) {
-        console.error("Error processing file:", file.name, error);
-        console.error(error.stack);
-      }
-
-      newDocuments.push(newDocument);
-    }
-
-    setRows([...rows, ...newDocuments]);
-    localStorage.setItem('documentFiles', JSON.stringify([...rows, ...newDocuments]));
-    setAlertInfo({ title: "Success", message: `${files.length === 1 ? 'File' : 'Files'} uploaded successfully!`, severity: "success" });
-    setOpen(true);
-
-    setLoading(false);
-    // API Call needed here to send the new documents to the backend.
-  };
-
   // Function to open the purge database confirmation dialog.
   const handlePurgeDatabase = () => {
     setOpenPurgeDialog(true);
@@ -157,16 +78,7 @@ const DocumentsPage = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, width: '99%' }}>
       <Box sx={{ display: 'flex', gap: 2, marginBottom: '10px', marginTop: '0%', justifyContent: 'space-around' }}>
-        <Button
-          variant="contained"
-          component="label"
-          startIcon={<FileUploadIcon />}
-          disabled={loading} // Disable the button while loading is true.
-          sx={{ backgroundColor: loading ? 'gray' : undefined }} // Set button background to gray while loading.
-        >
-          Upload & Process Documents
-          <input type="file" hidden accept={Object.keys(allowedFileTypes).join(",")} onChange={handleFileUpload} multiple />
-        </Button>
+        <UploadDocsButton/>
         <TextField
           label="Search Documents"
           variant="outlined"
