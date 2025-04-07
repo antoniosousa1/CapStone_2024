@@ -33,10 +33,6 @@ const DocumentsPage = () => {
     setFilteredRows(filtered);
   }, [searchQuery, rows]);
 
-  const handleFileUpload = async (event) => {
-    await FileUploadProcessor(event.target.files, rows, setRows, setAlertInfo, setOpen, setLoading);
-  };
-
   const handleDeleteSelectedRows = HandleDeleteRows({
     rows,
     setRows,
@@ -56,7 +52,7 @@ const DocumentsPage = () => {
           variant="contained"
           startIcon={<DeleteForeverIcon />}
           sx={{ backgroundColor: 'red', '&:hover': { backgroundColor: 'darkred' } }}
-          disabled={!rows.length}
+          disabled={rows.length}
           onClick={() => setOpenPurgeDialog(true)}
         >
           Purge Database Collection

@@ -65,6 +65,11 @@ def list_entries_in_collection() -> list:
 
     collection = get_milvus_connection()
 
+    if not collection.client.has_collection(collection_name):
+        collection.client.close()
+        return []
+        
+
     # Queries collection to get source doc names, page_numbers, and PKs
     data = collection.client.query(
         collection_name=collection_name,
