@@ -8,9 +8,8 @@ import { Alert, AlertTitle, Snackbar, Dialog, DialogActions, DialogContent, Dial
 import PurgeDB from '../components/PurgeDB';
 import DataGrid from '../components/DataGrid';
 import HandleDeleteRows from '../components/HandleDeleteRows';
-import FileUploadButton from '../components/FileUploadButton';
 import SearchField from '../components/SearchField';
-import FileUploadProcessor from '../components/FileUploadProcessor';
+import UploadDocsButton from '../components/UploadDocsButton';
 
 const DocumentsPage = () => {
   const [rows, setRows] = useState([]);
@@ -51,7 +50,7 @@ const DocumentsPage = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, width: '99%' }}>
       <Box sx={{ display: 'flex', gap: 2, marginBottom: '10px', marginTop: '0%', justifyContent: 'space-around' }}>
-        <FileUploadButton loading={loading} handleFileUpload={handleFileUpload} />
+        <UploadDocsButton/>
         <SearchField searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
         <Button
           variant="contained"

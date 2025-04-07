@@ -58,22 +58,18 @@ def llm_response():
 
 @app.route("/add", methods=["POST"])
 def upload_file():
-    if "file" not in request.files:
-        return {"error": "No file part"}, 400
+    if "files" not in request.files:
+        return {"error": "No files part"}, 400
 
-    file = request.files["file"]  # This retrieves the uploaded file
+    files = request.files.getlist("files")  # This retrieves the uploaded file
 
-    loaded_doc = doc_manager.load_doc(file)
+    loaded_docs = doc_manager.load_docs(files)
 
-    print("#" * 40 + "\n")
-    print(loaded_doc)
-    print("#" * 40 + "\n")
-
-    splits = doc_manager.split_doc(loaded_doc)
+    splits = doc_manager.split_docs(loaded_docs)
     
     collection_manger.add_docs_to_collection(splits=splits)
 
-    return {"message": f"File {file.filename} uploaded successfully!"}, 200
+    return {"message": f"Files uploaded successfully!"}, 200
 
 
 @app.route("/list-files", methods=["GET"])
