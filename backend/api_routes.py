@@ -5,6 +5,7 @@ from llm_package import collection_manger
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 from dotenv import load_dotenv
 import os
@@ -24,6 +25,7 @@ embeddings = OllamaEmbeddings(model=llama_model)
 
 # intinaiate flask app
 app = Flask(__name__)
+CORS(app)  # Enables CORS for all routes
 
 # Initialize the Ollama LLM and DeepSeek LLM and embeddings
 

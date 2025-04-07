@@ -1,25 +1,45 @@
-// components/PurgeDB.jsx
 import React, { useState } from 'react';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, Snackbar, Alert, AlertTitle } from '@mui/material';
+import axios from 'axios';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const PurgeDB = ({ open, onClose, setAlertInfo, setRows }) => {
   const [loading, setLoading] = useState(false);
 
-  // Function to confirm and purge the database.
-  const confirmPurgeDatabase = () => {
+  // Function to confirm and purge the database via API call
+  const confirmPurgeDatabase = async () => {
     setLoading(true);
-    // Simulate purging process, e.g., clearing local storage and rows.
-    setRows([]); // Clear the local rows
-    localStorage.setItem('documentFiles', JSON.stringify([])); // Purge the local storage
 
-    setAlertInfo({
-      title: "Success",
-      message: "Database Collection Purged Successfully!",
-      severity: "success",
-    });
+    try {
+      console.log("BACKEND_URL:", BACKEND_URL);
+      const response = await axios.delete(`${BACKEND_URL}/clear-db-content`);
 
-    setLoading(false);
-    onClose(); // Close the dialog
+      // Check if the response is successful
+      if (response.status === 200) {
+        setRows([]); // Clear the local rows
+        localStorage.setItem('documentFiles', JSON.stringify([])); // Purge the local storage
+
+        setAlertInfo({
+          title: "Success",
+          message: "Database content cleared successfully!",
+          severity: "success",
+        });
+      } else {
+        throw new Error('Failed to purge database');
+      }
+    } catch (error) {
+      console.error("Purge failed:", error);
+
+      setAlertInfo({
+        title: "Error",
+        message: "Failed to purge database. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+      onClose(); // Close the dialog
+    }
   };
 
   return (
