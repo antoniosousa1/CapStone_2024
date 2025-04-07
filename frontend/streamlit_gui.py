@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-BACKEND_URL = os.getenv("BACKEND_URL")
+BACKEND_URL = os.getenv("REACT_APP_BACKEND_URL")
 CSS_PATH = os.getenv("CSS_PATH")
 
 # Sets tab title and icon 

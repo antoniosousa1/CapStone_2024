@@ -12,7 +12,7 @@ MILVUS_SERVER_URL = os.getenv("MILVUS_SERVER_URL")
 
 # Inialize variables
 embeddings = OllamaEmbeddings(model="llama3.1:70b")
-collection_name = f"user_{USER_ID}_collection"
+collection_name = f"collection_{USER_ID}"
 
 
 def get_milvus_connection():
