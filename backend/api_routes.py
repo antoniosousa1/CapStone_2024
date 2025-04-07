@@ -25,7 +25,7 @@ embeddings = OllamaEmbeddings(model=llama_model)
 
 # intinaiate flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Enables CORS for all routes
 
 # Initialize the Ollama LLM and DeepSeek LLM and embeddings
 
