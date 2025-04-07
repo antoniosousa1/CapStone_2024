@@ -61,29 +61,36 @@ def remove_docs_from_collection(docs_to_remove: list[str]) -> None:
     collection.client.close()
 
 # Creates a list of the document names in the collection
-def get_doc_names_in_collection() -> list:
+def list_entries_in_collection() -> list:
 
     collection = get_milvus_connection()
+
+    if not collection.client.has_collection(collection_name):
+        collection.client.close()
+        return []
+        
 
     # Queries collection to get source doc names, page_numbers, and PKs
     data = collection.client.query(
         collection_name=collection_name,
-        output_fields=["filename", "pk"],
+        output_fields=["doc_id", "filename", "filetype", "upload_time"],
         filter="",
         limit = "1000"
     )
 
-    # Set of document names from the query data
-    doc_set = set()
-    for x in data:
-        doc_set.add(x["filename"])
+    # Use only with unqie DOC_ID to show documents
+    unique_entries = {}
+    for entry in data:
+        doc_id = entry["doc_id"]
+        if doc_id not in unique_entries:
+            unique_entries[doc_id] = entry
 
-    # Parses back to a list for future use
-    docs = list(doc_set)
+    # Convert the dictionary values back into a list
+    unique_data = list(unique_entries.values())
 
     collection.client.close()
 
-    return docs
+    return unique_data
 
 # Drops the collection
 def drop_collection() -> None:

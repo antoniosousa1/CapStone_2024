@@ -33,10 +33,6 @@ const DocumentsPage = () => {
     setFilteredRows(filtered);
   }, [searchQuery, rows]);
 
-  const handleFileUpload = async (event) => {
-    await FileUploadProcessor(event.target.files, rows, setRows, setAlertInfo, setOpen, setLoading);
-  };
-
   const handleDeleteSelectedRows = HandleDeleteRows({
     rows,
     setRows,
@@ -55,7 +51,7 @@ const DocumentsPage = () => {
         <Button
           variant="contained"
           startIcon={<DeleteForeverIcon />}
-          sx={{ backgroundColor: 'darkred', '&:hover': { backgroundColor: 'red' } }}
+          sx={{ backgroundColor: 'red', '&:hover': { backgroundColor: 'darkred' } }}
           disabled={rows.length}
           onClick={() => setOpenPurgeDialog(true)}
         >
