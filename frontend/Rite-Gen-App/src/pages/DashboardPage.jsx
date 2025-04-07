@@ -8,8 +8,8 @@ import { createTheme } from '@mui/material/styles';
 import FolderIcon from '@mui/icons-material/Folder';
 import ChatIcon from '@mui/icons-material/Chat';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import ChatBox from './ChatBoxPage';
-import DocumentsPage from '../pages/DocumentsPage';
+import ChatBox from './ChatPage';
+import DocumentsPage from './DocumentsPage';
 import TooltipBox from './ToolTipsPage';
 
 const NAVIGATION = [
