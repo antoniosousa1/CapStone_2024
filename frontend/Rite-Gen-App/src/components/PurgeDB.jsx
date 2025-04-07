@@ -6,8 +6,15 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const PurgeDB = ({ open, onClose, setAlertInfo, setRows }) => {
   const [loading, setLoading] = useState(false);
+  const [successSnackbarOpen, setSuccessSnackbarOpen] = useState(false);
 
-  // Function to confirm and purge the database via API call
+  const handleCloseSuccessSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSuccessSnackbarOpen(false);
+  };
+
   const confirmPurgeDatabase = async () => {
     setLoading(true);
 
@@ -15,22 +22,15 @@ const PurgeDB = ({ open, onClose, setAlertInfo, setRows }) => {
       console.log("BACKEND_URL:", BACKEND_URL);
       const response = await axios.delete(`${BACKEND_URL}/clear-db-content`);
 
-      // Check if the response is successful
       if (response.status === 200) {
-        setRows([]); // Clear the local rows
-        localStorage.setItem('documentFiles', JSON.stringify([])); // Purge the local storage
-
-        setAlertInfo({
-          title: "Success",
-          message: "Database content cleared successfully!",
-          severity: "success",
-        });
+        setRows([]);
+        localStorage.setItem('documentFiles', JSON.stringify([]));
+        setSuccessSnackbarOpen(true); // Open the success Snackbar
       } else {
         throw new Error('Failed to purge database');
       }
     } catch (error) {
       console.error("Purge failed:", error);
-
       setAlertInfo({
         title: "Error",
         message: "Failed to purge database. Please try again.",
@@ -38,7 +38,7 @@ const PurgeDB = ({ open, onClose, setAlertInfo, setRows }) => {
       });
     } finally {
       setLoading(false);
-      onClose(); // Close the dialog
+      onClose();
     }
   };
 
@@ -55,10 +55,29 @@ const PurgeDB = ({ open, onClose, setAlertInfo, setRows }) => {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={loading} autoHideDuration={5000}>
+      <Snackbar open={loading} autoHideDuration={6000}>
         <Alert severity="info">
           <AlertTitle>Purging</AlertTitle>
           Please wait while the database is being purged.
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={successSnackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleCloseSuccessSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={handleCloseSuccessSnackbar}
+          severity="success"
+          sx={{
+            width: '100%',
+            backgroundColor: (theme) => theme.palette.success.dark,
+            color: (theme) => theme.palette.success.contrastText,
+          }}
+        >
+          Collection Purged successfully!
         </Alert>
       </Snackbar>
     </>

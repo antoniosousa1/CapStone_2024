@@ -1,41 +1,55 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import Button from '@mui/material/Button';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import FixedLoadingContainer from './FixedLoadingContainer';
+import FileUploadButton from './FileUploadButton';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-function UploadDocsButton() {
+function UploadDocsContainer() {
   const [loading, setLoading] = useState(false);
+  const [successSnackbarOpen, setSuccessSnackbarOpen] = useState(false);
+  const [uploadedFileCount, setUploadedFileCount] = useState(0);
+
+  const handleCloseSuccessSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSuccessSnackbarOpen(false);
+  };
 
   const handleFileUpload = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setSuccessSnackbarOpen(false);
+    setUploadedFileCount(0); // Reset count for new upload
 
-    const formData = new FormData(); // Form data for sending to backend
-
-    // Get selected files
+    const formData = new FormData();
     const files = e.target.files;
+    const fileCount = files ? files.length : 0;
+
     if (files) {
-      // Append files to FormData
       Array.from(files).forEach((file) => {
-        formData.append('files', file); // 'files' is the field name for the backend
+        formData.append('files', file);
       });
     }
-    // Print FormData contents
     for (let [key, file] of formData.entries()) {
       console.log(`Field: ${key}, Filename: ${file.name}, Type: ${file.type}, Size: ${file.size} bytes`);
     }
 
     try {
-      // Send files to backend
-      const response = await axios.post(`${BACKEND_URL}/add`, formData, { // Corrected the URL
+      const response = await axios.post(`${BACKEND_URL}/add`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      // If you need to process or show success feedback, you can log it
       console.log(`Upload successful: ${response.data}`);
+      setUploadedFileCount(fileCount); // Set the count based on the number of files selected
+      setSuccessSnackbarOpen(true);
     } catch (error) {
       console.error(`Error during upload: ${error.message}`);
     } finally {
@@ -43,23 +57,40 @@ function UploadDocsButton() {
     }
   };
 
+  const successMessage = uploadedFileCount === 1
+    ? 'File Uploaded Successfully!'
+    : 'Files Uploaded Successfully!';
+
   return (
-    <Button
-      variant="contained"
-      component="label"
-      startIcon={<FileUploadIcon />}
-      disabled={loading} // Disable the button while loading is true.
-      sx={{ backgroundColor: loading ? 'gray' : undefined }} // Set button background to gray while loading.
-    >
-      Upload & Process Documents
-      <input
-        type="file"
-        hidden
-        accept=".pdf,.doc,.docx,.pptx,.ppt,.csv"
-        onChange={handleFileUpload}
-        multiple />
-    </Button>
+    <Box>
+      <FileUploadButton loading={loading} onFileUpload={handleFileUpload} />
+      {loading && (
+        <FixedLoadingContainer>
+          <CircularProgress size={40} />
+          <Typography sx={{ ml: 1 }}>Currently Uploading Documents... </Typography>
+        </FixedLoadingContainer>
+      )}
+
+      <Snackbar
+        open={successSnackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleCloseSuccessSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <Alert
+          onClose={handleCloseSuccessSnackbar}
+          severity="success"
+          sx={{
+            width: '100%',
+            backgroundColor: (theme) => theme.palette.success.dark,
+            color: (theme) => theme.palette.success.contrastText,
+          }}
+        >
+          {successMessage}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }
 
-export default UploadDocsButton;
+export default UploadDocsContainer;
