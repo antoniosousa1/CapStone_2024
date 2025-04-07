@@ -14,6 +14,8 @@ hashing.py description and purpose:
 
 # Importing necessary libraries for file handling, hashing, and LangChain components
 import hashlib
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from langchain.schema import Document
 from langchain_community.document_loaders import UnstructuredFileIOLoader
 from werkzeug.datastructures import FileStorage  # Import FileStorage
@@ -38,6 +40,7 @@ class DocumentManagement:
             doc.metadata["doc_id"] = doc_id
             doc.metadata["filename"] = file.filename
             doc.metadata["filetype"] = file.content_type
+            doc.metadata["upload_time"] = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d %H:%M:%S %Z%z")
 
             docs.append(doc)
 

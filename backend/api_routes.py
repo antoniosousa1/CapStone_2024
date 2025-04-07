@@ -75,7 +75,7 @@ def upload_file():
 @app.route("/list-files", methods=["GET"])
 def list_files():
     
-    files = collection_manger.get_doc_names_in_collection()
+    files = collection_manger.list_entries_in_collection()
     
     return jsonify({"files": files})
 
@@ -85,11 +85,13 @@ def clear_db():
     
     try:
         collection_manger.drop_collection()
-        return jsonify({"status": "success", "message": "Database collection cleared."}), 200
+        return jsonify({"status": "success", 
+                        "message": "Database collection cleared."}), 200
 
     except Exception as e:
         app.logger.error(f"Error clearing database: {str(e)}")
-        return jsonify({"status": "failure", "message": "Internal server error"}), 500
+        return jsonify({"status": "failure", 
+                        "message": "Internal server error"}), 500
     
 # run app
 app.run(host="0.0.0.0", port=PORT)
