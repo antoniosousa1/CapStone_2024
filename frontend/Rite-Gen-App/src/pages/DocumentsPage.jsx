@@ -55,8 +55,8 @@ const DocumentsPage = () => {
         <Button
           variant="contained"
           startIcon={<DeleteForeverIcon />}
-          sx={{ backgroundColor: 'red', '&:hover': { backgroundColor: 'darkred' } }}
-          disabled={!rows.length}
+          sx={{ backgroundColor: 'darkred', '&:hover': { backgroundColor: 'red' } }}
+          disabled={rows.length}
           onClick={() => setOpenPurgeDialog(true)}
         >
           Purge Database Collection
