@@ -3,8 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { DataGrid as MUIDataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 
-const DataGrid = ({ onRowSelectionModelChange, selectionModel }) => {
+const DataGrid = ({refetchSignal}) => {
+
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
   const [rows, setRows] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
 
   const updateRows = (data) => {
     const rowsWithId = data.map(({ doc_id, filename, filetype, upload_time }) => ({
@@ -19,15 +23,14 @@ const DataGrid = ({ onRowSelectionModelChange, selectionModel }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:5005/list-files");  // your backend API route
+        const res = await axios.get(`${BACKEND_URL}/list-files`);  // your backend API route
         updateRows(res.data.files); // assuming res.data = list of docs
       } catch (err) {
         console.error('Failed to fetch data', err);
       }
     };
-
     fetchData();
-  }, []);
+  }, [refetchSignal]);
   // Define columns for the DataGrid.
   const columns = [
     { field: 'id', headerName: 'Doc ID', flex: 1 },
@@ -41,8 +44,8 @@ const DataGrid = ({ onRowSelectionModelChange, selectionModel }) => {
       rows={rows}
       columns={columns}
       checkboxSelection
-      onRowSelectionModelChange={onRowSelectionModelChange}
-      selectionModel={selectionModel}
+      onRowSelectionModelChange={(selection) => setSelectedRows(selection)}
+      selectionModel={selectedRows}
       sx={{ flexGrow: 1 }}
     />
   );

@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-const PurgeDB = ({ open, onClose, setAlertInfo, setRows }) => {
+const PurgeDB = ({onRefetch, open, onClose, setAlertInfo, setRows }) => {
   const [loading, setLoading] = useState(false);
   const [successSnackbarOpen, setSuccessSnackbarOpen] = useState(false);
 
@@ -26,6 +26,7 @@ const PurgeDB = ({ open, onClose, setAlertInfo, setRows }) => {
         setRows([]);
         localStorage.setItem('documentFiles', JSON.stringify([]));
         setSuccessSnackbarOpen(true); // Open the success Snackbar
+        onRefetch();
       } else {
         throw new Error('Failed to purge database');
       }

@@ -21,6 +21,7 @@ const DocumentsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [openPurgeDialog, setOpenPurgeDialog] = useState(false);
+  const [refetchSignal, setRefetchSignal] = useState(0);
 
   useEffect(() => {
     const savedFiles = JSON.parse(localStorage.getItem('documentFiles') || '[]');
@@ -43,10 +44,13 @@ const DocumentsPage = () => {
     setOpen,
   });
 
+  // Update refetchSignal when an action is completed (add, delete, purge)
+  const triggerRefetch = () => setRefetchSignal(prev => prev + 1);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, width: '99%' }}>
       <Box sx={{ display: 'flex', gap: 2, marginBottom: '10px', marginTop: '0%', justifyContent: 'space-around' }}>
-        <UploadDocsButton/>
+        <UploadDocsButton onRefetch={triggerRefetch}/>
         <SearchField searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
         <Button
           variant="contained"
@@ -59,7 +63,7 @@ const DocumentsPage = () => {
         </Button>
       </Box>
 
-      <DataGrid rows={filteredRows} onRowSelectionModelChange={(selection) => setSelectedRows(selection)} selectionModel={selectedRows} />
+      <DataGrid refetchSignal={refetchSignal} rows={filteredRows}/>
 
       {selectedRows.length > 0 && (
         <Box sx={{ display: 'flex', justifyContent: 'right', marginTop: 2 }}>
@@ -97,7 +101,7 @@ const DocumentsPage = () => {
         </Box>
       )}
 
-      <PurgeDB open={openPurgeDialog} onClose={() => setOpenPurgeDialog(false)} setRows={setRows} setAlertInfo={setAlertInfo} />
+      <PurgeDB onRefetch={triggerRefetch} open={openPurgeDialog} onClose={() => setOpenPurgeDialog(false)} setRows={setRows} setAlertInfo={setAlertInfo} />
     </Box>
   );
 };
