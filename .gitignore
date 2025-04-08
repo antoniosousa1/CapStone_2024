@@ -1,7 +1,0 @@
-.DS_Store
-settings.json
-data/database/*
-data/documents/*
-__pycache__/
-.env
-volumes

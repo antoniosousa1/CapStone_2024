@@ -10,7 +10,7 @@ import FileUploadButton from './FileUploadButton';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-function UploadDocsContainer() {
+function UploadDocsContainer({ onRefetch }) {
   const [loading, setLoading] = useState(false);
   const [successSnackbarOpen, setSuccessSnackbarOpen] = useState(false);
   const [uploadedFileCount, setUploadedFileCount] = useState(0);
@@ -50,6 +50,7 @@ function UploadDocsContainer() {
       console.log(`Upload successful: ${response.data}`);
       setUploadedFileCount(fileCount); // Set the count based on the number of files selected
       setSuccessSnackbarOpen(true);
+      onRefetch();
     } catch (error) {
       console.error(`Error during upload: ${error.message}`);
     } finally {
