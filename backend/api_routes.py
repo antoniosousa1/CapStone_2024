@@ -93,5 +93,20 @@ def clear_db():
         return jsonify({"status": "failure", 
                         "message": "Internal server error"}), 500
     
+@app.route("/delete-entries", methods=["DELETE"])
+def delete_entries():
+
+    data = request.json
+    
+    try:
+        collection_manger.remove_docs_from_collection(data["ids"])
+        return jsonify({"status": "success", 
+                        "message": "doc entry removed."}), 200
+
+    except Exception as e:
+        app.logger.error(f"Error clearing entry: {str(e)}")
+        return jsonify({"status": "failure", 
+                        "message": "Internal server error"}), 500
+
 # run app
 app.run(host="0.0.0.0", port=PORT)

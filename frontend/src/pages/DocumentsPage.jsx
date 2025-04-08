@@ -7,9 +7,13 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { Alert, AlertTitle, Snackbar, Dialog, DialogActions, DialogContent, DialogTitle, CircularProgress } from '@mui/material';
 import PurgeDB from '../components/PurgeDB';
 import DataGrid from '../components/DataGrid';
-import HandleDeleteRows from '../components/HandleDeleteRows';
+import HandleDeleteRows from '../components/DeleteEntriesButton';
 import SearchField from '../components/SearchField';
 import UploadDocsButton from '../components/UploadDocsButton';
+import DeleteEntriesButton from '../components/DeleteEntriesButton';
+import axios from 'axios';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const DocumentsPage = () => {
   const [rows, setRows] = useState([]);
@@ -23,27 +27,26 @@ const DocumentsPage = () => {
   const [openPurgeDialog, setOpenPurgeDialog] = useState(false);
   const [refetchSignal, setRefetchSignal] = useState(0);
 
-  useEffect(() => {
-    const savedFiles = JSON.parse(localStorage.getItem('documentFiles') || '[]');
-    setRows(savedFiles);
-    setFilteredRows(savedFiles);
-  }, []);
+    // Fetch rows on component mount
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const res = await axios.get(`${BACKEND_URL}/list-files`);
+          setRows(res.data.files);  // Set full rows from API response
+          setFilteredRows(res.data.files);  // Set filtered rows initially to all rows
+        } catch (err) {
+          console.error('Failed to fetch data', err);
+        }
+      };
+      fetchData();
+    }, [refetchSignal]);  // Fetch new data when refetchSignal changes
 
-  useEffect(() => {
-    const filtered = rows.filter((row) => row.documentName.toLowerCase().includes(searchQuery.toLowerCase()));
-    setFilteredRows(filtered);
-  }, [searchQuery, rows]);
 
-  const handleDeleteSelectedRows = HandleDeleteRows({
-    rows,
-    setRows,
-    selectedRows,
-    setSelectedRows,
-    setOpenDeleteDialog,
-    setAlertInfo,
-    setOpen,
-  });
+  const handleRowSelection = (rows) => {
+    setSelectedRows(rows);
+  }
 
+  console.log(`this is the selected rows ${selectedRows}`)
   // Update refetchSignal when an action is completed (add, delete, purge)
   const triggerRefetch = () => setRefetchSignal(prev => prev + 1);
 
@@ -56,36 +59,15 @@ const DocumentsPage = () => {
           variant="contained"
           startIcon={<DeleteForeverIcon />}
           sx={{ backgroundColor: 'red', '&:hover': { backgroundColor: 'darkred' } }}
-          disabled={rows.length}
+          disabled={!rows.length}
           onClick={() => setOpenPurgeDialog(true)}
         >
           Purge Database Collection
         </Button>
       </Box>
 
-      <DataGrid refetchSignal={refetchSignal} rows={filteredRows}/>
-
-      {selectedRows.length > 0 && (
-        <Box sx={{ display: 'flex', justifyContent: 'right', marginTop: 2 }}>
-          <Button
-            variant="contained"
-            onClick={() => setOpenDeleteDialog(true)}
-            startIcon={<DeleteIcon />}
-            sx={{ backgroundColor: 'red', '&:hover': { backgroundColor: 'darkred' }, padding: '5px 10px', fontSize: '16px' }}
-          >
-            Delete Selected {selectedRows.length === 1 ? 'File' : 'Files'}
-          </Button>
-        </Box>
-      )}
-
-      <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>Are you sure you want to delete the selected {selectedRows.length === 1 ? 'file' : 'files'}?</DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
-          <Button onClick={handleDeleteSelectedRows} color="error">Delete</Button>
-        </DialogActions>
-      </Dialog>
+      <DataGrid refetchSignal={refetchSignal} handleRowSelection={handleRowSelection} rows={rows} selectedRows={selectedRows}/>
+      <DeleteEntriesButton onRefetch={triggerRefetch} selectedRows={selectedRows}/>
 
       <Snackbar open={open} autoHideDuration={5000} onClose={() => setOpen(false)}>
         <Alert severity={alertInfo.severity}>

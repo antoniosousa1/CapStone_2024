@@ -48,14 +48,14 @@ def add_docs_to_collection(splits: list[Document]) -> None:
 
     collection.client.close()
 
-# Removes docs from collection passed on a list of doc names to remove
+# Removes docs from collection passed on a list of doc ids to remove
 def remove_docs_from_collection(docs_to_remove: list[str]) -> None:
 
     collection = get_milvus_connection()
 
     collection.client.delete(
         collection_name=collection_name,
-        filter=f"source in {docs_to_remove}"
+        filter=f"doc_id in {docs_to_remove}"
     )
 
     collection.client.close()
