@@ -103,3 +103,35 @@ def drop_collection() -> None:
     print("collection dropped")
 
     collection.client.close()
+
+def check_dup(loaded_docs: list[Document]) -> dict:
+
+    collection = get_milvus_connection()
+
+    duplicates = []
+
+    for doc in loaded_docs:
+        doc_id = doc.metadata["doc_id"]
+        filename = doc.metadata["filename"]
+
+        # Check by doc_id or filename
+        result = collection.client.query(
+            collection_name=collection_name,
+            output_fields=["doc_id", "filename"],
+            filter=f'doc_id == "{doc_id}" OR filename == "{filename}"',
+            limit=1,
+        )
+
+        if result:
+            if result[0]["doc_id"] == doc_id and result[0]["filename"] == filename:
+                reason = "Duplicate content and filename"
+            elif result[0]["doc_id"] == doc_id:
+                reason = "Duplicate content"
+            else:
+                reason = "Duplicate filename"
+        
+            duplicates.append({"filename": filename, "reason": reason})
+
+    collection.client.close()
+
+    return {"duplicates": duplicates}

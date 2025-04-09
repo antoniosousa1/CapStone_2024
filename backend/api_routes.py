@@ -61,15 +61,25 @@ def upload_file():
     if "files" not in request.files:
         return {"error": "No files part"}, 400
 
-    files = request.files.getlist("files")  # This retrieves the uploaded file
+    files = request.files.getlist("files")
 
     loaded_docs = doc_manager.load_docs(files)
+
+    duplicates = collection_manger.check_dup(loaded_docs)
+
+    print(f"duplicates {duplicates}")
+
+    if duplicates["duplicates"]:
+        return {
+            "error": "Duplicate files detected",
+            "duplicates": duplicates,
+        }, 409  # 409 Conflict
 
     splits = doc_manager.split_docs(loaded_docs)
     
     collection_manger.add_docs_to_collection(splits=splits)
 
-    return {"message": f"Files uploaded successfully!"}, 200
+    return {"message": "Files uploaded successfully!"}, 200
 
 
 @app.route("/list-files", methods=["GET"])

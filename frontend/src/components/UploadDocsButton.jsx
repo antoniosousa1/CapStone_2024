@@ -52,7 +52,13 @@ function UploadDocsContainer({ onRefetch }) {
       setSuccessSnackbarOpen(true);
       onRefetch();
     } catch (error) {
-      console.error(`Error during upload: ${error.message}`);
+      if (error.response.status === 409) {
+        const duplicates = error.response.data.duplicates;
+        console.log(duplicates);
+    
+      } else {
+        alert("Something went wrong");
+      }
     } finally {
       setLoading(false);
     }
