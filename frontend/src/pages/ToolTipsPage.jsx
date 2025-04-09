@@ -12,11 +12,7 @@ const helpItems = [
   {
     title: "Upload, edit, or delete documents from the 'Documents' tab.",
     label: 'Managing Documents',
-    pdfUrl: '/pdfs/Documents Help.pdf',
-  },
-  {
-    title: 'Evaluate responses based on precision, faithfulness, and relevancy.',
-    label: 'Evaluating AI Performance',
+    pdfUrl: '/pdfs/DocsHelp.pdf',
   },
   {
     title: 'More details coming soon!',
