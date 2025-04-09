@@ -7,7 +7,7 @@ const helpItems = [
   {
     title: 'Chat with the LLM to generate content.',
     label: 'Chat Assistance',
-    pdfUrl: '/pdfs/Chat Assistance.pdf',
+    pdfUrl: '/pdfs/ChatHelp.pdf',
   },
   {
     title: "Upload, edit, or delete documents from the 'Documents' tab.",
