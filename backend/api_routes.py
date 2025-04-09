@@ -61,15 +61,36 @@ def upload_file():
     if "files" not in request.files:
         return {"error": "No files part"}, 400
 
-    files = request.files.getlist("files")  # This retrieves the uploaded file
+    files = request.files.getlist("files")  # This retrieves the uploaded files
 
-    loaded_docs = doc_manager.load_docs(files)
+    # Step 1: Get current doc_ids in the collection
+    existing_entries = collection_manger.list_entries_in_collection()
+    existing_doc_ids = {entry["doc_id"] for entry in existing_entries}
 
+    new_files = []
+    skipped_files = []
+
+    # Step 2: Filter out duplicates
+    for file in files:
+        file_hash = doc_manager.get_file_hash(file)
+        if file_hash in existing_doc_ids:
+            skipped_files.append(file.filename)
+        else:
+            new_files.append(file)
+
+    if not new_files:
+        return {"message": "All uploaded files are duplicates and were skipped.",
+                "skipped": skipped_files}, 200
+
+    # Step 3: Load and upload new files
+    loaded_docs = doc_manager.load_docs(new_files)
     splits = doc_manager.split_docs(loaded_docs)
-    
     collection_manger.add_docs_to_collection(splits=splits)
 
-    return {"message": f"Files uploaded successfully!"}, 200
+    return {
+    "uploaded": [file.filename for file in new_files],
+    "skipped": skipped_files
+    }, 200
 
 
 @app.route("/list-files", methods=["GET"])
