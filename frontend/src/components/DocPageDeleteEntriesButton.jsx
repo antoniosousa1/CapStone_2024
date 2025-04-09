@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import axios from 'axios';
+import React, { useState } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import DeleteIcon from "@mui/icons-material/Delete";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import axios from "axios";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -24,10 +24,9 @@ function DeleteEntriesButton({ onRefetch, selectedRows }) {
         console.log(`Successfully deleted ${selectedRows.length} row(s)`);
         setOpenDeleteDialog(false);
         onRefetch();
-
       }
     } catch (error) {
-      console.error('Error deleting rows:', error);
+      console.error("Error deleting rows:", error);
 
       // Optionally, show an error message (use your Snackbar or Alert here)
     }
@@ -38,26 +37,29 @@ function DeleteEntriesButton({ onRefetch, selectedRows }) {
   };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'right', marginTop: 2 }}>
+    <Box sx={{ display: "flex", justifyContent: "right", marginTop: 2 }}>
       <Button
         variant="contained"
         onClick={handleButtonPress} // Directly call the function
         startIcon={<DeleteIcon />}
         sx={{
-          backgroundColor: 'red',
-          '&:hover': { backgroundColor: 'darkred' },
-          padding: '5px 10px',
-          fontSize: '16px',
+          backgroundColor: "red",
+          "&:hover": { backgroundColor: "darkred" },
+          padding: "5px 10px",
+          fontSize: "16px",
         }}
       >
         Delete Selected
       </Button>
 
       {/* Dialog to confirm deletion */}
-      <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete the selected 
+          Are you sure you want to delete the selected
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>

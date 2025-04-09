@@ -1,10 +1,10 @@
-import React from 'react';
-import Button from '@mui/material/Button';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
-import { styled } from '@mui/material/styles';
+import React from "react";
+import Button from "@mui/material/Button";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
+import { styled } from "@mui/material/styles";
 
 const StyledButton = styled(Button)(({ loading }) => ({
-  backgroundColor: loading ? 'grey' : undefined,
+  backgroundColor: loading ? "grey" : undefined,
 }));
 
 function FileUploadButton({ loading, onFileUpload }) {

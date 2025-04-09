@@ -1,6 +1,6 @@
 // src/App.jsx
-import React from 'react';
-import Dashboard from './pages/DashboardPage.jsx';
+import React from "react";
+import Dashboard from "./pages/DashboardPage.jsx";
 function App() {
   return (
     <div>
@@ -10,5 +10,3 @@ function App() {
 }
 
 export default App;
-
-
