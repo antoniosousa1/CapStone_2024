@@ -1,4 +1,3 @@
-// components/LoadingSnackbar.jsx
 import React from "react";
 import { Snackbar, Alert, AlertTitle } from "@mui/material";
 

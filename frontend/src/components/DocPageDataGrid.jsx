@@ -1,7 +1,7 @@
 import { DataGrid as MUIDataGrid } from "@mui/x-data-grid";
 
 const DataGrid = ({ handleRowSelection, rows, selectedRows }) => {
-  // Define columns for the DataGrid.
+
   const columns = [
     { field: "doc_id", headerName: "Doc ID", flex: 1 },
     { field: "filename", headerName: "Document Name", flex: 2 },
@@ -14,10 +14,10 @@ const DataGrid = ({ handleRowSelection, rows, selectedRows }) => {
       rows={rows}
       columns={columns}
       checkboxSelection
-      onRowSelectionModelChange={handleRowSelection} // Update selected rows
+      onRowSelectionModelChange={handleRowSelection} 
       selectionModel={selectedRows}
       sx={{ flexGrow: 1 }}
-      getRowId={(row) => row.doc_id} // Use doc_id as the row ID
+      getRowId={(row) => row.doc_id}
     />
   );
 };

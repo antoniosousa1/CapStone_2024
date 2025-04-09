@@ -1,12 +1,10 @@
 import React from "react";
-import { Typography, Box } from "@mui/material";
-import { styled } from "@mui/material/styles";
-
-const StyledTypography = styled(Typography)(({ theme }) => ({
-  color: theme.palette.primary.main,
-}));
+import { Typography, Box, useTheme } from "@mui/material";
 
 const QueryTime = ({ responseTime }) => {
+  const theme = useTheme();
+  const primaryColor = theme.palette.primary.main;
+
   if (responseTime === null) return null;
 
   const responseTimeInSeconds = (responseTime / 1000).toFixed(2);
@@ -19,9 +17,12 @@ const QueryTime = ({ responseTime }) => {
       alignItems="center"
       height="12%"
     >
-      <StyledTypography variant="body1" color="textSecondary">
+      <Typography
+        variant="body1"
+        sx={{ color: primaryColor, fontWeight: "bold" }}
+      >
         Response Time: {responseTimeInSeconds} seconds
-      </StyledTypography>
+      </Typography>
     </Box>
   );
 };

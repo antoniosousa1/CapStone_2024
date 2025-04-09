@@ -1,4 +1,3 @@
-// components/FileUploadTrigger.jsx
 import React from "react";
 import FileUploadButton from "./DocPageFileUploadButton";
 

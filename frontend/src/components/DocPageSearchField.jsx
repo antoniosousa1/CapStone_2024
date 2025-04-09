@@ -1,4 +1,3 @@
-// components/SearchField.jsx
 import React from "react";
 import TextField from "@mui/material/TextField";
 import SearchIcon from "@mui/icons-material/Search";

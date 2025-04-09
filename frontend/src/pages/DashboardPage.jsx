@@ -1,7 +1,7 @@
 // src/pages/DashboardPage.jsx
 import React from "react";
 import PropTypes from "prop-types";
-import { Box } from "@mui/material";
+import { Box, Toolbar, Typography, AppBar } from "@mui/material";
 import { AppProvider } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { useDemoRouter } from "@toolpad/core/internal";
@@ -40,6 +40,7 @@ const DashboardLayoutBasic = ({ window }) => {
           <img
             src="https://rite-solutions.com/wp-content/uploads/2024/06/RiteSolutions_Logo-op.png"
             alt="MUI logo"
+            style={{ maxHeight: "40px", color: 'red' }} // Adjust logo size as needed
           />
         ),
         title: "",
@@ -49,13 +50,26 @@ const DashboardLayoutBasic = ({ window }) => {
       theme={theme}
       window={window?.()}
     >
-      <DashboardLayout>
+      <DashboardLayout
+        header={
+          <AppBar position="static" color="primary">
+            {" "}
+            {/* Set header background to primary color */}
+            <Toolbar>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                {NAVIGATION.find((item) => item.segment === segment)?.title ||
+                  "Dashboard"}
+              </Typography>
+              {/* You can add more header elements here if needed */}
+            </Toolbar>
+          </AppBar>
+        }
+      >
         <Box
           sx={{
             py: 4,
             display: "flex",
             width: "100%",
-            // Removed height: "100%"
           }}
         >
           {/* Always render ChatBox */}

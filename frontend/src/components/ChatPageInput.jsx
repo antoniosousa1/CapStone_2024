@@ -5,12 +5,12 @@ import SendIcon from "@mui/icons-material/Send";
 const ChatInput = ({ newMessage, onNewMessageChange, onSendMessage }) => {
   const handleEnterPress = (e) => {
     if (e.key === "Enter") {
-      onSendMessage(newMessage); // Pass newMessage as the argument
+      onSendMessage(newMessage); 
     }
   };
 
   const handleButtonClick = () => {
-    onSendMessage(newMessage); // Pass newMessage as the argument
+    onSendMessage(newMessage); 
   };
 
   return (

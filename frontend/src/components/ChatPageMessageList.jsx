@@ -1,14 +1,13 @@
-// MessageList.jsx
 import React from "react";
 import { Box, styled } from "@mui/material";
 import MessageDisplay from "./ChatPageMessageDisplay";
-import LoadingIndicator from "./DocPageLoadingIndicator";
+import { CircularProgress } from "@mui/material"; 
 
 const MessagesArea = styled(Box)({
   flexGrow: 1,
   overflowY: "auto",
-  marginBottom: 3,
-  padding: 2,
+  marginBottom: 0,
+  padding: 0,
   display: "flex",
   flexDirection: "column",
 });
@@ -18,7 +17,11 @@ const MessageList = ({ messages, messagesEndRef, isLoading }) => {
     <MessagesArea>
       <MessageDisplay messages={messages} />
       <div ref={messagesEndRef} />
-      {isLoading && <LoadingIndicator />}
+      {isLoading && (
+        <Box sx={{ alignSelf: "center", mt: 2 }}>
+          <CircularProgress size={24} />
+        </Box>
+      )}
     </MessagesArea>
   );
 };

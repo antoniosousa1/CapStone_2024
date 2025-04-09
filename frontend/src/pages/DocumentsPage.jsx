@@ -3,12 +3,7 @@ import React, { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import {
-  Alert,
-  AlertTitle,
-  Snackbar,
-  CircularProgress,
-} from "@mui/material";
+import { Alert, AlertTitle, Snackbar, CircularProgress } from "@mui/material";
 import PurgeDB from "../components/DocPagePurgeDB";
 import DataGrid from "../components/DocPageDataGrid";
 import SearchField from "../components/DocPageSearchField";
@@ -52,18 +47,14 @@ const DocumentsPage = () => {
     setSelectedRows(rows);
   };
 
-  console.log(`this is the selected rows ${selectedRows}`);
-  // Update refetchSignal when an action is completed (add, delete, purge)
   const triggerRefetch = () => setRefetchSignal((prev) => prev + 1);
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", flex: 1, width: "99%" }}
-    >
+    <Box sx={{ display: "flex", flexDirection: "column", width: "99.5%" }}>
       <Box
         sx={{
           display: "flex",
-          gap: 2,
+          gap: 1,
           marginBottom: "10px",
           marginTop: "0%",
           justifyContent: "space-around",
@@ -87,7 +78,6 @@ const DocumentsPage = () => {
           Purge Database Collection
         </Button>
       </Box>
-
       <DataGrid
         refetchSignal={refetchSignal}
         handleRowSelection={handleRowSelection}

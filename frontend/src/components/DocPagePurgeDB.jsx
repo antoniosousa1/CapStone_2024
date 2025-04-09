@@ -50,11 +50,11 @@ const PurgeDB = ({ onRefetch, open, onClose, setAlertInfo, setRows }) => {
         open={open}
         onClose={onClose}
         title="Confirm Purge Database Collection"
-        content="Are you sure you want to purge the entire database collection?"
+        content="Are you sure you want to purge your entire database collection?"
         onConfirm={confirmPurgeDatabase}
         confirmText="Purge"
         confirmColor="error"
-        loading={loading} // You might want to pass loading state to disable buttons in the dialog
+        loading={loading} 
       />
 
       <LoadingSnackbar open={loading} message="Purging database..." />

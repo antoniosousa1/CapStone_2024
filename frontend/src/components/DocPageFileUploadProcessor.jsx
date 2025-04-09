@@ -1,4 +1,4 @@
-import processFile from "./processFile"; // Assuming you save the above as processFile.js
+import processFile from "./processFile"; 
 
 const FileUploadProcessor = async (
   files,

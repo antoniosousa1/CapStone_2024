@@ -1,4 +1,3 @@
-// components/MessageDisplay.jsx
 import React from "react";
 import { Box, Typography, Paper, styled, useTheme } from "@mui/material";
 
@@ -9,7 +8,7 @@ const MessageContainer = styled(Paper)(({ theme, sender }) => ({
       : theme.palette.mode === "dark"
         ? theme.palette.grey[800]
         : theme.palette.grey[200],
-  borderRadius: 8,
+  borderRadius: 5,
   padding: theme.spacing(2),
   marginBottom: theme.spacing(2),
   width: "100%",
