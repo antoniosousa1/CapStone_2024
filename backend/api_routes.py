@@ -63,14 +63,12 @@ def upload_file():
 
     files = request.files.getlist("files")  # This retrieves the uploaded files
 
-    # Step 1: Get current doc_ids in the collection
     existing_entries = collection_manger.list_entries_in_collection()
     existing_doc_ids = {entry["doc_id"] for entry in existing_entries}
 
     new_files = []
     skipped_files = []
 
-    # Step 2: Filter out duplicates
     for file in files:
         file_hash = doc_manager.get_file_hash(file)
         if file_hash in existing_doc_ids:
@@ -82,7 +80,6 @@ def upload_file():
         return {"message": "All uploaded files are duplicates and were skipped.",
                 "skipped": skipped_files}, 200
 
-    # Step 3: Load and upload new files
     loaded_docs = doc_manager.load_docs(new_files)
     splits = doc_manager.split_docs(loaded_docs)
     collection_manger.add_docs_to_collection(splits=splits)
