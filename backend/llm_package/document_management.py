@@ -46,7 +46,6 @@ class DocumentManagement:
 
 
         return docs  # Return list of documents with correct metadata
- 
 
     def split_docs(self, docs: list[Document]) -> list[Document]:
 
