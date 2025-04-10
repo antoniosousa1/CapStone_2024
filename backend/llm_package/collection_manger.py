@@ -10,96 +10,122 @@ load_dotenv()
 USER_ID = os.getenv("USER_ID")
 MILVUS_SERVER_URL = os.getenv("MILVUS_SERVER_URL")
 
-# Inialize variables
+# Inialize embeddings model you want collections to use
 embeddings = OllamaEmbeddings(model="llama3.1:70b")
+# Inialize collection name based on USER_ID env variable
 collection_name = f"collection_{USER_ID}"
 
+# NOTE: Schema for collection is defined automatically from first docuemnts metadata
+# NOTE: Collection.client.close() only closes connection on client side it will still show on server
+# NOTE: See Milvusdb.md in docs directory for more details
 
-def get_milvus_connection():
 
-    return Milvus(
-        collection_name=collection_name,
-        embedding_function=embeddings,
-        connection_args={"uri": MILVUS_SERVER_URL},
-        auto_id=True
-    )
+def get_milvus_connection() -> Milvus:
+    # Creates the connection to the Milvus server
 
-# Adds docs to collection
-# NOTE: Schema for collection is defined automatticaly from first docuemnts metadata
+    try:
+        return Milvus(
+            collection_name=collection_name,
+            embedding_function=embeddings,
+            connection_args={"uri": MILVUS_SERVER_URL},
+            auto_id=True
+        )
+    
+    except Exception as e:
+        print(f"[get_milvus_connection] Failed to connect to Milvus: {e}")
+        raise
+
+
 def add_docs_to_collection(splits: list[Document]) -> None:
-
+    # Adds docs to collection
     collection = get_milvus_connection()
 
-    # Extract page content and metadata from documents
-    text_splits = [doc.page_content for doc in splits]
-    metadatas = [doc.metadata for doc in splits]
+    try:
+        # Extract page content and metadata from documents
+        text_splits = [doc.page_content for doc in splits]
+        metadatas = [doc.metadata for doc in splits]
 
-    # Debug statement
-    if not text_splits:
-        print("\nWarning: No valid content found in the documencts!\n")
+        # Add the new document text splits to the Milvus database
+        collection.add_texts(
+            texts=text_splits,
+            metadatas=metadatas
+        )
+
+    except Exception as e:
+        print(f"[add_docs_to_collection] Failed to add docs: {e}")
+
+    finally:
         collection.client.close()
-        return
 
-    # Add the new texts (documents) to the Milvus database
-    collection.add_texts(
-        texts=text_splits,
-        metadatas=metadatas
-    )
 
-    collection.client.close()
-
-# Removes docs from collection passed on a list of doc ids to remove
 def remove_docs_from_collection(docs_to_remove: list[str]) -> None:
-
+    # Removes docs from collection passed on a list of doc ids (hashes) to remove
     collection = get_milvus_connection()
 
-    collection.client.delete(
-        collection_name=collection_name,
-        filter=f"doc_id in {docs_to_remove}"
-    )
+    try:
+        # Deletes entries based a doc id (hash)
+        collection.client.delete(
+            collection_name=collection_name,
+            filter=f"doc_id in {docs_to_remove}"
+        )
 
-    collection.client.close()
+    except Exception as e:
+        print(f"[remove_docs_from_collection] Failed to remove docs: {e}")
 
-# Creates a list of the document names in the collection
-def list_entries_in_collection() -> list:
-
-    collection = get_milvus_connection()
-
-    if not collection.client.has_collection(collection_name):
+    finally:
         collection.client.close()
-        return []
-        
 
-    # Queries collection to get source doc names, page_numbers, and PKs
-    data = collection.client.query(
-        collection_name=collection_name,
-        output_fields=["doc_id", "filename", "filetype", "upload_time"],
-        filter="",
-        limit = "1000"
-    )
 
-    # Use only with unqie DOC_ID to show documents
-    unique_entries = {}
-    for entry in data:
-        doc_id = entry["doc_id"]
-        if doc_id not in unique_entries:
-            unique_entries[doc_id] = entry
-
-    # Convert the dictionary values back into a list
-    unique_data = list(unique_entries.values())
-
-    collection.client.close()
-
-    return unique_data
-
-# Drops the collection
-def drop_collection() -> None:
-
+def list_docs_in_collection() -> list:
+    # Creates a list of the document names in the collection
     collection = get_milvus_connection()
 
-    collection.client.drop_collection(
-        collection_name=collection_name
-    )
-    print("collection dropped")
+    try:
+        # If the collection hasnt been created yet
+        if not collection.client.has_collection(collection_name):
+            return []
 
-    collection.client.close()
+        # Queries collection to get doc ids, filenames, filetypes, and upload times
+        # This will work for 1000 chunks increase limit parameter if there are more chunks
+        data = collection.client.query(
+            collection_name=collection_name,
+            output_fields=["doc_id", "filename", "filetype", "upload_time"],
+            filter="",
+            limit="1000"
+        )
+
+        # Get only unique doc ids to send to frontend
+        # We are identifing documents by the meta data (doc_id) of the chunks in the db
+        unique_entries = {}
+        for entry in data:
+            doc_id = entry["doc_id"]
+            if doc_id not in unique_entries:
+                unique_entries[doc_id] = entry
+
+        # Convert the dictionary values back into a list
+        unique_data = list(unique_entries.values())
+
+        return unique_data
+
+    except Exception as e:
+        print(f"[list_docs_in_collection] Failed to list docs: {e}")
+        return []
+
+    finally:
+        collection.client.close()
+
+
+def drop_collection() -> None:
+    # Drops the collection
+    collection = get_milvus_connection()
+
+    try:
+        collection.client.drop_collection(
+            collection_name=collection_name
+        )
+
+    except Exception as e:
+        print(f"[drop_collection] Failed to drop collection: {e}")
+
+    finally:
+        collection.client.close()
