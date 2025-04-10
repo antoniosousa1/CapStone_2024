@@ -45,9 +45,9 @@ class Rag:
     # Function to create a detailed prompt with context for the LLM
     def create_prompt(self, retrieved_docs: list[Document], query: str) -> str:
         prompt = (
-            "You are an assistant for question-answering tasks. Use the following pieces "
-            "of retrieved context to answer the question. Use five sentences maximum and keep the answer "
-            "concise. Use the previous questions and answers to be conversational if need be.  \n"
+            "You are an assistant for question-answering tasks. Please only use the following pieces of retrieved context to answer the question. If you cannot find any context referring to the question, inform the user that you could not find any context related to that concept."
+            "Please do not use previously stored knowledge to answer the questions. Use up to five sentences maximum and keep the answer concise but, if the user specifies how many sentences to use, only use that amount of sentences. "
+            "Use the previous questions and answers to be conversational if need be.  \n"
         )
 
         # Format the question, context, and previous interactions
@@ -83,9 +83,9 @@ class Rag:
     ) -> str:
 
         prompt = (
-            "You are an assistant for question-answering tasks. Use the following pieces "
-            "of retrieved context to answer the question. Use five sentences maximum and keep the answer "
-            "concise. Use the previous question and answer if requested by the user. \n"
+            "You are an assistant for question-answering tasks. Please only use the following pieces of retrieved context to answer the question. If you cannot find any context referring to the question, inform the user that you could not find any context related to that concept."
+            "Please do not use previously stored knowledge to answer the questions. Use up to five sentences maximum and keep the answer concise but, if the user specifies how many sentences to use, only use that amount of sentences. "
+            "Use the previous questions and answers to be conversational if need be.  \n"
         )
         Question = "Question: " + question + "\n"
         Context_str = "Context: \n\n"
