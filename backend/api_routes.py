@@ -61,32 +61,34 @@ def upload_file():
     if "files" not in request.files:
         return {"error": "No files part"}, 400
 
-    files = request.files.getlist("files")  # This retrieves the uploaded files
+    files = request.files.getlist("files")
 
     existing_entries = collection_manger.list_entries_in_collection()
-    existing_doc_ids = {entry["doc_id"] for entry in existing_entries}
+    existing_doc_ids = {entry["doc_id"]: entry["filename"] for entry in existing_entries}
 
     new_files = []
-    skipped_files = []
+    skipped = {}
 
     for file in files:
         file_hash = doc_manager.get_file_hash(file)
         if file_hash in existing_doc_ids:
-            skipped_files.append(file.filename)
+            skipped[file.filename] = existing_doc_ids[file_hash]  # uploaded -> existing
         else:
             new_files.append(file)
 
     if not new_files:
-        return {"message": "All uploaded files are duplicates and were skipped.",
-                "skipped": skipped_files}, 200
+        return {
+            "uploaded": [],
+            "skipped": skipped
+        }, 200
 
     loaded_docs = doc_manager.load_docs(new_files)
     splits = doc_manager.split_docs(loaded_docs)
     collection_manger.add_docs_to_collection(splits=splits)
 
     return {
-    "uploaded": [file.filename for file in new_files],
-    "skipped": skipped_files
+        "uploaded": [file.filename for file in new_files],
+        "skipped": skipped
     }, 200
 
 

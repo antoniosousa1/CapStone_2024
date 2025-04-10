@@ -1,4 +1,4 @@
-// components/UploadDocsButton.jsx
+// UploadDocsButton.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
 import Box from '@mui/material/Box';
@@ -19,8 +19,7 @@ function UploadDocsContainer({ onRefetch }) {
     message: ''
   });
 
-  const handleCloseSnackbar = (event, reason) => {
-    if (reason === 'clickaway') return;
+  const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
 
@@ -43,23 +42,26 @@ function UploadDocsContainer({ onRefetch }) {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      const { uploaded = [], skipped = [] } = response.data;
+      const { uploaded = [], skipped = {} } = response.data;
+      const skippedEntries = Object.entries(skipped); // [ [uploadedFile, matchedFile], ...]
 
-      if (uploaded.length && skipped.length) {
-        setSnackbarContent({
-          severity: 'warning',
-          message: `✅ Uploaded: ${uploaded.join(', ')}\n⚠️ Skipped (duplicate): ${skipped.join(', ')}`
-        });
+      if (uploaded.length && skippedEntries.length) {
+        const message = [
+          `✅ Uploaded: ${uploaded.join(', ')}`,
+          `⚠️ Skipped duplicates:\n${skippedEntries.map(([newFile, originalFile]) => `• ${newFile} (duplicate of ${originalFile})`).join('\n')}`
+        ].join('\n\n');
+
+        setSnackbarContent({ severity: 'warning', message });
       } else if (uploaded.length) {
-        setSnackbarContent({
-          severity: 'success',
-          message: `✅ Uploaded: ${uploaded.join(', ')}`
-        });
-      } else {
-        setSnackbarContent({
-          severity: 'info',
-          message: `⚠️ Duplicate file not uploaded: ${skipped.join(', ')}`
-        });
+        setSnackbarContent({ severity: 'success', message: `✅ Uploaded: ${uploaded.join(', ')}` });
+      } else if (skippedEntries.length) {
+        const plural = skippedEntries.length > 1 ? "files were" : "file was";
+        const message = [
+          `❌ ${skippedEntries.length} ${plural} not uploaded (duplicates):`,
+          skippedEntries.map(([newFile, originalFile]) => `• ${newFile} (matches ${originalFile})`).join('\n')
+        ].join('\n\n');
+
+        setSnackbarContent({ severity: 'error', message });
       }
 
       setSnackbarOpen(true);
@@ -74,6 +76,9 @@ function UploadDocsContainer({ onRefetch }) {
     } finally {
       setLoading(false);
     }
+
+    // Reset the input to allow re-uploading the same file
+    e.target.value = null;
   };
 
   return (
@@ -89,7 +94,6 @@ function UploadDocsContainer({ onRefetch }) {
 
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={5000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
@@ -104,8 +108,6 @@ function UploadDocsContainer({ onRefetch }) {
                 ? theme.palette.success.dark
                 : snackbarContent.severity === 'warning'
                 ? theme.palette.warning.dark
-                : snackbarContent.severity === 'info'
-                ? theme.palette.info.dark
                 : theme.palette.error.dark,
             color: (theme) => theme.palette.common.white
           }}
