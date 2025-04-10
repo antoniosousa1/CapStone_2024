@@ -13,15 +13,18 @@ from langchain.schema import Document
 from dotenv import load_dotenv
 import os
 
+
 # Get ENV variables
 load_dotenv()
 USER_ID = os.getenv("USER_ID")
 MILVUS_SERVER_URL = os.getenv("MILVUS_SERVER_URL")
 
+
 # Inialize embeddings model you want collections to use
 embeddings = OllamaEmbeddings(model="llama3.1:70b")
 # Inialize collection name based on USER_ID env variable
 collection_name = f"collection_{USER_ID}"
+
 
 # NOTE: Schema for collection is defined automatically from first docuemnts metadata
 # NOTE: Collection.client.close() only closes connection on client side it will still show on server

@@ -1,8 +1,14 @@
-from llm_package.rag import Rag
+"""
+Authors: Antonio Sousa Jr(Team Lead), Matthew Greeson, Goncalo Felix, Antonio Morais, Dylan Ricci, Ryan Medeiros
+Affiliation: University of Massachusetts Dartmouth
+Course: CIS 498 & 499 (Senior Capstone Project)
+Ownership: Rite-Solutions, Inc.
+Client/Stakeholder: Brandon Carvhalo
+"""
+
+from llm_package import rag
 from llm_package import document_management
 from llm_package import collection_manger
-
-from langchain_ollama import OllamaLLM, OllamaEmbeddings
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -10,51 +16,28 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 
-
+# Initialize ENV variables
 load_dotenv()
 PORT = os.getenv("PORT")
 USER_ID = os.getenv("USER_ID")
 
-llama_model = "llama3.1:70b"
-phi4_model = "phi4:latest"
 
-llm1 = OllamaLLM(model=phi4_model)
-llm2 = OllamaLLM(model=llama_model)
-embeddings = OllamaEmbeddings(model=llama_model)
-
-
-# intinaiate flask app
+# Initialize flask app
 app = Flask(__name__)
-CORS(app)  # Enables CORS for all routes
+CORS(app)
 
-# Initialize the Ollama LLM and DeepSeek LLM and embeddings
 
-rag = Rag()
-
-# API endpoint to return llm response before rag
+# API endpoint to return Rag response
 @app.route("/query", methods=["POST"])
 def llm_response():
     data = request.json
     query = data.get("query")
 
-    # retrive docs
-    retrieved_docs = rag.retrieve_docs(query=query, vector_store=collection_manger.get_milvus_connection())
-    # create prompt
-    prompt = rag.create_prompt(retrieved_docs=retrieved_docs, query=query)
-    # gets response
-    response = rag.get_llm_response(llm=llm1, prompt=prompt)
-    print(f"Reponse: {response}")
+    rag_response = rag.full_rag_response(query)
 
-    refined_prompt = rag.refine_prompt(retrieved_docs=retrieved_docs, llm1_context=response, question=query)
-    refined_response = rag.get_llm_response(llm=llm2, prompt=refined_prompt)
-    print(f"Refined Reponse: {refined_response}")
-    # saves previous answers
-    rag.previous_questions.append(query)
-    rag.previous_answers.append(refined_response)
+    return jsonify({"llm_response": rag_response})
 
-    return jsonify({"llm_response": refined_response})
-
-
+# API endpoint that adds documents to vector db collection
 @app.route("/add", methods=["POST"])
 def upload_file():
     if "files" not in request.files:
@@ -90,7 +73,7 @@ def upload_file():
         "skipped": skipped
     }, 200
 
-
+# API endpoint that lists the documents in the vector db collection
 @app.route("/list-files", methods=["GET"])
 def list_files():
     
@@ -98,7 +81,7 @@ def list_files():
     
     return jsonify({"files": files})
 
-
+# API endpoint that drops the vector db collection
 @app.route("/clear-db-content", methods=["DELETE"])
 def clear_db():
     
@@ -111,7 +94,9 @@ def clear_db():
         app.logger.error(f"Error clearing database: {str(e)}")
         return jsonify({"status": "failure", 
                         "message": "Internal server error"}), 500
-    
+
+
+# API endpoint that deletes certain entries in the vector db collection
 @app.route("/delete-entries", methods=["DELETE"])
 def delete_entries():
 
