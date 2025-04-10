@@ -1,5 +1,5 @@
 // src/pages/DashboardPage.jsx
-import React from "react";
+import React, { useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { Box, Toolbar, Typography, AppBar } from "@mui/material";
 import { AppProvider } from "@toolpad/core/AppProvider";
@@ -12,6 +12,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import ChatBox from "./ChatPage";
 import DocumentsPage from "./DocumentsPage";
 import TooltipBox from "./ToolTipsPage";
+import FileUploadProgress from "../components/DocPageFileUploadProgress"; // Import the progress bar
 
 const NAVIGATION = [
   { kind: "header", title: "Main Menu" },
@@ -30,7 +31,28 @@ const theme = createTheme({
 
 const DashboardLayoutBasic = ({ window }) => {
   const router = useDemoRouter("/dashboard/chat");
-  const segment = router.pathname.split("/").pop() || "chat"; // Default to 'chat'
+  const segment = router.pathname.split("/").pop() || "chat";
+  const [uploading, setUploading] = useState(false);
+  const cancelUploadSource = useRef(null);
+
+  const handleFileUploadStart = () => {
+    setUploading(true);
+    cancelUploadSource.current = axios.CancelToken.source(); // Initialize cancel token here
+  };
+
+  const handleFileUploadEnd = () => {
+    setUploading(false);
+    cancelUploadSource.current = null;
+  };
+
+  const handleCancelUpload = () => {
+    if (cancelUploadSource.current) {
+      cancelUploadSource.current.cancel("Upload cancelled by user.");
+      setUploading(false);
+      cancelUploadSource.current = null;
+      // You might want to notify the DocumentsPage to stop any ongoing processing
+    }
+  };
 
   return (
     <AppProvider
@@ -40,7 +62,7 @@ const DashboardLayoutBasic = ({ window }) => {
           <img
             src="https://rite-solutions.com/wp-content/uploads/2024/06/RiteSolutions_Logo-op.png"
             alt="MUI logo"
-            style={{ maxHeight: "40px", color: 'red' }} // Adjust logo size as needed
+            style={{ maxHeight: "45px", color: "red" }}
           />
         ),
         title: "",
@@ -70,12 +92,15 @@ const DashboardLayoutBasic = ({ window }) => {
             py: 4,
             display: "flex",
             width: "100%",
+            flexDirection: "column", // To stack content vertically
+            alignItems: "center", // Optional: Center content horizontally
           }}
         >
           {/* Always render ChatBox */}
           <Box
             sx={{
               flexGrow: 1,
+              width: "100%", // Make ChatBox take full width within its flex container
               display: segment === "chat" ? "flex" : "none", // Show only on chat segment
             }}
           >
@@ -86,15 +111,25 @@ const DashboardLayoutBasic = ({ window }) => {
           <Box
             sx={{
               flexGrow: 1,
+              width: "100%", // Make Documents/Tooltips take full width
               display:
                 segment === "documents" || segment === "tooltips"
                   ? "flex"
                   : "none", // Show on other segments
             }}
           >
-            {segment === "documents" && <DocumentsPage />}
+            {segment === "documents" && (
+              <DocumentsPage
+                onUploadStart={handleFileUploadStart}
+                onUploadEnd={handleFileUploadEnd}
+                cancelToken={cancelUploadSource.current?.token}
+              />
+            )}
             {segment === "tooltips" && <TooltipBox />}
           </Box>
+
+          {/* Render FileUploadProgress always */}
+          {uploading && <FileUploadProgress onCancel={handleCancelUpload} />}
         </Box>
       </DashboardLayout>
     </AppProvider>

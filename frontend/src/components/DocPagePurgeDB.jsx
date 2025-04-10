@@ -57,7 +57,7 @@ const PurgeDB = ({ onRefetch, open, onClose, setAlertInfo, setRows }) => {
         loading={loading} 
       />
 
-      <LoadingSnackbar open={loading} message="Purging database..." />
+      <LoadingSnackbar open={loading} message="Purging The Database Collection..." />
 
       <SuccessSnackbar
         open={successSnackbarOpen}

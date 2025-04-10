@@ -20,7 +20,7 @@ const ChatPageContainer = styled(Box)(({ theme }) => ({
 const MessageListContainer = styled(Box)({
   flexGrow: 1,
   overflowY: "auto",
-  marginBottom: "8px",
+  marginBottom: "5px",
 });
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -41,7 +41,6 @@ const ChatPage = () => {
   }, [messages]);
 
   useEffect(() => {
-    // Save messages to local storage whenever the messages state updates
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
@@ -80,30 +79,33 @@ const ChatPage = () => {
     setMessages([]);
     setResponseTime(null);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
+    console.log("Clear chat function executed"); // For debugging
   };
 
   const handleNewMessageChange = (e) => {
     setNewMessage(e.target.value);
   };
 
-  return (
-    <ChatPageContainer>
-      <ChatHeader onClearChat={handleClearChat} />
-      <MessageListContainer>
-        <MessageList
-          messages={messages}
-          messagesEndRef={messagesEndRef}
-          isLoading={isLoading}
-        />
-      </MessageListContainer>
-      <QueryTime responseTime={responseTime} />
-      <ChatInput
-        newMessage={newMessage}
-        onNewMessageChange={handleNewMessageChange}
-        onSendMessage={handleSendMessage}
-      />
-    </ChatPageContainer>
-  );
+ return (
+   <ChatPageContainer>
+     <ChatHeader onClearChat={handleClearChat} />
+     <MessageListContainer>
+       <MessageList
+         messages={messages}
+         messagesEndRef={messagesEndRef}
+         isLoading={isLoading}
+       />
+     </MessageListContainer>
+     <QueryTime responseTime={responseTime} />
+     <ChatInput
+       newMessage={newMessage}
+       onNewMessageChange={handleNewMessageChange}
+       onSendMessage={handleSendMessage}
+       onClearChat={handleClearChat}
+       disabled={isLoading} // Pass the isLoading state here!
+     />
+   </ChatPageContainer>
+ );
 };
 
 export default ChatPage;

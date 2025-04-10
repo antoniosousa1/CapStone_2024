@@ -14,9 +14,9 @@ const DataGrid = ({ handleRowSelection, rows, selectedRows }) => {
       rows={rows}
       columns={columns}
       checkboxSelection
-      onRowSelectionModelChange={handleRowSelection} 
+      onRowSelectionModelChange={handleRowSelection}
       selectionModel={selectedRows}
-      sx={{ flexGrow: 1 }}
+      sx={{ flexGrow: 1, marginLeft: 1 }}
       getRowId={(row) => row.doc_id}
     />
   );

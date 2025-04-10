@@ -1,8 +1,12 @@
 import React from "react";
-import { Box, Typography, IconButton, Divider, useTheme } from "@mui/material";
-import ClearIcon from "@mui/icons-material/Clear";
+import {
+  Box,
+  Typography,
+  Divider,
+  useTheme,
+} from "@mui/material";
 
-const ChatHeader = ({ onClearChat }) => {
+const ChatHeader = ({}) => {
   const theme = useTheme();
   const primaryColor = theme.palette.primary.main;
 
@@ -23,18 +27,11 @@ const ChatHeader = ({ onClearChat }) => {
             textAlign: "center",
             flexGrow: 1,
             fontWeight: "bold",
-            color: primaryColor, // Header text is primary color
+            color: primaryColor,
           }}
         >
           RiteGen
         </Typography>
-        <IconButton
-          onClick={onClearChat}
-          aria-label="clear chat"
-          color="primary" // Set IconButton color to primary
-        >
-          <ClearIcon />
-        </IconButton>
       </Box>
       <Divider
         sx={{

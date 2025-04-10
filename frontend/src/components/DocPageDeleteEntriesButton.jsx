@@ -60,7 +60,6 @@ function DeleteEntriesButton({ onRefetch, selectedRows }) {
       }
     } catch (error) {
       console.error("Error deleting rows:", error);
-      // Optionally, show an error Snackbar here
     }
   };
 

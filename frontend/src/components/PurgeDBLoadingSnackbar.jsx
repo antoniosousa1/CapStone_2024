@@ -3,9 +3,9 @@ import { Snackbar, Alert, AlertTitle } from "@mui/material";
 
 const LoadingSnackbar = ({ open, message = "Please wait..." }) => {
   return (
-    <Snackbar open={open} autoHideDuration={null} /* Don't auto-hide loading */>
+    <Snackbar open={open} autoHideDuration={null}>
       <Alert severity="info">
-        <AlertTitle>Loading</AlertTitle>
+        <AlertTitle>Dropping, Please Wait!</AlertTitle>
         {message}
       </Alert>
     </Snackbar>

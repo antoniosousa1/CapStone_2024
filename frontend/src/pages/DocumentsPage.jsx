@@ -1,19 +1,18 @@
-// pages/DocumentsPage.jsx
+// src/pages/DocumentsPage.jsx
 import React, { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import { Alert, AlertTitle, Snackbar, CircularProgress } from "@mui/material";
+import { Alert, AlertTitle, Snackbar } from "@mui/material";
 import PurgeDB from "../components/DocPagePurgeDB";
 import DataGrid from "../components/DocPageDataGrid";
-import SearchField from "../components/DocPageSearchField";
-import UploadDocsButton from "../components/DocPageUploadDocsButton";
+import UploadDocsContainer from "../components/DocPageUploadDocsContainer";
 import DeleteEntriesButton from "../components/DocPageDeleteEntriesButton";
 import axios from "axios";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-const DocumentsPage = () => {
+const DocumentsPage = ({ onUploadStart, onUploadEnd, cancelToken }) => {
   const [rows, setRows] = useState([]);
   const [filteredRows, setFilteredRows] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
@@ -24,8 +23,6 @@ const DocumentsPage = () => {
     severity: "success",
   });
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(false);
   const [openPurgeDialog, setOpenPurgeDialog] = useState(false);
   const [refetchSignal, setRefetchSignal] = useState(0);
 
@@ -50,20 +47,21 @@ const DocumentsPage = () => {
   const triggerRefetch = () => setRefetchSignal((prev) => prev + 1);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", width: "99.5%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", width: "99%" }}>
       <Box
         sx={{
           display: "flex",
-          gap: 1,
           marginBottom: "10px",
           marginTop: "0%",
-          justifyContent: "space-around",
+          justifyContent: "space-between", 
+          alignItems: "center",
         }}
       >
-        <UploadDocsButton onRefetch={triggerRefetch} />
-        <SearchField
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
+        <UploadDocsContainer
+          onRefetch={triggerRefetch}
+          onUploadStart={onUploadStart}
+          onUploadEnd={onUploadEnd}
+          cancelToken={cancelToken}
         />
         <Button
           variant="contained"
@@ -99,23 +97,6 @@ const DocumentsPage = () => {
           {alertInfo.message}
         </Alert>
       </Snackbar>
-
-      {loading && (
-        <Box
-          sx={{
-            position: "fixed",
-            bottom: 20,
-            left: 20,
-            zIndex: 9999,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <CircularProgress sx={{ marginRight: 2 }} />
-          <span>Uploading File(s)...</span>
-        </Box>
-      )}
 
       <PurgeDB
         onRefetch={triggerRefetch}

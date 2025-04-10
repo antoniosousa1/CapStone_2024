@@ -14,6 +14,7 @@ function FileUploadButton({ loading, onFileUpload }) {
       component="label"
       startIcon={<FileUploadIcon />}
       disabled={loading}
+      sx={{ marginLeft: 1 }}
     >
       Upload & Process Documents
       <input
