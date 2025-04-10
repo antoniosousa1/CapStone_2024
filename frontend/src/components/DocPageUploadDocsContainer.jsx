@@ -40,9 +40,8 @@ function UploadDocsContainer({ onRefetch }) {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      const { uploaded = [], skipped = {} } = response.data;
+      const { uploaded = [], skipped = {} } = response.data[0];
       const skippedEntries = Object.entries(skipped); // [ [uploadedFile, matchedFile], ...]
-
       if (uploaded.length && skippedEntries.length) {
         const message = [
           `✅ Uploaded: ${uploaded.join(", ")}`,

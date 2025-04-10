@@ -8,7 +8,9 @@ Client/Stakeholder: Brandon Carvhalo
 
 from langchain_milvus import Milvus
 from langchain_ollama import OllamaEmbeddings
-from langchain.schema import Document
+
+from llm_package import document_management
+from werkzeug.datastructures import FileStorage
 
 from dotenv import load_dotenv
 import os
@@ -42,14 +44,42 @@ def get_milvus_connection() -> Milvus:
             connection_args={"uri": MILVUS_SERVER_URL},
             auto_id=True
         )
-    
+
     except Exception as e:
         print(f"[get_milvus_connection] Failed to connect to Milvus: {e}")
         raise
 
 
-def add_docs_to_collection(splits: list[Document]) -> None:
-    # Adds docs to collection
+def add_docs_to_collection(files: list[FileStorage]) -> dict:
+    # Adds documents to the collection and handles checking for duplicates, loading, and splitting
+
+    # Retrieve existing document entries from the collection
+    existing_entries = list_docs_in_collection()
+    existing_doc_ids = {entry["doc_id"]: entry["filename"]
+                        for entry in existing_entries}
+
+    new_files = []
+    skipped = {}
+
+    for file in files:
+        file_hash = document_management.get_file_hash(file)
+        if file_hash in existing_doc_ids:
+            skipped[file.filename] = existing_doc_ids[file_hash]  # uploaded -> existing
+            print(f"skipped: {skipped[file.filename]}")
+        else:
+            new_files.append(file)
+            print(f"file added")
+
+    if not new_files:
+        return {
+            "uploaded": [],
+            "skipped": skipped
+        }, 200
+    # Load and split new documents
+    loaded_docs = document_management.load_docs(new_files)
+    splits = document_management.split_docs(loaded_docs)
+
+    # Connect to the Milvus collection and add the docs
     collection = get_milvus_connection()
 
     try:
@@ -65,9 +95,12 @@ def add_docs_to_collection(splits: list[Document]) -> None:
 
     except Exception as e:
         print(f"[add_docs_to_collection] Failed to add docs: {e}")
+        return {"error": f"Failed to add documents: {e}"}
 
     finally:
         collection.client.close()
+
+    return {"uploaded": [file.filename for file in new_files], "skipped": skipped}
 
 
 def remove_docs_from_collection(docs_to_remove: list[str]) -> None:

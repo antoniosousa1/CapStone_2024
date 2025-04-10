@@ -25,7 +25,7 @@ def load_docs(files: list[FileStorage]) -> list[Document]:
 
         # Loop through the files sent and load them into langchain Document objects
         for file in files:
-            
+
             loader = UnstructuredFileIOLoader(file=file, mode="single")
             doc = loader.load()[0]
 
@@ -58,8 +58,10 @@ def split_docs(docs: list[Document]) -> list[Document]:
             chunk_size=512, chunk_overlap=64, add_start_index=True
         )
         splits = text_splitter.split_documents(docs)
+        
+        # Returns text splits
         return splits
-    
+
     except Exception as e:
         print(f"[split_docs] Failed to split docs: {e}")
         raise
@@ -75,7 +77,7 @@ def get_file_hash(file: FileStorage) -> str:
 
         # Return document hash
         return file_hash
-    
+
     except Exception as e:
         print(f"[get_file_hash] Failed to hash file: {e}")
         raise

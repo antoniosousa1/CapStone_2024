@@ -7,7 +7,6 @@ Client/Stakeholder: Brandon Carvhalo
 """
 
 from llm_package import rag
-from llm_package import document_management
 from llm_package import collection_manger
 
 from flask import Flask, request, jsonify
@@ -15,6 +14,7 @@ from flask_cors import CORS
 
 from dotenv import load_dotenv
 import os
+
 
 # Initialize ENV variables
 load_dotenv()
@@ -30,70 +30,61 @@ CORS(app)
 # API endpoint to return Rag response
 @app.route("/query", methods=["POST"])
 def llm_response():
-    data = request.json
-    query = data.get("query")
 
-    rag_response = rag.full_rag_response(query)
+    try:
+        data = request.json
+        query = data.get("query")
+        rag_response = rag.full_rag_response(query)
 
-    return jsonify({"llm_response": rag_response})
+        return jsonify({"llm_response": rag_response})
+
+    except Exception as e:
+        print(f"Error getting llm response: {e}")
+        return jsonify({"error": "An unexpected error occurred while processing your request."}), 500
+
 
 # API endpoint that adds documents to vector db collection
 @app.route("/add", methods=["POST"])
 def upload_file():
-    if "files" not in request.files:
-        return {"error": "No files part"}, 400
 
-    files = request.files.getlist("files")
+    try:
+        # Get list of files
+        files = request.files.getlist("files")
+        # Call the function that handles the file processing and collection update
+        result = collection_manger.add_docs_to_collection(files)
+        print(f"result: {result}")
+        # Return the result from the function
+        return jsonify(result), 200
 
-    existing_entries = collection_manger.list_docs_in_collection()
-    existing_doc_ids = {entry["doc_id"]: entry["filename"] for entry in existing_entries}
+    except Exception as e:
+        print(f"Failed to add documents: {e}")
+        return jsonify({"error": "Failed to add documents"}), 500
 
-    new_files = []
-    skipped = {}
-
-    for file in files:
-        file_hash = document_management.get_file_hash(file)
-        if file_hash in existing_doc_ids:
-            skipped[file.filename] = existing_doc_ids[file_hash]  # uploaded -> existing
-        else:
-            new_files.append(file)
-
-    if not new_files:
-        return {
-            "uploaded": [],
-            "skipped": skipped
-        }, 200
-
-    loaded_docs = document_management.load_docs(new_files)
-    splits = document_management.split_docs(loaded_docs)
-    collection_manger.add_docs_to_collection(splits=splits)
-
-    return {
-        "uploaded": [file.filename for file in new_files],
-        "skipped": skipped
-    }, 200
 
 # API endpoint that lists the documents in the vector db collection
 @app.route("/list-files", methods=["GET"])
 def list_files():
-    
-    files = collection_manger.list_docs_in_collection()
-    
-    return jsonify({"files": files})
+
+    try:
+        files = collection_manger.list_docs_in_collection()
+        return jsonify({"files": files}), 200
+
+    except Exception as e:
+        print(f"Error listing files: {e}")
+        return jsonify({"error": "Failed to list files."}), 500
+
 
 # API endpoint that drops the vector db collection
 @app.route("/clear-db-content", methods=["DELETE"])
 def clear_db():
-    
+
     try:
         collection_manger.drop_collection()
-        return jsonify({"status": "success", 
-                        "message": "Database collection cleared."}), 200
+        return jsonify({"status": "success", "message": "Database collection cleared."}), 200
 
     except Exception as e:
-        app.logger.error(f"Error clearing database: {str(e)}")
-        return jsonify({"status": "failure", 
-                        "message": "Internal server error"}), 500
+        print(f"Error dropping collection: {e}")
+        return jsonify({"status": "failure", "message": "Internal server error"}), 500
 
 
 # API endpoint that deletes certain entries in the vector db collection
@@ -101,16 +92,15 @@ def clear_db():
 def delete_entries():
 
     data = request.json
-    
+
     try:
         collection_manger.remove_docs_from_collection(data["ids"])
-        return jsonify({"status": "success", 
-                        "message": "doc entry removed."}), 200
+        return jsonify({"status": "success", "message": "doc entry removed."}), 200
 
     except Exception as e:
-        app.logger.error(f"Error clearing entry: {str(e)}")
-        return jsonify({"status": "failure", 
-                        "message": "Internal server error"}), 500
+        print(f"Error clearing entry: {e}")
+        return jsonify({"status": "failure", "message": "Internal server error"}), 500
+
 
 # run app
 app.run(host="0.0.0.0", port=PORT)
