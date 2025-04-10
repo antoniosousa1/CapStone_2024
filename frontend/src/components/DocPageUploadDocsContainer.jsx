@@ -2,29 +2,22 @@
 import React, { useState } from "react";
 import axios from "axios";
 import Box from "@mui/material/Box";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
 import FileUploadButton from "./DocPageFileUploadButton";
-import FileUploadProgress from "./DocPageFileUploadProgress"; // Import FileUploadProgress
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-function UploadDocsContainer({ onRefetch, onUploadStart, onUploadEnd, cancelToken, setProgress }) {
+function UploadDocsContainer({
+  onRefetch,
+  onUploadStart,
+  onUploadEnd,
+  cancelToken,
+  setUploadResult,
+}) {
   const [loading, setLoading] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarContent, setSnackbarContent] = useState({
-    severity: "success",
-    message: "",
-  });
-
-  const handleCloseSnackbar = () => {
-    setSnackbarOpen(false);
-  };
 
   const handleFileUpload = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setSnackbarOpen(false);
 
     const formData = new FormData();
     const files = e.target.files;
@@ -36,30 +29,30 @@ function UploadDocsContainer({ onRefetch, onUploadStart, onUploadEnd, cancelToke
     }
 
     try {
-      onUploadStart?.(); // Notify the layout we're uploading
-      setLoading(true);  // Local spinner (optional if layout handles everything)
+      onUploadStart?.();
 
       const response = await axios.post(`${BACKEND_URL}/add`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         cancelToken,
-        onUploadProgress: (progressEvent) => {
-          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setProgress?.(percent); // Update the global progress
-        },
       });
 
       const { uploaded = [], skipped = {} } = response.data;
-      const skippedEntries = Object.entries(skipped); // [ [uploadedFile, matchedFile], ...]
+      const skippedEntries = Object.entries(skipped);
 
       if (uploaded.length && skippedEntries.length) {
         const message = [
           `✅ Uploaded: ${uploaded.join(", ")}`,
-          `⚠️ Skipped duplicates:\n${skippedEntries.map(([newFile, originalFile]) => `• ${newFile} (duplicate of ${originalFile})`).join("\n")}`,
+          `⚠️ Skipped duplicates:\n${skippedEntries
+            .map(
+              ([newFile, originalFile]) =>
+                `• ${newFile} (duplicate of ${originalFile})`
+            )
+            .join("\n")}`,
         ].join("\n\n");
 
-        setSnackbarContent({ severity: "warning", message });
+        setUploadResult?.({ severity: "warning", message });
       } else if (uploaded.length) {
-        setSnackbarContent({
+        setUploadResult?.({
           severity: "success",
           message: `✅ Uploaded: ${uploaded.join(", ")}`,
         });
@@ -75,54 +68,27 @@ function UploadDocsContainer({ onRefetch, onUploadStart, onUploadEnd, cancelToke
             .join("\n"),
         ].join("\n\n");
 
-        setSnackbarContent({ severity: "error", message });
+        setUploadResult?.({ severity: "error", message });
       }
 
-      setSnackbarOpen(true);
       onRefetch();
     } catch (error) {
-      console.error(`Upload failed: ${error.message}`);
-      setSnackbarContent({
+      console.error("Upload failed:", error.message);
+      setUploadResult?.({
         severity: "error",
-        message: "Upload failed. Please try again.",
+        message: "❌ Upload failed. Please try again.",
       });
-      setSnackbarOpen(true);
     } finally {
       setLoading(false);
       onUploadEnd?.();
     }
 
-    // Reset the input to allow re-uploading the same file
     e.target.value = null;
   };
 
   return (
     <Box>
       <FileUploadButton loading={loading} onFileUpload={handleFileUpload} />
-
-      <Snackbar
-        open={snackbarOpen}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbarContent.severity}
-          sx={{
-            width: "100%",
-            whiteSpace: "pre-line",
-            backgroundColor: (theme) =>
-              snackbarContent.severity === "success"
-                ? theme.palette.success.dark
-                : snackbarContent.severity === "warning"
-                  ? theme.palette.warning.dark
-                  : theme.palette.error.dark,
-            color: (theme) => theme.palette.common.white,
-          }}
-        >
-          {snackbarContent.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }
