@@ -101,22 +101,27 @@ def get_llm_response(llm: OllamaLLM, prompt: str) -> str:
 def full_rag_response(query: str) -> str:
     # Combines previous methods to create full rag response
 
-    # Retrive docs
-    retrieved_docs = retrieve_docs(query=query, vector_store=collection_manger.get_milvus_connection())
+    try:
+        # Retrive docs
+        retrieved_docs = retrieve_docs(query=query, vector_store=collection_manger.get_milvus_connection())
 
-    # Create prompt
-    prompt = create_prompt(query=query, retrieved_docs=retrieved_docs)
+        # Create prompt
+        prompt = create_prompt(query=query, retrieved_docs=retrieved_docs)
 
-    # Gets response
-    response = get_llm_response(llm=llm1, prompt=prompt)
-    print(f"Reponse: {response}")
+        # Gets response
+        response = get_llm_response(llm=llm1, prompt=prompt)
+        print(f"Reponse: {response}")
 
-    # Refines prompt
-    refined_prompt = refine_prompt(query=query, retrieved_docs=retrieved_docs, llm1_context=response)
+        # Refines prompt
+        refined_prompt = refine_prompt(query=query, retrieved_docs=retrieved_docs, llm1_context=response)
 
-    # Gets refined response
-    refined_response = get_llm_response(llm=llm2, prompt=refined_prompt)
-    print(f"Refined Reponse: {refined_response}")
+        # Gets refined response
+        refined_response = get_llm_response(llm=llm2, prompt=refined_prompt)
+        print(f"Refined Reponse: {refined_response}")
 
-    # Returns refined response
-    return refined_response
+        # Returns refined response
+        return refined_response
+    
+    except Exception as e:
+        print(f"[full_rag_response] Failed to generate rag response: {e}")
+        raise

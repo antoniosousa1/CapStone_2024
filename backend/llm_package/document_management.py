@@ -20,24 +20,30 @@ import hashlib
 def load_docs(files: list[FileStorage]) -> list[Document]:
     # Loads files sent from frontend into langchain Doucment objects
 
-    docs = []
+    try:
+        docs = []
 
-    # Loop through the files sent and load them into langchain Document objects
-    for file in files:
-        loader = UnstructuredFileIOLoader(file=file, mode="single")
-        doc = loader.load()[0]
+        # Loop through the files sent and load them into langchain Document objects
+        for file in files:
+            
+            loader = UnstructuredFileIOLoader(file=file, mode="single")
+            doc = loader.load()[0]
 
-        # Create a unique doc_id (hash) for this file
-        doc_id = get_file_hash(file)
+            # Create a unique doc_id (hash) for this file
+            doc_id = get_file_hash(file)
 
-        # Add metadata to document object
-        doc.metadata["doc_id"] = doc_id
-        doc.metadata["filename"] = file.filename
-        doc.metadata["filetype"] = file.content_type
-        doc.metadata["upload_time"] = datetime.now(
-            ZoneInfo("America/New_York")).strftime("%Y-%m-%d %H:%M:%S %Z%z")
+            # Add metadata to document object
+            doc.metadata["doc_id"] = doc_id
+            doc.metadata["filename"] = file.filename
+            doc.metadata["filetype"] = file.content_type
+            doc.metadata["upload_time"] = datetime.now(
+                ZoneInfo("America/New_York")).strftime("%Y-%m-%d %H:%M:%S %Z%z")
 
-        docs.append(doc)
+            docs.append(doc)
+
+    except Exception as e:
+        print(f"[load_docs] Failed to load docs: {e}")
+        raise
 
     # Return list of documents with correct metadata
     return docs
@@ -46,22 +52,30 @@ def load_docs(files: list[FileStorage]) -> list[Document]:
 def split_docs(docs: list[Document]) -> list[Document]:
     # Split loaded documents
 
-    # Initialize the RecursiveCharacterTextSplitter with parameters for chunk size and overlap
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=512, chunk_overlap=64, add_start_index=True
-    )
-    splits = text_splitter.split_documents(docs)
-
-    # Return split documents
-    return splits
+    try:
+        # Initialize the RecursiveCharacterTextSplitter with parameters for chunk size and overlap
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=512, chunk_overlap=64, add_start_index=True
+        )
+        splits = text_splitter.split_documents(docs)
+        return splits
+    
+    except Exception as e:
+        print(f"[split_docs] Failed to split docs: {e}")
+        raise
 
 
 def get_file_hash(file: FileStorage) -> str:
     # Function to compute the SHA256 hash of a file
 
-    file.seek(0)
-    file_hash = hashlib.md5(file.read()).hexdigest()
-    file.seek(0)
+    try:
+        file.seek(0)
+        file_hash = hashlib.md5(file.read()).hexdigest()
+        file.seek(0)
 
-    # Return document hash
-    return file_hash
+        # Return document hash
+        return file_hash
+    
+    except Exception as e:
+        print(f"[get_file_hash] Failed to hash file: {e}")
+        raise
