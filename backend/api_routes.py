@@ -1,5 +1,5 @@
 from llm_package.rag import Rag
-from llm_package.document_management import DocumentManagement
+from llm_package import document_management
 from llm_package import collection_manger
 
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
@@ -30,7 +30,6 @@ CORS(app)  # Enables CORS for all routes
 # Initialize the Ollama LLM and DeepSeek LLM and embeddings
 
 rag = Rag()
-doc_manager = DocumentManagement()
 
 # API endpoint to return llm response before rag
 @app.route("/query", methods=["POST"])
@@ -70,7 +69,7 @@ def upload_file():
     skipped = {}
 
     for file in files:
-        file_hash = doc_manager.get_file_hash(file)
+        file_hash = document_management.get_file_hash(file)
         if file_hash in existing_doc_ids:
             skipped[file.filename] = existing_doc_ids[file_hash]  # uploaded -> existing
         else:
@@ -82,8 +81,8 @@ def upload_file():
             "skipped": skipped
         }, 200
 
-    loaded_docs = doc_manager.load_docs(new_files)
-    splits = doc_manager.split_docs(loaded_docs)
+    loaded_docs = document_management.load_docs(new_files)
+    splits = document_management.split_docs(loaded_docs)
     collection_manger.add_docs_to_collection(splits=splits)
 
     return {

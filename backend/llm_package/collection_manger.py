@@ -1,3 +1,11 @@
+"""
+Authors: Antonio Sousa Jr(Team Lead), Matthew Greeson, Goncalo Felix, Antonio Morais, Dylan Ricci, Ryan Medeiros
+Affiliation: University of Massachusetts Dartmouth
+Course: CIS 498 & 499 (Senior Capstone Project)
+Ownership: Rite-Solutions, Inc.
+Client/Stakeholder: Brandon Carvhalo
+"""
+
 from langchain_milvus import Milvus
 from langchain_ollama import OllamaEmbeddings
 from langchain.schema import Document
@@ -24,6 +32,7 @@ def get_milvus_connection() -> Milvus:
     # Creates the connection to the Milvus server
 
     try:
+        # Return Milvus Langchain object
         return Milvus(
             collection_name=collection_name,
             embedding_function=embeddings,
@@ -83,6 +92,7 @@ def list_docs_in_collection() -> list:
     try:
         # If the collection hasnt been created yet
         if not collection.client.has_collection(collection_name):
+            # Return empty list
             return []
 
         # Queries collection to get doc ids, filenames, filetypes, and upload times
@@ -105,10 +115,12 @@ def list_docs_in_collection() -> list:
         # Convert the dictionary values back into a list
         unique_data = list(unique_entries.values())
 
+        # Return list of unique documents
         return unique_data
 
     except Exception as e:
         print(f"[list_docs_in_collection] Failed to list docs: {e}")
+        # Return empty list
         return []
 
     finally:
