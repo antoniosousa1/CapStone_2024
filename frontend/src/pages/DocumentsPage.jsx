@@ -12,7 +12,7 @@ import axios from "axios";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-const DocumentsPage = ({ onUploadStart, onUploadEnd, cancelToken }) => {
+const DocumentsPage = ({ onUploadStart, onUploadEnd, cancelToken, setProgress }) => {
   const [rows, setRows] = useState([]);
   const [filteredRows, setFilteredRows] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
@@ -62,6 +62,7 @@ const DocumentsPage = ({ onUploadStart, onUploadEnd, cancelToken }) => {
           onUploadStart={onUploadStart}
           onUploadEnd={onUploadEnd}
           cancelToken={cancelToken}
+          setProgress={setProgress}
         />
         <Button
           variant="contained"

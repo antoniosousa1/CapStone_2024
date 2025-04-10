@@ -9,7 +9,7 @@ import FileUploadProgress from "./DocPageFileUploadProgress"; // Import FileUplo
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-function UploadDocsContainer({ onRefetch }) {
+function UploadDocsContainer({ onRefetch, onUploadStart, onUploadEnd, cancelToken, setProgress }) {
   const [loading, setLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarContent, setSnackbarContent] = useState({
@@ -36,8 +36,16 @@ function UploadDocsContainer({ onRefetch }) {
     }
 
     try {
+      onUploadStart?.(); // Notify the layout we're uploading
+      setLoading(true);  // Local spinner (optional if layout handles everything)
+
       const response = await axios.post(`${BACKEND_URL}/add`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        cancelToken,
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setProgress?.(percent); // Update the global progress
+        },
       });
 
       const { uploaded = [], skipped = {} } = response.data;
@@ -81,6 +89,7 @@ function UploadDocsContainer({ onRefetch }) {
       setSnackbarOpen(true);
     } finally {
       setLoading(false);
+      onUploadEnd?.();
     }
 
     // Reset the input to allow re-uploading the same file
@@ -90,14 +99,6 @@ function UploadDocsContainer({ onRefetch }) {
   return (
     <Box>
       <FileUploadButton loading={loading} onFileUpload={handleFileUpload} />
-
-      {loading && (
-        <FileUploadProgress
-          loading={loading}
-          onCancel={() => {
-          }}
-        />
-      )}
 
       <Snackbar
         open={snackbarOpen}
