@@ -15,9 +15,11 @@ const helpItems = [
     pdfUrl: '/pdfs/DocsHelp.pdf',
   },
   {
-    title: 'More details coming soon!',
-    label: 'More Help',
-  },
+    title: "Learn about the different kinds of LLMs.",
+    label: 'LLMs Information',
+    pdfUrl: '/pdfs/LLMs Info.pdf'
+  }
+  
 ];
 
 const TooltipBox = ({ placement }) => {
@@ -40,7 +42,7 @@ const TooltipBox = ({ placement }) => {
         Need Assistance?
       </Typography>
       <Typography variant="body1" paragraph>
-        Get guidance on using RiteGen for documentation, content creation, and performance evaluation.
+        Get guidance on how to use RiteGen and additional information.
       </Typography>
 
       <Stack spacing={2} alignItems="center">

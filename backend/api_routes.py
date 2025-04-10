@@ -16,10 +16,10 @@ PORT = os.getenv("PORT")
 USER_ID = os.getenv("USER_ID")
 
 llama_model = "llama3.1:70b"
-deepseek_model = "deepseek-r1:70b"
+phi4_model = "phi4:latest"
 
-llm1 = OllamaLLM(model=deepseek_model)
-llm2 = OllamaLLM(model=llama_model)
+llm1 = OllamaLLM(model=llama_model)
+llm2 = OllamaLLM(model=phi4_model)
 embeddings = OllamaEmbeddings(model=llama_model)
 
 
