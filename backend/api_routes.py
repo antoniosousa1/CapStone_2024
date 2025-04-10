@@ -63,7 +63,7 @@ def upload_file():
 
     files = request.files.getlist("files")
 
-    existing_entries = collection_manger.list_entries_in_collection()
+    existing_entries = collection_manger.list_docs_in_collection()
     existing_doc_ids = {entry["doc_id"]: entry["filename"] for entry in existing_entries}
 
     new_files = []
@@ -95,7 +95,7 @@ def upload_file():
 @app.route("/list-files", methods=["GET"])
 def list_files():
     
-    files = collection_manger.list_entries_in_collection()
+    files = collection_manger.list_docs_in_collection()
     
     return jsonify({"files": files})
 
