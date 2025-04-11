@@ -18,7 +18,6 @@ const helpItems = [
     title: "Learn about the different kinds of LLMs.",
     label: 'LLMs Information',
     pdfUrl: '/pdfs/LLMs Info.pdf'
-    // end of tooltips
   }
   
 ];
