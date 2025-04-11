@@ -51,47 +51,28 @@ def get_milvus_connection() -> Milvus:
 
 
 def add_docs_to_collection(files: list[FileStorage]) -> dict:
-    # Adds documents to the collection and handles checking for duplicates, loading, and splitting
-
-    # Retrieve existing document entries from the collection
     existing_entries = list_docs_in_collection()
-    existing_doc_ids = {entry["doc_id"]: entry["filename"]
-                        for entry in existing_entries}
+    existing_doc_ids = {entry["doc_id"]: entry["filename"] for entry in existing_entries}
 
-    new_files = []
-    skipped = {}
-
-    for file in files:
-        file_hash = document_management.get_file_hash(file)
-        if file_hash in existing_doc_ids:
-            skipped[file.filename] = existing_doc_ids[file_hash]  # uploaded -> existing
-            print(f"skipped: {skipped[file.filename]}")
-        else:
-            new_files.append(file)
-            print(f"file added")
+    new_files, skipped = filter_duplicate_files(files, existing_doc_ids)
 
     if not new_files:
         return {
             "uploaded": [],
             "skipped": skipped
-        }, 200
-    # Load and split new documents
+        }
+
+    # Load, split, and embed new documents
     loaded_docs = document_management.load_docs(new_files)
     splits = document_management.split_docs(loaded_docs)
 
-    # Connect to the Milvus collection and add the docs
     collection = get_milvus_connection()
 
     try:
-        # Extract page content and metadata from documents
         text_splits = [doc.page_content for doc in splits]
         metadatas = [doc.metadata for doc in splits]
 
-        # Add the new document text splits to the Milvus database
-        collection.add_texts(
-            texts=text_splits,
-            metadatas=metadatas
-        )
+        collection.add_texts(texts=text_splits, metadatas=metadatas)
 
     except Exception as e:
         print(f"[add_docs_to_collection] Failed to add docs: {e}")
@@ -100,7 +81,40 @@ def add_docs_to_collection(files: list[FileStorage]) -> dict:
     finally:
         collection.client.close()
 
-    return {"uploaded": [file.filename for file in new_files], "skipped": skipped}
+    return {
+        "uploaded": [file.filename for file in new_files],
+        "skipped": skipped
+    }
+
+
+def filter_duplicate_files(files, existing_doc_ids):
+    """
+    Filters out duplicates both from existing collection entries
+    and within the current upload batch.
+    
+    Returns:
+        - new_files: List of files that should be uploaded
+        - skipped: Dict of skipped file reasons
+    """
+    new_files = []
+    skipped = {}
+    seen_hashes = set()
+
+    for file in files:
+        file_hash = document_management.get_file_hash(file)
+
+        if file_hash in existing_doc_ids:
+            skipped[file.filename] = existing_doc_ids[file_hash]
+            print(f"skipped (in collection): {file.filename} → {existing_doc_ids[file_hash]}")
+        elif file_hash in seen_hashes:
+            skipped[file.filename] = "duplicate of another file in this upload"
+            print(f"skipped (duplicate in batch): {file.filename}")
+        else:
+            seen_hashes.add(file_hash)
+            new_files.append(file)
+            print(f"added: {file.filename}")
+
+    return new_files, skipped
 
 
 def remove_docs_from_collection(docs_to_remove: list[str]) -> None:
