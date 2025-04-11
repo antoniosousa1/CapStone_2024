@@ -42,17 +42,17 @@ https://python.langchain.com/docs/tutorials/rag/
 # Running Frontend and Backend serperatly
 
 1. Split terminal to get two bash terminals
-2. from the ~/CapStone directory run the following command for the frontend terminal
+2. from the ~/fronted directory run the following command for the frontend terminal
 
-- streamlit run frontend/streamlit_gui.py
+- npm run dev 
 
 3. from the ~/Capstone directory run the following command for the backend terminal
 
-- python3 api/routes.py
+- python3 backend/api_routes.py
 
 4. Go to http://localhost:8501 this will be the frontend of the application
 
-1. ~/Capstone/api/routes.py will be our backend code file, this is where the api end points will be
+1. ~/Capstone/backend/api_routes.py will be our backend code file, this is where the api end points will be
 2. This flask app will be listening to requests from the frontend to run the given api endpoint
 
 # Milvus Server set up

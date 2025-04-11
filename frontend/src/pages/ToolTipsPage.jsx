@@ -38,7 +38,7 @@ const TooltipBox = ({ placement }) => {
   };
 
   return (
-    <Box sx={{ p: 4, textAlign: 'center', maxWidth: 600, mx: 'auto' }}>
+    <Box sx={{ p: 4, textAlign: "center", maxWidth: 600, mx: "auto" }}>
       <Typography variant="h4" gutterBottom>
         Need Assistance?
       </Typography>
@@ -91,11 +91,11 @@ const TooltipBox = ({ placement }) => {
 };
 
 TooltipBox.propTypes = {
-  placement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
+  placement: PropTypes.oneOf(["top", "bottom", "left", "right"]),
 };
 
 TooltipBox.defaultProps = {
-  placement: 'top',
+  placement: "top",
 };
 
 export default TooltipBox;

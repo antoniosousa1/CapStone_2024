@@ -1,14 +1,15 @@
-// components/FileHandling.jsx
-import JSZip from 'jszip';
+import JSZip from "jszip";
 
 export const allowedFileTypes = {
   "application/pdf": "PDF",
   "application/msword": "DOC",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "DOCX",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    "DOCX",
   "application/vnd.ms-powerpoint": "PPT",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "PPTX",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+    "PPTX",
   "text/plain": "TXT",
-  "text/csv": "CSV"
+  "text/csv": "CSV",
 };
 
 export const formatFileSize = (sizeInBytes) => {
@@ -20,5 +21,7 @@ export const formatFileSize = (sizeInBytes) => {
 export const getPptxSlideCount = async (file) => {
   const zip = new JSZip();
   const content = await zip.loadAsync(file);
-  return Object.keys(content.files).filter(name => name.startsWith("ppt/slides/") && name.endsWith(".xml")).length;
+  return Object.keys(content.files).filter(
+    (name) => name.startsWith("ppt/slides/") && name.endsWith(".xml")
+  ).length;
 };
