@@ -3,7 +3,7 @@ Authors: Antonio Sousa Jr(Team Lead), Matthew Greeson, Goncalo Felix, Antonio Mo
 Affiliation: University of Massachusetts Dartmouth
 Course: CIS 498 & 499 (Senior Capstone Project)
 Ownership: Rite-Solutions, Inc.
-Client/Stakeholder: Brandon Carvhalo
+Client/Stakeholder: Brandon Carvalho
 """
 
 from langchain.schema import Document
