@@ -37,7 +37,8 @@ function UploadDocsContainer({
       });
 
       const { uploaded = [], skipped = {} } = response.data;
-      const skippedEntries = Object.entries(skipped);
+
+      const skippedEntries = Object.entries(skipped); // [ [uploadedFile, matchedFile], ...]
 
       if (uploaded.length && skippedEntries.length) {
         const message = [

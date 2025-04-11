@@ -1,155 +1,129 @@
 """
-File: llm.py
 Authors: Antonio Sousa Jr(Team Lead), Matthew Greeson, Goncalo Felix, Antonio Morais, Dylan Ricci, Ryan Medeiros
 Affiliation: University of Massachusetts Dartmouth
 Course: CIS 498 & 499 (Senior Capstone Project)
 Ownership: Rite-Solutions, Inc.
 Client/Stakeholder: Brandon Carvhalo
-Date: 2025-4-25
-Project Description: This code utilizes Ollama as our LLM and a Retrieval-Augmented Generation (RAG) approach to take documents from a specifc directory, load them and then
-             split the documents into texts and store it into a local database using Milvus Lite. Once stored the user then asks a questions which retrieves the most
-             relevant documents and the LLM generates a response as best as it can.
-
 """
 
-# For using the Ollama language model
-from langchain_ollama import OllamaLLM, OllamaEmbeddings
-from langchain.schema import Document  # Document schema class
-from langchain_milvus import Milvus  # For managing vector databases
+from langchain_ollama import OllamaLLM
+from langchain.schema import Document
+from langchain_milvus import Milvus
+from llm_package import collection_manger
 
-from ragas import EvaluationDataset, evaluate, SingleTurnSample
-from ragas.metrics import (
-    LLMContextPrecisionWithoutReference,
-    Faithfulness,
-    ResponseRelevancy,
-)
-from ragas.llms import LangchainLLMWrapper
-from ragas.embeddings import LangchainEmbeddingsWrapper
 
-class Rag:
+# Initialize llm models you would like to use, Mix and match differnt models for best result
+llm1 = OllamaLLM(model="phi4:latest")
+llm2 = OllamaLLM(model="llama3.1:70b")
 
-    previous_questions = []
-    previous_answers = []
 
-    # Function to retrieve relevant documents based on a user's query
-    def retrieve_docs(
-        self, query: str, vector_store: Milvus
-    ) -> list[Document]:
-        
-        search_results = vector_store.similarity_search(
-            query=query, k=3
-            )
-        
-        return search_results
+def retrieve_docs(query: str, vector_store: Milvus) -> list[Document]:
+    # Function to retrieve relevant document chunks based on a user's query
 
+    search_results = vector_store.similarity_search(query=query, k=3)
+
+    # Returns the relevant chunks to the user's query
+    return search_results
+
+
+def create_prompt(retrieved_docs: list[Document], query: str) -> str:
     # Function to create a detailed prompt with context for the LLM
-    def create_prompt(self, retrieved_docs: list[Document], query: str) -> str:
-        prompt = (
-            "You are an assistant for question-answering tasks. Please only use the following pieces of retrieved context to answer the question. If you cannot find any context referring to the question, inform the user that you could not find any context related to that concept."
-            "Please do not use previously stored knowledge to answer the questions. Use up to five sentences maximum and keep the answer concise but, if the user specifies how many sentences to use, only use that amount of sentences. "
-            "Use the previous questions and answers to be conversational if need be.  \n"
-        )
 
-        # Format the question, context, and previous interactions
-        Question = "Question: " + query + "\n"
-        Context_str = "Context: \n\n"
+    prompt = (
+        "You are an assistant for question-answering tasks. Please only "
+        "use the following pieces of retrieved context to answer the question. "
+        "If you cannot find any context referring to the question, inform the "
+        "user that you could not find any context related to that concept."
+        "Use up to five sentences maximum and keep the answer concise but, if the "
+        "user specifies how many sentences to use, only use that amount of sentences. "
+    )
 
-        # Add the context from the retrieved documents to the prompt
-        for i in retrieved_docs:
-            Context_str += i.page_content + "\n\n"
+    Context_str = ""
 
-        Answer = "Answer: "
+    # Add the context from the retrieved documents to the prompt
+    for i in retrieved_docs:
+        Context_str += i.page_content + "\n\n"
 
-        previous_questions_str = "previous questions: \n\n"
-        for i in range(len(self.previous_questions)):
-            previous_questions_str += f"Q{i+1}: {self.previous_questions[i]}\n\n"
+    # Contruct final prompt
+    final_prompt = (
+        f"Prompt: {prompt}\n\n"
+        f"Question: {query}\n\n"
+        f"Context: {Context_str}\n\n"
+        f"Answer: "
+    )
 
-        previous_answers_str = "previous answers: \n\n"
-        for i in range(len(self.previous_answers)):
-            previous_answers_str += f"A{i+1}: {self.previous_answers[i]}\n\n"
+    # Return the final prompt
+    return final_prompt
 
-        final_prompt = (
-            prompt + Question + Context_str +
-            previous_questions_str + previous_answers_str + Answer
-        )
-        return final_prompt
 
+def refine_prompt(retrieved_docs: list[Document], query: str, llm1_context: str) -> str:
     # Alternative prompt creation function with an additional LLM context
-    def refine_prompt(
-        self,
-        retrieved_docs: list[Document],
-        llm1_context: str,
-        question: str,
-    ) -> str:
 
-        prompt = (
-            "You are an assistant for question-answering tasks. Please only use the following pieces of retrieved context to answer the question. If you cannot find any context referring to the question, inform the user that you could not find any context related to that concept."
-            "Please do not use previously stored knowledge to answer the questions. Use up to five sentences maximum and keep the answer concise but, if the user specifies how many sentences to use, only use that amount of sentences. "
-            "Use the previous questions and answers to be conversational if need be.  \n"
-        )
-        Question = "Question: " + question + "\n"
-        Context_str = "Context: \n\n"
-        Answer = "Answer: "
+    prompt = (
+        "You are an assistant for question-answering tasks. Please only use the "
+        "following pieces of retrieved context to answer the question. If you cannot "
+        "find any context referring to the question, inform the user that you could "
+        "not find any context related to that concept. Use up to five sentences maximum "
+        "and keep the answer concise but, if the user specifies how many sentences to "
+        "use, only use that amount of sentences. "
+    )
 
-        # Add the context from the retrieved documents to the prompt
-        for i in retrieved_docs:
-            Context_str += i.page_content + "\n\n"
+    Context_str = ""
 
-        # Add the additional LLM context
-        llm1_context = (
-            "This is an answer generated by another LLM, try to use this to make a better and more "
-            "insightful response: " + llm1_context + "\n"
-        )
+    # Add the context from the retrieved documents to the prompt
+    for i in retrieved_docs:
+        Context_str += i.page_content + "\n\n"
 
-        Answer = "Answer: "
-        final_prompt = (
-            prompt
-            + Question
-            + Context_str
-            + llm1_context
-            + Answer
-        )
+    # Contruct final prompt with context from llm 1
+    refined_prompt = (
+        f"Prompt: {prompt}\n\n"
+        f"Question: {query}\n\n"
+        f"Context: {Context_str}\n\n"
+        "This is an answer generated by another LLM, try to use this to make a "
+        f"better and more insightful response: {llm1_context}\n\n"
+        f"Answer: "
+    )
 
-        return final_prompt
+    # Return the refined prompt
+    return refined_prompt
 
+
+def get_llm_response(llm: OllamaLLM, prompt: str) -> str:
     # Function to query the LLM with the generated prompt and return the answer
-    def get_llm_response(self, llm: OllamaLLM, prompt: str) -> str:
-        response = llm.invoke(prompt)  # Get the answer from the LLM
-        return response
 
-    def eval_rag_response(
-        self,
-        question: str,
-        retrived_docs: list[Document],
-        answer: str,
-        llm: OllamaLLM,
-        llm_embeddings: OllamaEmbeddings,
-    ) -> EvaluationDataset:
+    response = llm.invoke(prompt)
 
-        evaluator_llm = LangchainLLMWrapper(llm)
-        gen_embeddings = LangchainEmbeddingsWrapper(llm_embeddings)
+    # Returns the llm response
+    return response
 
-        sample = SingleTurnSample(
-            user_input=question,
-            response=answer,
-            retrieved_contexts=[doc.page_content for doc in retrived_docs],
+
+def full_rag_response(query: str) -> str:
+    # Combines previous methods to create full rag response
+
+    try:
+        # Retrive docs
+        retrieved_docs = retrieve_docs(
+            query=query, vector_store=collection_manger.get_milvus_connection()
         )
 
-        dataset = EvaluationDataset(samples=[sample])
+        # Create prompt
+        prompt = create_prompt(query=query, retrieved_docs=retrieved_docs)
 
-        # Context Precision is a metric that measures the proportion of relevant chunks in the retrieved_contexts
-        # The Faithfulness metric measures how factually consistent a response is with the retrieved context
-        # The ResponseRelevancy metric measures how relevant a response is to the user input
+        # Gets response
+        response = get_llm_response(llm=llm1, prompt=prompt)
+        print(f"Reponse: {response}")
 
-        evaluation = evaluate(
-            dataset=dataset,
-            metrics=[
-                LLMContextPrecisionWithoutReference(),
-                Faithfulness(),
-                ResponseRelevancy(),
-            ],
-            llm=evaluator_llm,
-            embeddings=gen_embeddings,
-        )
+        # Refines prompt
+        refined_prompt = refine_prompt(
+            query=query, retrieved_docs=retrieved_docs, llm1_context=response)
 
-        return evaluation
+        # Gets refined response
+        refined_response = get_llm_response(llm=llm2, prompt=refined_prompt)
+        print(f"Refined Reponse: {refined_response}")
+
+        # Returns refined response
+        return refined_response
+
+    except Exception as e:
+        print(f"[full_rag_response] Failed to generate rag response: {e}")
+        raise
