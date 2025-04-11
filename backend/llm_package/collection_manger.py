@@ -9,9 +9,9 @@ import os
 load_dotenv()
 USER_ID = os.getenv("USER_ID")
 MILVUS_SERVER_URL = os.getenv("MILVUS_SERVER_URL")
-
+OLLAMA_SERVER_URL = os.getenv("OLLAMA_SERVER_URL")
 # Inialize variables
-embeddings = OllamaEmbeddings(model="llama3.1:70b")
+embeddings = OllamaEmbeddings(model="llama3.1:70b", base_url=OLLAMA_SERVER_URL)
 collection_name = f"collection_{USER_ID}"
 
 

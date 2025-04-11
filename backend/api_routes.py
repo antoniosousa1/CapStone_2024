@@ -14,13 +14,14 @@ import os
 load_dotenv()
 PORT = os.getenv("PORT")
 USER_ID = os.getenv("USER_ID")
+OLLAMA_SERVER_URL = os.getenv("OLLAMA_SERVER_URL")
 
 llama_model = "llama3.1:70b"
 phi4_model = "phi4:latest"
 
-llm1 = OllamaLLM(model=phi4_model)
-llm2 = OllamaLLM(model=llama_model)
-embeddings = OllamaEmbeddings(model=llama_model)
+llm1 = OllamaLLM(model=phi4_model, base_url=OLLAMA_SERVER_URL)
+llm2 = OllamaLLM(model=llama_model, base_url=OLLAMA_SERVER_URL)
+embeddings = OllamaEmbeddings(model=llama_model, base_url=OLLAMA_SERVER_URL)
 
 
 # intinaiate flask app

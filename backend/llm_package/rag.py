@@ -13,18 +13,9 @@ Project Description: This code utilizes Ollama as our LLM and a Retrieval-Augmen
 """
 
 # For using the Ollama language model
-from langchain_ollama import OllamaLLM, OllamaEmbeddings
+from langchain_ollama import OllamaLLM
 from langchain.schema import Document  # Document schema class
 from langchain_milvus import Milvus  # For managing vector databases
-
-from ragas import EvaluationDataset, evaluate, SingleTurnSample
-from ragas.metrics import (
-    LLMContextPrecisionWithoutReference,
-    Faithfulness,
-    ResponseRelevancy,
-)
-from ragas.llms import LangchainLLMWrapper
-from ragas.embeddings import LangchainEmbeddingsWrapper
 
 class Rag:
 
@@ -116,40 +107,3 @@ class Rag:
     def get_llm_response(self, llm: OllamaLLM, prompt: str) -> str:
         response = llm.invoke(prompt)  # Get the answer from the LLM
         return response
-
-    def eval_rag_response(
-        self,
-        question: str,
-        retrived_docs: list[Document],
-        answer: str,
-        llm: OllamaLLM,
-        llm_embeddings: OllamaEmbeddings,
-    ) -> EvaluationDataset:
-
-        evaluator_llm = LangchainLLMWrapper(llm)
-        gen_embeddings = LangchainEmbeddingsWrapper(llm_embeddings)
-
-        sample = SingleTurnSample(
-            user_input=question,
-            response=answer,
-            retrieved_contexts=[doc.page_content for doc in retrived_docs],
-        )
-
-        dataset = EvaluationDataset(samples=[sample])
-
-        # Context Precision is a metric that measures the proportion of relevant chunks in the retrieved_contexts
-        # The Faithfulness metric measures how factually consistent a response is with the retrieved context
-        # The ResponseRelevancy metric measures how relevant a response is to the user input
-
-        evaluation = evaluate(
-            dataset=dataset,
-            metrics=[
-                LLMContextPrecisionWithoutReference(),
-                Faithfulness(),
-                ResponseRelevancy(),
-            ],
-            llm=evaluator_llm,
-            embeddings=gen_embeddings,
-        )
-
-        return evaluation
