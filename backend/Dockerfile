@@ -6,5 +6,8 @@ WORKDIR /backend
 COPY . .
 
 EXPOSE 5005
+
+RUN apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0
+
 #installs the needed python dependencies for the application
 RUN pip install --no-cache-dir -r requirements.txt
