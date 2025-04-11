@@ -15,9 +15,9 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import FixedLoadingContainer from "./LoadingContainer";
-import Button from "@mui/material/Button"; // Import Button here
+import Button from "@mui/material/Button";
 
-function FileUploadProgress({ loading, onCancel }) {
+function FileUploadProgress({ onCancel, loading }) {
   return (
     loading && (
       <FixedLoadingContainer

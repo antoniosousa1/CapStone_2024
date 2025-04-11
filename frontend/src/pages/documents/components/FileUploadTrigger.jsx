@@ -11,7 +11,7 @@
 }
 
 import React from "react";
-import FileUploadButton from "./DocPageFileUploadButton";
+import FileUploadButton from "./FileUploadButton";
 
 function FileUploadTrigger({ loading, onFileUpload }) {
   return <FileUploadButton loading={loading} onFileUpload={onFileUpload} />;

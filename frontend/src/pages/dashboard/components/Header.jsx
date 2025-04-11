@@ -12,7 +12,7 @@
 
 import React from "react";
 import { AppBar, Toolbar, Typography } from "@mui/material";
-import NAVIGATION from "../../config/Navigation";
+import NAVIGATION from "../../../config/Navigation";
 import { useDemoRouter } from "@toolpad/core/internal";
 
 const DashboardHeader = () => {

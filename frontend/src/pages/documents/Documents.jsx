@@ -23,12 +23,8 @@ import FileUploadProgress from "./components/FileUploadProgress";
 import useFetchDocuments from "../../hooks/useFetchDocuments";
 import useDocumentRowSelection from "../../hooks/useDocumentRowSelection";
 import useSnackbar from "../../hooks/useSnackbar";
-import useFileUploadProgress from "../../hooks/useFileUploadProgress";
 
-const DocumentsPage = ({
-  cancelToken,
-  onCancelUpload,
-}) => {
+const DocumentsPage = ({ cancelToken, onCancelUpload }) => {
   const [openPurgeDialog, setOpenPurgeDialog] = useState(false);
   const [refetchSignal, setRefetchSignal] = useState(0);
   const {
@@ -36,7 +32,7 @@ const DocumentsPage = ({
     loading: fetchLoading,
     error: fetchError,
     setRows,
-  } = useFetchDocuments(refetchSignal); 
+  } = useFetchDocuments(refetchSignal);
   const { selectedRows, handleRowSelection } = useDocumentRowSelection();
   const {
     open: snackbarOpen,
@@ -45,7 +41,7 @@ const DocumentsPage = ({
     showSnackbar,
   } = useSnackbar();
   const { uploading, handleFileUploadStart, handleFileUploadEnd } =
-    useFileUploadProgress(); 
+    useFileUploadProgress();
 
   const triggerRefetch = () => setRefetchSignal((prev) => prev + 1);
 
@@ -62,8 +58,8 @@ const DocumentsPage = ({
       >
         <UploadDocsContainer
           onRefetch={triggerRefetch}
-          onUploadStart={handleFileUploadStart} 
-          onUploadEnd={handleFileUploadEnd} 
+          onUploadStart={handleFileUploadStart}
+          onUploadEnd={handleFileUploadEnd}
           cancelToken={cancelToken}
         />
         <Button
@@ -73,7 +69,7 @@ const DocumentsPage = ({
             backgroundColor: "darkred",
             "&:hover": { backgroundColor: "red" },
           }}
-          disabled={fetchLoading || !rows.length || uploading} 
+          disabled={fetchLoading || !rows.length || uploading}
           onClick={() => setOpenPurgeDialog(true)}
         >
           Purge Database Collection
@@ -92,7 +88,9 @@ const DocumentsPage = ({
         selectedRows={selectedRows}
         showSnackbar={showSnackbar}
       />
-      {uploading && <FileUploadProgress onCancel={onCancelUpload} />}{" "}
+      {uploading && (
+        <FileUploadProgress onCancel={onCancelUpload} loading={uploading} />
+      )}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={5000}

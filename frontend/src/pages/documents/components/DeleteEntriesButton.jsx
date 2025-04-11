@@ -20,7 +20,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
-import useDeleteEntries from "../../hooks/useDeleteEntries";
+import useDeleteEntries from "../../../hooks/useDeleteEntries";
 
 function DeleteEntriesButton({ onRefetch, selectedRows }) {
   const {
