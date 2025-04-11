@@ -10,7 +10,7 @@
 */
 }
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react"; // Import useEffect
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
@@ -19,10 +19,11 @@ import PurgeDB from "./components/PurgeDB";
 import DataGrid from "./components/DocumentDataGrid";
 import UploadDocsContainer from "./components/UploadDocsContainer";
 import DeleteEntriesButton from "./components/DeleteEntriesButton";
-import FileUploadProgress from "./components/FileUploadProgress";
+import useFileUploadProgress from "../../hooks/useFileUploadProgress";
 import useFetchDocuments from "../../hooks/useFetchDocuments";
 import useDocumentRowSelection from "../../hooks/useDocumentRowSelection";
 import useSnackbar from "../../hooks/useSnackbar";
+import FileUploadProgress from "./components/FileUploadProgress";
 
 const DocumentsPage = ({ cancelToken, onCancelUpload }) => {
   const [openPurgeDialog, setOpenPurgeDialog] = useState(false);
@@ -42,8 +43,29 @@ const DocumentsPage = ({ cancelToken, onCancelUpload }) => {
   } = useSnackbar();
   const { uploading, handleFileUploadStart, handleFileUploadEnd } =
     useFileUploadProgress();
+  const [uploadMessage, setUploadMessage] = useState(null);
 
   const triggerRefetch = () => setRefetchSignal((prev) => prev + 1);
+
+  useEffect(() => {
+    console.log(
+      "DocumentsPage - useEffect for uploadMessage triggered:",
+      uploadMessage
+    );
+    if (uploadMessage) {
+      showSnackbar(
+        uploadMessage.severity,
+        uploadMessage.title || "Upload Status", // Added a default title
+        uploadMessage.message
+      );
+      setUploadMessage(null);
+    }
+  }, [uploadMessage, showSnackbar]);
+
+  const handleUploadResult = useCallback((result) => {
+    console.log("DocumentsPage - handleUploadResult received:", result);
+    setUploadMessage(result);
+  }, []);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", width: "99%" }}>
@@ -61,6 +83,7 @@ const DocumentsPage = ({ cancelToken, onCancelUpload }) => {
           onUploadStart={handleFileUploadStart}
           onUploadEnd={handleFileUploadEnd}
           cancelToken={cancelToken}
+          setUploadResult={handleUploadResult} // Pass the local handler
         />
         <Button
           variant="contained"

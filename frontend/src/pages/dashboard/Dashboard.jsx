@@ -37,12 +37,10 @@ const DashboardLayoutBasic = ({ window }) => {
       theme={theme}
       window={window?.()}
     >
-      <DashboardLayout
-        header={<DashboardHeader />} 
-      >
+      <DashboardLayout header={<DashboardHeader />}>
         <Box
           sx={{
-            py: 4,
+            py: 2,
             display: "flex",
             width: "100%",
             flexDirection: "column",
@@ -53,7 +51,9 @@ const DashboardLayoutBasic = ({ window }) => {
             sx={{
               flexGrow: 1,
               width: "100%",
-              display: segment === "chat" ? "flex" : "none",
+              opacity: segment === "chat" ? 1 : 0,
+              pointerEvents: segment === "chat" ? "auto" : "none",
+              position: "absolute",
             }}
           >
             <ChatBox />
@@ -62,14 +62,23 @@ const DashboardLayoutBasic = ({ window }) => {
             sx={{
               flexGrow: 1,
               width: "100%",
-              display:
-                segment === "documents" || segment === "tooltips"
-                  ? "flex"
-                  : "none",
+              opacity: segment === "documents" ? 1 : 0,
+              pointerEvents: segment === "documents" ? "auto" : "none",
+              position: "flex", 
             }}
           >
-            {segment === "documents" && <DocumentsPage />}
-            {segment === "tooltips" && <TooltipBox />}
+            <DocumentsPage />
+          </Box>
+          <Box
+            sx={{
+              flexGrow: 1,
+              width: "100%",
+              opacity: segment === "tooltips" ? 1 : 0,
+              pointerEvents: segment === "tooltips" ? "auto" : "none",
+              position: "absolute",
+            }}
+          >
+            <TooltipBox />
           </Box>
         </Box>
       </DashboardLayout>

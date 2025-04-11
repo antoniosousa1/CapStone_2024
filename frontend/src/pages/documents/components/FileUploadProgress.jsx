@@ -30,10 +30,10 @@ function FileUploadProgress({ onCancel, loading }) {
         <Box sx={{ display: "flex", alignItems: "center", marginBottom: 1 }}>
           <CircularProgress size={40} />
           <Typography sx={{ ml: 1 }}>
-            Currently Uploading Documents...{" "}
+            Uploading Documents...{" "}
           </Typography>
         </Box>
-        <Button onClick={onCancel} sx={{ marginLeft: 2 }}>
+        <Button onClick={onCancel} sx={{ marginLeft: 4 }}>
           Cancel Upload
         </Button>
       </FixedLoadingContainer>
