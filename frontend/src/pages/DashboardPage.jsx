@@ -1,7 +1,7 @@
 // src/pages/DashboardPage.jsx
 import React, { useState, useRef } from "react";
 import PropTypes from "prop-types";
-import { Box, Toolbar, Typography, AppBar } from "@mui/material";
+import { Box, Toolbar, Typography, AppBar, Snackbar, Alert } from "@mui/material";
 import { AppProvider } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { useDemoRouter } from "@toolpad/core/internal";
@@ -12,7 +12,8 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import ChatBox from "./ChatPage";
 import DocumentsPage from "./DocumentsPage";
 import TooltipBox from "./ToolTipsPage";
-import FileUploadProgress from "../components/DocPageFileUploadProgress"; // Import the progress bar
+import FileUploadProgress from "../components/DocPageFileUploadProgress";
+import axios from "axios";
 
 const NAVIGATION = [
   { kind: "header", title: "Main Menu" },
@@ -33,11 +34,12 @@ const DashboardLayoutBasic = ({ window }) => {
   const router = useDemoRouter("/dashboard/chat");
   const segment = router.pathname.split("/").pop() || "chat";
   const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null); // global snackbar result
   const cancelUploadSource = useRef(null);
 
   const handleFileUploadStart = () => {
     setUploading(true);
-    cancelUploadSource.current = axios.CancelToken.source(); // Initialize cancel token here
+    cancelUploadSource.current = axios.CancelToken.source();
   };
 
   const handleFileUploadEnd = () => {
@@ -50,7 +52,6 @@ const DashboardLayoutBasic = ({ window }) => {
       cancelUploadSource.current.cancel("Upload cancelled by user.");
       setUploading(false);
       cancelUploadSource.current = null;
-      // You might want to notify the DocumentsPage to stop any ongoing processing
     }
   };
 
@@ -62,7 +63,7 @@ const DashboardLayoutBasic = ({ window }) => {
           <img
             src="https://rite-solutions.com/wp-content/uploads/2024/06/RiteSolutions_Logo-op.png"
             alt="MUI logo"
-            style={{ maxHeight: "45px", color: "red" }}
+            style={{ maxHeight: "45px" }}
           />
         ),
         title: "",
@@ -75,14 +76,10 @@ const DashboardLayoutBasic = ({ window }) => {
       <DashboardLayout
         header={
           <AppBar position="static" color="primary">
-            {" "}
-            {/* Set header background to primary color */}
             <Toolbar>
               <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                {NAVIGATION.find((item) => item.segment === segment)?.title ||
-                  "Dashboard"}
+                {NAVIGATION.find((item) => item.segment === segment)?.title || "Dashboard"}
               </Typography>
-              {/* You can add more header elements here if needed */}
             </Toolbar>
           </AppBar>
         }
@@ -92,30 +89,25 @@ const DashboardLayoutBasic = ({ window }) => {
             py: 4,
             display: "flex",
             width: "100%",
-            flexDirection: "column", // To stack content vertically
-            alignItems: "center", // Optional: Center content horizontally
+            flexDirection: "column",
+            alignItems: "center",
           }}
         >
-          {/* Always render ChatBox */}
           <Box
             sx={{
               flexGrow: 1,
-              width: "100%", // Make ChatBox take full width within its flex container
-              display: segment === "chat" ? "flex" : "none", // Show only on chat segment
+              width: "100%",
+              display: segment === "chat" ? "flex" : "none",
             }}
           >
             <ChatBox />
           </Box>
 
-          {/* Render Documents or Tooltips */}
           <Box
             sx={{
               flexGrow: 1,
-              width: "100%", // Make Documents/Tooltips take full width
-              display:
-                segment === "documents" || segment === "tooltips"
-                  ? "flex"
-                  : "none", // Show on other segments
+              width: "100%",
+              display: segment === "documents" || segment === "tooltips" ? "flex" : "none",
             }}
           >
             {segment === "documents" && (
@@ -123,13 +115,38 @@ const DashboardLayoutBasic = ({ window }) => {
                 onUploadStart={handleFileUploadStart}
                 onUploadEnd={handleFileUploadEnd}
                 cancelToken={cancelUploadSource.current?.token}
+                setUploadResult={setUploadResult}
               />
             )}
             {segment === "tooltips" && <TooltipBox />}
           </Box>
 
-          {/* Render FileUploadProgress always */}
           {uploading && <FileUploadProgress onCancel={handleCancelUpload} />}
+
+          <Snackbar
+            open={!!uploadResult}
+            autoHideDuration={6000}
+            onClose={() => setUploadResult(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          >
+            <Alert
+              onClose={() => setUploadResult(null)}
+              severity={uploadResult?.severity}
+              sx={{
+                width: "100%",
+                whiteSpace: "pre-line",
+                backgroundColor: (theme) =>
+                  uploadResult?.severity === "success"
+                    ? theme.palette.success.dark
+                    : uploadResult?.severity === "warning"
+                    ? theme.palette.warning.dark
+                    : theme.palette.error.dark,
+                color: (theme) => theme.palette.common.white,
+              }}
+            >
+              {uploadResult?.message}
+            </Alert>
+          </Snackbar>
         </Box>
       </DashboardLayout>
     </AppProvider>

@@ -1,32 +1,26 @@
-// components/FileUploadProgress.jsx
 import React from "react";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import FixedLoadingContainer from "./DocPageFixedLoadingContainer";
-import Button from "@mui/material/Button"; // Import Button here
+import Button from "@mui/material/Button";
 
-function FileUploadProgress({ loading, onCancel }) {
+function FileUploadProgress({ onCancel }) {
   return (
-    loading && (
-      <FixedLoadingContainer
-        sx={{
-          display: "flex",
-          flexDirection: "column", 
-          alignItems: "center", 
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", marginBottom: 1 }}>
-          <CircularProgress size={40} />
-          <Typography sx={{ ml: 1 }}>
-            Currently Uploading Documents...{" "}
-          </Typography>
-        </Box>
-        <Button onClick={onCancel} sx={{ marginLeft: 2 }}>
-          Cancel Upload
-        </Button>
-      </FixedLoadingContainer>
-    )
+    <FixedLoadingContainer
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 2,
+      }}
+    >
+      <CircularProgress size={60} />
+      <Typography>Uploading documents...</Typography>
+      <Button onClick={onCancel} variant="outlined">
+        Cancel Upload
+      </Button>
+    </FixedLoadingContainer>
   );
 }
 
