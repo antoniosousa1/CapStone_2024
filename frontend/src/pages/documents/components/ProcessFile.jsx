@@ -29,7 +29,7 @@ const processFile = async (file, existingRowCount) => {
     fileSize: formatFileSize(file.size),
     uploadDate: new Date().toLocaleDateString(),
     lastModified: new Date(file.lastModified).toLocaleDateString(),
-    pageCount: 1, // Default
+    pageCount: 1, 
   };
 
   try {

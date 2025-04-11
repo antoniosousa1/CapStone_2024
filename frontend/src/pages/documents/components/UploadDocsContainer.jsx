@@ -16,7 +16,7 @@ import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import FileUploadButton from "./FileUploadButton";
 import FileUploadProgress from "./FileUploadProgress";
-import useFileUpload from "../../../hooks/useFileUpload"; // Import the hook
+import useFileUpload from "../../../hooks/useFileUpload"; 
 
 function UploadDocsContainer({ onRefetch }) {
   const {
@@ -35,7 +35,6 @@ function UploadDocsContainer({ onRefetch }) {
         <FileUploadProgress
           loading={loading}
           onCancel={() => {
-            // You might want to implement a cancel upload functionality in the hook
           }}
         />
       )}
