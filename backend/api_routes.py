@@ -102,7 +102,11 @@ def delete_entries():
     except Exception as e:
         print(f"Error clearing entry: {e}")
         return jsonify({"status": "failure", "message": "Internal server error"}), 500
+    
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
 
 
 # run app
-app.run(host="0.0.0.0", port=PORT)
+app.run(host="0.0.0.0", port=PORT, debug=True)

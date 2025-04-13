@@ -7,7 +7,9 @@ COPY . .
 
 EXPOSE 5005
 
-RUN apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0
+RUN apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0 libmagic1 curl
 
 #installs the needed python dependencies for the application
 RUN pip install --no-cache-dir -r requirements.txt
+
+CMD [ "python3", "-u", "api_routes.py" ]

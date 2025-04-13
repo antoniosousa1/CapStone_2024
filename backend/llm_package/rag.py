@@ -20,8 +20,8 @@ load_dotenv()
 OLLAMA_SERVER_URL = os.getenv("OLLAMA_SERVER_URL")
 
 # Initialize llm models you would like to use, Mix and match differnt models for best result
-llm1 = OllamaLLM(model="phi4:latest", base_url=OLLAMA_SERVER_URL)
-llm2 = OllamaLLM(model="llama3.1:70b", base_url=OLLAMA_SERVER_URL)
+llm1 = OllamaLLM(model="llama3.1:latest", base_url=OLLAMA_SERVER_URL)
+llm2 = OllamaLLM(model="llama3.1:latest", base_url=OLLAMA_SERVER_URL)
 
 
 def retrieve_docs(query: str, vector_store: Milvus) -> list[Document]:
