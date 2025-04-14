@@ -1,5 +1,5 @@
 #uses ubuntu base image
-FROM python:3.12.3-slim
+FROM python:3.12.10-slim
 #creates directory app and changes to that directory
 WORKDIR /backend
 #copies local "App" directory to /app inside docker container
