@@ -20,6 +20,8 @@ import os
 load_dotenv()
 PORT = os.getenv("PORT")
 USER_ID = os.getenv("USER_ID")
+OLLAMA_SERVER_URL = os.getenv("OLLAMA_SERVER_URL")
+
 
 
 # Initialize flask app
@@ -100,7 +102,11 @@ def delete_entries():
     except Exception as e:
         print(f"Error clearing entry: {e}")
         return jsonify({"status": "failure", "message": "Internal server error"}), 500
+    
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
 
 
 # run app
-app.run(host="0.0.0.0", port=PORT)
+app.run(host="0.0.0.0", port=PORT, debug=True)
