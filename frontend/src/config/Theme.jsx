@@ -10,13 +10,12 @@
 */
 }
 
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./app/App.jsx";
+import { createTheme } from "@mui/material/styles";
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const theme = createTheme({
+  cssVariables: { colorSchemeSelector: "data-toolpad-color-scheme" },
+  colorSchemes: { light: true, dark: true },
+  breakpoints: { values: { xs: 0, sm: 600, md: 600, lg: 1200, xl: 1536 } },
+});
+
+export default theme;

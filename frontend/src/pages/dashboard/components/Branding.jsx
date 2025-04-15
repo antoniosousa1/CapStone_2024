@@ -11,12 +11,19 @@
 }
 
 import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./app/App.jsx";
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const DashboardBranding = () => {
+  return {
+    logo: (
+      <img
+        src="https://rite-solutions.com/wp-content/uploads/2024/06/RiteSolutions_Logo-op.png"
+        alt="MUI logo"
+        style={{ maxHeight: "45px", color: "red" }}
+      />
+    ),
+    title: "",
+    homeUrl: "chat",
+  };
+};
+
+export default DashboardBranding;
