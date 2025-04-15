@@ -10,13 +10,16 @@
 */
 }
 
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./app/App.jsx";
+import { useState } from "react";
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const useDocumentRowSelection = () => {
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  const handleRowSelection = (rows) => {
+    setSelectedRows(rows);
+  };
+
+  return { selectedRows, handleRowSelection };
+};
+
+export default useDocumentRowSelection;
