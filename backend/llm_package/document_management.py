@@ -50,17 +50,21 @@ def load_docs(files: list[FileStorage]) -> list[Document]:
 
 
 def split_docs(docs: list[Document]) -> list[Document]:
-    # Split loaded documents
-
     try:
-        # Initialize the RecursiveCharacterTextSplitter with parameters for chunk size and overlap
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=512, chunk_overlap=64, add_start_index=True
         )
-        splits = text_splitter.split_documents(docs)
-        
-        # Returns text splits
-        return splits
+
+        all_splits = []
+        for doc in docs:
+            splits = text_splitter.split_documents([doc])
+            for split in splits:
+                for key in ["doc_id", "filename", "filetype", "upload_time"]:
+                    if key in doc.metadata:
+                        split.metadata[key] = doc.metadata[key]
+            all_splits.extend(splits)
+
+        return all_splits
 
     except Exception as e:
         print(f"[split_docs] Failed to split docs: {e}")
