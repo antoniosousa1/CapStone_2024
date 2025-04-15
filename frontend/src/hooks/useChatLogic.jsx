@@ -14,13 +14,9 @@ import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-const LOCAL_STORAGE_KEY = "chatMessages";
 
 const useChatLogic = () => {
-  const [messages, setMessages] = useState(() => {
-    const storedMessages = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return storedMessages ? JSON.parse(storedMessages) : [];
-  });
+  const [messages, setMessages] = useState([]); 
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [responseTime, setResponseTime] = useState(null);
@@ -28,10 +24,6 @@ const useChatLogic = () => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
   const handleSendMessage = async (message) => {
@@ -68,8 +60,6 @@ const useChatLogic = () => {
   const handleClearChat = () => {
     setMessages([]);
     setResponseTime(null);
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-    console.log("Clear chat function executed"); // For debugging
   };
 
   const handleNewMessageChange = (e) => {
