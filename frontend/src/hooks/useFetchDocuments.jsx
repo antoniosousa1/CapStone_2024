@@ -14,7 +14,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-console.log("Backend URL in useFetchDocuments:", BACKEND_URL); // Verify the URL
+console.log("Backend URL in useFetchDocuments:", BACKEND_URL); 
 
 const useFetchDocuments = (refetchSignal) => {
   const [rows, setRows] = useState([]);
@@ -27,9 +27,9 @@ const useFetchDocuments = (refetchSignal) => {
       setLoading(true);
       setError(null);
       try {
-        console.log("Fetching data from:", `${BACKEND_URL}/list-files`); // Log the fetch URL
+        console.log("Fetching data from:", `${BACKEND_URL}/list-files`); 
         const res = await axios.get(`${BACKEND_URL}/list-files`);
-        console.log("Data fetched successfully:", res.data); // Log the fetched data
+        console.log("Data fetched successfully:", res.data); 
         setRows(res.data.files);
         setFilteredRows(res.data.files);
       } catch (err) {

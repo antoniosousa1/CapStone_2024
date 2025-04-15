@@ -14,7 +14,7 @@ from llm_package import collection_manger
 
 # Initialize llm models you would like to use, Mix and match differnt models for best result
 llm2 = OllamaLLM(model="phi4:latest")
-llm1 = OllamaLLM(model="llama3.1:70b")
+llm1 = OllamaLLM(model="llama3.1:8b")
 
 
 def retrieve_docs(query: str, vector_store: Milvus) -> list[Document]:
