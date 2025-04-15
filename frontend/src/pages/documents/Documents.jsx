@@ -10,7 +10,7 @@
 */
 }
 
-import React, { useState, useCallback, useEffect } from "react"; // Import useEffect
+import React, { useState, useCallback, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
@@ -22,7 +22,7 @@ import DeleteEntriesButton from "./components/DeleteEntriesButton";
 import useFileUploadProgress from "../../hooks/useFileUploadProgress";
 import useFetchDocuments from "../../hooks/useFetchDocuments";
 import useDocumentRowSelection from "../../hooks/useDocumentRowSelection";
-import useSnackbar from "../../hooks/useSnackbar";
+import DeleteEntriesSnackbar from "./components/DeleteEntriesSnackbar"; // It's a component
 import FileUploadProgress from "./components/FileUploadProgress";
 
 const DocumentsPage = ({ cancelToken, onCancelUpload }) => {
@@ -35,40 +35,66 @@ const DocumentsPage = ({ cancelToken, onCancelUpload }) => {
     setRows,
   } = useFetchDocuments(refetchSignal);
   const { selectedRows, handleRowSelection } = useDocumentRowSelection();
-  const {
-    open: snackbarOpen,
-    alertInfo,
-    handleCloseSnackbar,
-    showSnackbar,
-  } = useSnackbar();
   const { uploading, handleFileUploadStart, handleFileUploadEnd } =
     useFileUploadProgress();
   const [uploadMessage, setUploadMessage] = useState(null);
+  const [deleteSuccessSnackbarOpen, setDeleteSuccessSnackbarOpen] =
+    useState(false);
+  const [deletedCount, setDeletedCount] = useState(0);
+  const [snackbarOpen, setSnackbarOpen] = useState(false); // For general messages
+  const [alertInfo, setAlertInfo] = useState({
+    title: "",
+    message: null, // Allow message to be a string or an array
+    severity: "success",
+  });
 
   const triggerRefetch = () => setRefetchSignal((prev) => prev + 1);
 
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
+
+  const showSnackbar = useCallback((severity, title, message) => {
+    setAlertInfo({ severity, title, message });
+    setSnackbarOpen(true);
+  }, []);
+
   useEffect(() => {
-    console.log(
-      "DocumentsPage - useEffect for uploadMessage triggered:",
-      uploadMessage
-    );
     if (uploadMessage) {
       showSnackbar(
         uploadMessage.severity,
-        uploadMessage.title || "Upload Status", // Added a default title
+        uploadMessage.title || "Upload Status",
         uploadMessage.message
       );
       setUploadMessage(null);
     }
   }, [uploadMessage, showSnackbar]);
 
-  const handleUploadResult = useCallback((result) => {
-    console.log("DocumentsPage - handleUploadResult received:", result);
-    setUploadMessage(result);
-  }, []);
+  const handleUploadResult = useCallback(
+    (result) => {
+      console.log("handleUploadResult CALLED with:", result);
+      setUploadMessage(result);
+    },
+    [setUploadMessage]
+  );
+
+  const handleShowDeleteSnackbar = (count) => {
+    setDeletedCount(count);
+    setDeleteSuccessSnackbarOpen(true);
+  };
+
+  const handleCloseDeleteSnackbar = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setDeleteSuccessSnackbarOpen(false);
+  };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", width: "99%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", width: "99%", p: 1}}>
       <Box
         sx={{
           display: "flex",
@@ -83,7 +109,7 @@ const DocumentsPage = ({ cancelToken, onCancelUpload }) => {
           onUploadStart={handleFileUploadStart}
           onUploadEnd={handleFileUploadEnd}
           cancelToken={cancelToken}
-          setUploadResult={handleUploadResult} // Pass the local handler
+          setUploadResult={handleUploadResult}
         />
         <Button
           variant="contained"
@@ -109,21 +135,38 @@ const DocumentsPage = ({ cancelToken, onCancelUpload }) => {
       <DeleteEntriesButton
         onRefetch={triggerRefetch}
         selectedRows={selectedRows}
-        showSnackbar={showSnackbar}
+        onDeleteSuccess={handleShowDeleteSnackbar}
       />
       {uploading && (
         <FileUploadProgress onCancel={onCancelUpload} loading={uploading} />
       )}
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={5000}
+        autoHideDuration={null}
         onClose={handleCloseSnackbar}
       >
-        <Alert severity={alertInfo.severity}>
+        <Alert
+          severity={alertInfo.severity}
+          onClose={handleCloseSnackbar}
+          sx={{
+            width: "100%",
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+          }}
+        >
           <AlertTitle>{alertInfo.title}</AlertTitle>
-          {alertInfo.message}
+          {Array.isArray(alertInfo.message)
+            ? alertInfo.message.map((item, index) => (
+                <div key={index}>{item}</div>
+              ))
+            : alertInfo.message}
         </Alert>
       </Snackbar>
+      <DeleteEntriesSnackbar
+        open={deleteSuccessSnackbarOpen}
+        onClose={handleCloseDeleteSnackbar}
+        deletedFileCount={deletedCount}
+      />
       <PurgeDB
         onRefetch={triggerRefetch}
         open={openPurgeDialog}

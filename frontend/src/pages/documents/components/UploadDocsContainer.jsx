@@ -1,4 +1,15 @@
-// UploadDocsContainer.jsx
+{
+  /*
+
+  Authors: Antonio Sousa Jr(Team Lead), Matthew Greeson, Goncalo Felix, Antonio Morais, Dylan Ricci, Ryan Medeiros
+  Affiliation: University of Massachusetts Dartmouth
+  Course: CIS 498 & 499 (Senior Capstone Project)
+  Ownership: Rite-Solutions, Inc.
+  Client/Stakeholder: Brandon Carvalho
+
+*/
+}
+
 import React from "react";
 import Box from "@mui/material/Box";
 import FileUploadButton from "./FileUploadButton";

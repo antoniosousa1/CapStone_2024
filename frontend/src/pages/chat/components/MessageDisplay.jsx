@@ -25,6 +25,7 @@ const MessageContainer = styled(Paper)(({ theme, sender }) => ({
   width: "100%",
   textAlign: "left",
   wordWrap: "break-word",
+  height: "auto"
 }));
 
 const MessageDisplay = ({ messages }) => {

@@ -1,4 +1,15 @@
-// src/hooks/useDocumentUpload.js
+{
+  /*
+
+  Authors: Antonio Sousa Jr(Team Lead), Matthew Greeson, Goncalo Felix, Antonio Morais, Dylan Ricci, Ryan Medeiros
+  Affiliation: University of Massachusetts Dartmouth
+  Course: CIS 498 & 499 (Senior Capstone Project)
+  Ownership: Rite-Solutions, Inc.
+  Client/Stakeholder: Brandon Carvalho
+
+*/
+}
+
 import { useState } from "react";
 import axios from "axios";
 
@@ -38,33 +49,43 @@ function useFileUpload({
       const skippedEntries = Object.entries(skipped);
 
       if (uploaded.length && skippedEntries.length) {
-        const message = [
-          `✅ Uploaded: ${uploaded.join(", ")}`,
-          `⚠️ Skipped duplicates:\n${skippedEntries
-            .map(
-              ([newFile, originalFile]) =>
-                `• ${newFile} (duplicate of ${originalFile})`
-            )
-            .join("\n")}`,
-        ].join("\n\n");
-        setUploadResult?.({ severity: "warning", message });
+        const uploadedList = uploaded.map((name) => `• ${name}`);
+        const skippedList = skippedEntries.map(
+          ([newFile, originalFile]) =>
+            `• ${newFile} (${originalFile})`
+        );
+        setUploadResult?.({
+          severity: "warning",
+          message: [
+            `✅ Uploaded:`,
+            ...uploadedList,
+            `⚠️ Skipped duplicates:`,
+            ...skippedList,
+          ],
+        });
       } else if (uploaded.length) {
+        const uploadedList = uploaded.map((name) => `• ${name}`);
         setUploadResult?.({
           severity: "success",
-          message: `✅ Uploaded: ${uploaded.join(", ")}`,
+          message: [`✅ Uploaded:`, ...uploadedList],
         });
       } else if (skippedEntries.length) {
         const plural = skippedEntries.length > 1 ? "files were" : "file was";
-        const message = [
-          `❌ ${skippedEntries.length} ${plural} not uploaded (duplicates):`,
-          skippedEntries
-            .map(
-              ([newFile, originalFile]) =>
-                `• ${newFile} (matches ${originalFile})`
-            )
-            .join("\n"),
-        ].join("\n\n");
-        setUploadResult?.({ severity: "error", message });
+        const skippedList = skippedEntries.map(
+          ([newFile, originalFile]) => `• ${newFile} (matches ${originalFile})`
+        );
+        setUploadResult?.({
+          severity: "error",
+          message: [
+            `❌ ${skippedEntries.length} ${plural} not uploaded (duplicates):`,
+            ...skippedList,
+          ],
+        });
+      } else {
+        setUploadResult?.({
+          severity: "success",
+          message: "No files uploaded.",
+        });
       }
 
       onRefetch();
@@ -72,7 +93,7 @@ function useFileUpload({
       console.error("Upload failed:", error.message);
       setUploadResult?.({
         severity: "error",
-        message: "❌ Upload failed. Please try again.",
+        message: ["❌ Upload failed. Please try again."], // Message as an array
       });
     } finally {
       setLoading(false);

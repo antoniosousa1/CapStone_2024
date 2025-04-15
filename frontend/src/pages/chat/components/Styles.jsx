@@ -20,7 +20,7 @@ export const ChatPageContainer = styled(Box)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   flexGrow: 1,
-  overflowY: "hidden",
+  overflowY: "auto",
 }));
 
 export const MessageListContainer = styled(Box)({

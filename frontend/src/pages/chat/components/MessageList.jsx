@@ -21,6 +21,7 @@ const MessagesArea = styled(Box)({
   padding: 0,
   display: "flex",
   flexDirection: "column",
+  
 });
 
 const MessageList = ({ messages, messagesEndRef, isLoading }) => {

@@ -1,25 +1,44 @@
-import React, { useState } from 'react';
-import { Box, Stack, Typography, Button, Tooltip, Modal, IconButton } from '@mui/material';
-import PropTypes from 'prop-types';
-import CloseIcon from '@mui/icons-material/Close';
+{
+  /*
+
+  Authors: Antonio Sousa Jr(Team Lead), Matthew Greeson, Goncalo Felix, Antonio Morais, Dylan Ricci, Ryan Medeiros
+  Affiliation: University of Massachusetts Dartmouth
+  Course: CIS 498 & 499 (Senior Capstone Project)
+  Ownership: Rite-Solutions, Inc.
+  Client/Stakeholder: Brandon Carvalho
+
+*/
+}
+
+import React, { useState } from "react";
+import {
+  Box,
+  Stack,
+  Typography,
+  Button,
+  Tooltip,
+  Modal,
+  IconButton,
+} from "@mui/material";
+import PropTypes from "prop-types";
+import CloseIcon from "@mui/icons-material/Close";
 
 const helpItems = [
   {
-    title: 'Chat with the LLM to generate content.',
-    label: 'Chat Assistance',
-    pdfUrl: '/pdfs/ChatHelp.pdf',
+    title: "Chat with the LLM to generate content.",
+    label: "Chat Assistance",
+    pdfUrl: "/pdfs/ChatHelp.pdf",
   },
   {
     title: "Upload, edit, or delete documents from the 'Documents' tab.",
-    label: 'Managing Documents',
-    pdfUrl: '/pdfs/DocsHelp.pdf',
+    label: "Managing Documents",
+    pdfUrl: "/pdfs/DocsHelp.pdf",
   },
   {
     title: "Learn about the different kinds of LLMs.",
-    label: 'LLMs Information',
-    pdfUrl: '/pdfs/LLMs Info.pdf'
-  }
-  
+    label: "LLMs Information",
+    pdfUrl: "/pdfs/LLMs Info.pdf",
+  },
 ];
 
 const TooltipBox = ({ placement }) => {
@@ -58,18 +77,18 @@ const TooltipBox = ({ placement }) => {
       <Modal open={open} onClose={handleClose}>
         <Box
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            bgcolor: 'background.paper',
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "background.paper",
             boxShadow: 24,
-            width: '90%',
+            width: "90%",
             maxWidth: 800,
             p: 2,
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
             <IconButton onClick={handleClose}>
               <CloseIcon />
             </IconButton>
@@ -80,7 +99,7 @@ const TooltipBox = ({ placement }) => {
               title="PDF Preview"
               width="100%"
               height="600px"
-              style={{ border: 'none' }}
+              style={{ border: "none" }}
             />
           )}
         </Box>
