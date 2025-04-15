@@ -11,6 +11,7 @@ from langchain_ollama import OllamaLLM
 from langchain.schema import Document
 from langchain_milvus import Milvus
 from llm_package import collection_manger
+from collections import defaultdict
 
 from dotenv import load_dotenv
 import os
@@ -27,10 +28,26 @@ llm2 = OllamaLLM(model="llama3.1:latest", base_url=OLLAMA_SERVER_URL)
 def retrieve_docs(query: str, vector_store: Milvus) -> list[Document]:
     # Function to retrieve relevant document chunks based on a user's query
 
-    search_results = vector_store.similarity_search(query=query, k=3)
+    try:
+        # Performing a broad search to allow for selection from chunks
+        raw_results = vector_store.similarity_search(query=query, k=50)
 
-    # Returns the relevant chunks to the user's query
-    return search_results
+        # Grouping the results by filetype
+        type_buckets = defaultdict(list)
+        for doc in raw_results:
+            filetype = doc.metadata.get("filetype", "unknown")
+            type_buckets[filetype].append(doc)
+
+        # Collect balanced results from each filetype
+        balanced_results = []
+        for doc in type_buckets.values():
+            balanced_results.extend(doc[:5])  # Take up to 5 from each type
+
+        return balanced_results[:20]
+
+    except Exception as e:
+        print(f"[retrieve_docs] Failed during balanced retrieval: {e}")
+        raise
 
 
 def create_prompt(retrieved_docs: list[Document], query: str) -> str:

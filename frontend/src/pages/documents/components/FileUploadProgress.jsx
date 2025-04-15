@@ -15,7 +15,6 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import FixedLoadingContainer from "./LoadingContainer";
-import Button from "@mui/material/Button";
 
 function FileUploadProgress({ onCancel, loading }) {
   return (
@@ -33,9 +32,6 @@ function FileUploadProgress({ onCancel, loading }) {
             Uploading Documents...{" "}
           </Typography>
         </Box>
-        <Button onClick={onCancel} sx={{ marginLeft: 4 }}>
-          Cancel Upload
-        </Button>
       </FixedLoadingContainer>
     )
   );
