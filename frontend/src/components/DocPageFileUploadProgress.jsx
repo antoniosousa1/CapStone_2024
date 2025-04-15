@@ -17,9 +17,6 @@ function FileUploadProgress({ onCancel }) {
     >
       <CircularProgress size={60} />
       <Typography>Uploading documents...</Typography>
-      <Button onClick={onCancel} variant="outlined">
-        Cancel Upload
-      </Button>
     </FixedLoadingContainer>
   );
 }
