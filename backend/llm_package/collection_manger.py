@@ -24,7 +24,7 @@ OLLAMA_SERVER_URL = os.getenv("OLLAMA_SERVER_URL")
 
 
 # Inialize embeddings model you want collections to use
-embeddings = OllamaEmbeddings(model="llama3.1:latest", base_url=OLLAMA_SERVER_URL)
+embeddings = OllamaEmbeddings(model="llama3.1:70b", base_url=OLLAMA_SERVER_URL)
 # Inialize collection name based on USER_ID env variable
 collection_name = f"collection_{USER_ID}"
 
