@@ -126,3 +126,6 @@ services:
 networks:
   app_net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.222.0/24
